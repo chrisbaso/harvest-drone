@@ -1,0 +1,14 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/process-drips",
+      "schedule": "0 14 * * *"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
