@@ -41,6 +41,14 @@ export function formatCrmStageLabel(value) {
     open: "Open",
     assigned: "Assigned",
     unassigned: "Unassigned",
+    active: "Active",
+    completed: "Completed",
+    paused: "Paused",
+    unsubscribed: "Unsubscribed",
+    sent: "Sent",
+    delivered: "Delivered",
+    failed: "Failed",
+    bounced: "Bounced",
   };
 
   return labels[value] || value?.replaceAll("_", " ") || "-";

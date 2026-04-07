@@ -24,7 +24,7 @@ const OPPORTUNITY_BOARD_COLUMNS = [
 function getBadgeTone(value = "") {
   const normalized = String(value).toLowerCase();
 
-  if (["closed_won", "active", "approved", "qualified"].includes(normalized)) {
+  if (["closed_won", "active", "approved", "qualified", "sent", "delivered", "completed"].includes(normalized)) {
     return "status-pill status-pill--success";
   }
 
@@ -32,11 +32,11 @@ function getBadgeTone(value = "") {
     return "status-pill status-pill--info";
   }
 
-  if (["closed_lost", "inactive"].includes(normalized)) {
+  if (["closed_lost", "inactive", "failed", "bounced", "unsubscribed"].includes(normalized)) {
     return "status-pill status-pill--danger";
   }
 
-  if (["hylio", "hylio_sale"].includes(normalized)) {
+  if (["hylio", "hylio_sale", "paused", "grower", "operator", "source"].includes(normalized)) {
     return "status-pill status-pill--highlight";
   }
 
@@ -54,6 +54,22 @@ function getInitials(value = "") {
 
 function formatNumber(value) {
   return Number(value ?? 0).toLocaleString();
+}
+
+function startOfTodayIso() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return start.toISOString();
+}
+
+function startOfWeekIso() {
+  const now = new Date();
+  const start = new Date(now);
+  const day = start.getDay();
+  const diff = (day + 6) % 7;
+  start.setDate(start.getDate() - diff);
+  start.setHours(0, 0, 0, 0);
+  return start.toISOString();
 }
 
 function matchesSearch(record, searchQuery) {
@@ -92,6 +108,10 @@ function CrmPage() {
   const [acres, setAcres] = useState([]);
   const [operators, setOperators] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [dripSequences, setDripSequences] = useState([]);
+  const [dripEmails, setDripEmails] = useState([]);
+  const [dripEnrollments, setDripEnrollments] = useState([]);
+  const [dripSends, setDripSends] = useState([]);
   const [activeSection, setActiveSection] = useState("dashboard");
   const [opportunityView, setOpportunityView] = useState("board");
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -102,6 +122,9 @@ function CrmPage() {
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [expandedSequences, setExpandedSequences] = useState({});
+  const [pendingSequenceId, setPendingSequenceId] = useState("");
+  const [pendingEnrollmentId, setPendingEnrollmentId] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -110,7 +133,7 @@ function CrmPage() {
       setIsLoading(true);
       setErrorMessage("");
 
-      const [accountsResponse, contactsResponse, leadsResponse, opportunitiesResponse, acresResponse, operatorsResponse, activitiesResponse] = await Promise.all([
+      const [accountsResponse, contactsResponse, leadsResponse, opportunitiesResponse, acresResponse, operatorsResponse, activitiesResponse, sequencesResponse, emailsResponse, enrollmentsResponse, sendsResponse] = await Promise.all([
         supabase.from("crm_accounts").select("*").order("created_at", { ascending: false }),
         supabase.from("crm_contacts").select("*").order("created_at", { ascending: false }),
         supabase.from("crm_leads").select("*").order("created_at", { ascending: false }),
@@ -118,6 +141,10 @@ function CrmPage() {
         supabase.from("crm_acres").select("*").order("created_at", { ascending: false }),
         supabase.from("crm_operators").select("*").order("created_at", { ascending: false }),
         supabase.from("crm_activities").select("*").order("created_at", { ascending: false }).limit(60),
+        supabase.from("drip_sequences").select("*").order("created_at", { ascending: false }),
+        supabase.from("drip_emails").select("*").order("sequence_id").order("step_number"),
+        supabase.from("drip_enrollments").select("*").order("created_at", { ascending: false }),
+        supabase.from("drip_sends").select("*").order("sent_at", { ascending: false }).limit(20),
       ]);
 
       if (!isMounted) {
@@ -131,7 +158,11 @@ function CrmPage() {
         opportunitiesResponse.error ||
         acresResponse.error ||
         operatorsResponse.error ||
-        activitiesResponse.error;
+        activitiesResponse.error ||
+        sequencesResponse.error ||
+        emailsResponse.error ||
+        enrollmentsResponse.error ||
+        sendsResponse.error;
 
       if (error) {
         setErrorMessage(error.message || "Unable to load CRM data.");
@@ -142,6 +173,10 @@ function CrmPage() {
         setAcres([]);
         setOperators([]);
         setActivities([]);
+        setDripSequences([]);
+        setDripEmails([]);
+        setDripEnrollments([]);
+        setDripSends([]);
         setIsLoading(false);
         return;
       }
@@ -153,6 +188,10 @@ function CrmPage() {
       setAcres(acresResponse.data ?? []);
       setOperators(operatorsResponse.data ?? []);
       setActivities(activitiesResponse.data ?? []);
+      setDripSequences(sequencesResponse.data ?? []);
+      setDripEmails(emailsResponse.data ?? []);
+      setDripEnrollments(enrollmentsResponse.data ?? []);
+      setDripSends(sendsResponse.data ?? []);
       setIsLoading(false);
     }
 
@@ -193,6 +232,9 @@ function CrmPage() {
     const activityType = row.metadata?.lead_type || row.metadata?.opportunity_type || null;
     return (typeFilter === "all" || activityType === typeFilter) && (stageFilter === "all" || row.stage === stageFilter) && (stateFilter === "all" || row.state === stateFilter) && (ownerFilter === "all" || row.owner === ownerFilter) && matchesSearch(row, searchQuery);
   }), [activities, ownerFilter, searchQuery, stageFilter, stateFilter, typeFilter]);
+  const filteredSequences = useMemo(() => dripSequences.filter((row) => (typeFilter === "all" || row.lead_type === typeFilter) && matchesSearch(row, searchQuery)), [dripSequences, searchQuery, typeFilter]);
+  const filteredEnrollments = useMemo(() => dripEnrollments.filter((row) => (typeFilter === "all" || row.lead_type === typeFilter) && (stageFilter === "all" || row.status === stageFilter) && matchesSearch(row, searchQuery)), [dripEnrollments, searchQuery, stageFilter, typeFilter]);
+  const filteredSends = useMemo(() => dripSends.filter((row) => (stageFilter === "all" || row.status === stageFilter) && matchesSearch(row, searchQuery)), [dripSends, searchQuery, stageFilter]);
 
   const growerLeads = useMemo(() => filteredLeads.filter((row) => row.lead_type === "grower"), [filteredLeads]);
   const hylioLeads = useMemo(() => filteredLeads.filter((row) => row.lead_type === "hylio"), [filteredLeads]);
@@ -200,6 +242,34 @@ function CrmPage() {
   const directOpportunities = useMemo(() => filteredOpportunities.filter((row) => row.route_type === "direct_hd"), [filteredOpportunities]);
   const routedOpportunities = useMemo(() => filteredOpportunities.filter((row) => row.route_type === "route_to_operator"), [filteredOpportunities]);
   const activeOperators = useMemo(() => filteredOperators.filter((row) => ["approved", "active", "qualified"].includes(row.status)), [filteredOperators]);
+  const sequenceLookup = useMemo(() => dripSequences.reduce((acc, sequence) => {
+    acc[sequence.id] = sequence;
+    return acc;
+  }, {}), [dripSequences]);
+  const emailsBySequence = useMemo(() => dripEmails.reduce((acc, email) => {
+    if (!acc[email.sequence_id]) acc[email.sequence_id] = [];
+    acc[email.sequence_id].push(email);
+    return acc;
+  }, {}), [dripEmails]);
+  const todayIso = useMemo(() => startOfTodayIso(), []);
+  const weekIso = useMemo(() => startOfWeekIso(), []);
+  const automationSummary = useMemo(() => {
+    const activeEnrollments = dripEnrollments.filter((row) => row.status === "active").length;
+    const completedEnrollments = dripEnrollments.filter((row) => row.status === "completed").length;
+    const emailsSentToday = dripSends.filter((row) => ["sent", "delivered"].includes(row.status) && row.sent_at >= todayIso).length;
+    const emailsSentWeek = dripSends.filter((row) => ["sent", "delivered"].includes(row.status) && row.sent_at >= weekIso).length;
+    const failedSends = dripSends.filter((row) => row.status === "failed").length;
+    const completionRate = dripEnrollments.length ? Math.round((completedEnrollments / dripEnrollments.length) * 100) : 0;
+
+    return {
+      activeEnrollments,
+      completedEnrollments,
+      emailsSentToday,
+      emailsSentWeek,
+      failedSends,
+      completionRate,
+    };
+  }, [dripEnrollments, dripSends, todayIso, weekIso]);
 
   const stats = useMemo(() => ({
     accounts: filteredAccounts.length,
@@ -212,6 +282,7 @@ function CrmPage() {
     directOpportunities: directOpportunities.length,
     routedOpportunities: routedOpportunities.length,
     hylioPipeline: hylioOpportunities.reduce((sum, row) => sum + Number(row.estimated_value ?? 0), 0),
+    automations: filteredEnrollments.length,
   }), [activeOperators.length, directOpportunities.length, filteredAccounts.length, filteredContacts.length, filteredLeads.length, filteredOpportunities, filteredAcres, hylioOpportunities, routedOpportunities.length]);
 
   const dashboardSummary = [
@@ -231,6 +302,7 @@ function CrmPage() {
     activities: filteredActivities.length,
     accounts: filteredAccounts.length,
     acres: filteredAcres.length,
+    automations: filteredEnrollments.length,
   };
 
   const crmSections = [
@@ -243,7 +315,59 @@ function CrmPage() {
     { id: "activities", label: "Activities", description: "Calls, tasks, emails, texts", count: sectionCounts.activities },
     { id: "accounts", label: "Accounts", description: "Contacts and account records", count: sectionCounts.accounts },
     { id: "acres", label: "Acres", description: "Territory and assignment visibility", count: sectionCounts.acres },
+    { id: "automations", label: "Automations", description: "Drip sequences and sends", count: sectionCounts.automations },
   ];
+
+  async function toggleSequence(sequence) {
+    setPendingSequenceId(sequence.id);
+
+    const { data, error } = await supabase
+      .from("drip_sequences")
+      .update({ is_active: !sequence.is_active, updated_at: new Date().toISOString() })
+      .eq("id", sequence.id)
+      .select("*")
+      .single();
+
+    if (!error && data) {
+      setDripSequences((current) => current.map((row) => (row.id === sequence.id ? data : row)));
+    }
+
+    setPendingSequenceId("");
+  }
+
+  async function updateEnrollmentStatus(enrollment, status) {
+    setPendingEnrollmentId(enrollment.id);
+    const updates = {
+      status,
+      updated_at: new Date().toISOString(),
+      ...(status === "active" ? { next_send_at: enrollment.next_send_at || new Date().toISOString() } : {}),
+      ...(status === "completed" ? { completed_at: new Date().toISOString() } : {}),
+    };
+
+    const { data, error } = await supabase
+      .from("drip_enrollments")
+      .update(updates)
+      .eq("id", enrollment.id)
+      .select("*")
+      .single();
+
+    if (!error && data) {
+      setDripEnrollments((current) => current.map((row) => (row.id === enrollment.id ? data : row)));
+    }
+
+    setPendingEnrollmentId("");
+  }
+
+  async function removeEnrollment(enrollment) {
+    setPendingEnrollmentId(enrollment.id);
+    const { error } = await supabase.from("drip_enrollments").delete().eq("id", enrollment.id);
+
+    if (!error) {
+      setDripEnrollments((current) => current.filter((row) => row.id !== enrollment.id));
+    }
+
+    setPendingEnrollmentId("");
+  }
 
   const leadsColumns = [
     {
@@ -526,6 +650,184 @@ function CrmPage() {
     );
   }
 
+  function renderAutomations() {
+    const enrollmentColumns = [
+      {
+        key: "lead",
+        label: "Lead",
+        render: (row) => (
+          <div className="crm-table-primary">
+            <strong>{row.first_name || "Lead"}</strong>
+            <span>{row.email}</span>
+          </div>
+        ),
+      },
+      {
+        key: "sequence",
+        label: "Sequence",
+        render: (row) => sequenceLookup[row.sequence_id]?.name || "Unknown sequence",
+      },
+      {
+        key: "step",
+        label: "Current step",
+        render: (row) => {
+          const totalSteps = emailsBySequence[row.sequence_id]?.length || 0;
+          return `${row.current_step || 0} / ${totalSteps}`;
+        },
+      },
+      {
+        key: "status",
+        label: "Status",
+        render: (row) => <span className={getBadgeTone(row.status)}>{formatCrmStageLabel(row.status)}</span>,
+      },
+      {
+        key: "next_send_at",
+        label: "Next send",
+        render: (row) => formatDateTime(row.next_send_at),
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        render: (row) => (
+          <div className="inline-actions">
+            {row.status === "active" ? (
+              <button type="button" className="button button--secondary button--small" disabled={pendingEnrollmentId === row.id} onClick={() => updateEnrollmentStatus(row, "paused")}>
+                Pause
+              </button>
+            ) : (
+              <button type="button" className="button button--secondary button--small" disabled={pendingEnrollmentId === row.id} onClick={() => updateEnrollmentStatus(row, "active")}>
+                Resume
+              </button>
+            )}
+            <button type="button" className="button button--secondary button--small" disabled={pendingEnrollmentId === row.id} onClick={() => removeEnrollment(row)}>
+              Remove
+            </button>
+          </div>
+        ),
+      },
+    ];
+
+    return (
+      <div className="crm-view-stack">
+        <section className="crm-section-header">
+          <div>
+            <span className="crm-section-header__eyebrow">Automations</span>
+            <h2>Drip sequences, enrollments, and send performance</h2>
+            <p>Monitor sequence health, enrollment progress, and recent email delivery from one workspace.</p>
+          </div>
+        </section>
+
+        <section className="crm-kpi-grid crm-kpi-grid--mini">
+          <article className="crm-kpi-card card"><span>Active enrollments</span><strong>{formatCompactNumber(automationSummary.activeEnrollments)}</strong><p>Contacts currently moving through live sequences.</p></article>
+          <article className="crm-kpi-card card"><span>Emails sent</span><strong>{formatCompactNumber(automationSummary.emailsSentToday)}</strong><p>{automationSummary.emailsSentWeek} sent this week.</p></article>
+          <article className="crm-kpi-card card"><span>Completion rate</span><strong>{automationSummary.completionRate}%</strong><p>{automationSummary.completedEnrollments} completed enrollments so far.</p></article>
+          <article className="crm-kpi-card card"><span>Failed sends</span><strong>{formatCompactNumber(automationSummary.failedSends)}</strong><p>Recent sends marked failed in drip history.</p></article>
+        </section>
+
+        <section className="crm-dashboard-grid">
+          <article className="crm-card card">
+            <div className="crm-card__header">
+              <div>
+                <span className="crm-card__eyebrow">Sequences</span>
+                <h3>Live automation programs</h3>
+              </div>
+            </div>
+            <div className="crm-mini-list">
+              {filteredSequences.length === 0 ? (
+                <div className="crm-empty-card">No sequences match the current filters.</div>
+              ) : (
+                filteredSequences.map((sequence) => {
+                  const sequenceEnrollments = dripEnrollments.filter((row) => row.sequence_id === sequence.id);
+                  const activeCount = sequenceEnrollments.filter((row) => row.status === "active").length;
+                  const completedCount = sequenceEnrollments.filter((row) => row.status === "completed").length;
+                  const steps = emailsBySequence[sequence.id] || [];
+                  const isExpanded = Boolean(expandedSequences[sequence.id]);
+
+                  return (
+                    <div key={sequence.id} className="crm-subcard">
+                      <div className="crm-subcard__header">
+                        <div>
+                          <strong>{sequence.name}</strong>
+                          <p>{sequence.description || "Automation sequence"}</p>
+                        </div>
+                        <span className={getBadgeTone(sequence.lead_type)}>{formatCrmTypeLabel(sequence.lead_type)}</span>
+                      </div>
+                      <div className="crm-summary-list">
+                        <div className="crm-summary-list__item"><strong>{activeCount}</strong><span>Active</span></div>
+                        <div className="crm-summary-list__item"><strong>{completedCount}</strong><span>Completed</span></div>
+                      </div>
+                      <div className="inline-actions" style={{ marginTop: "1rem" }}>
+                        <button type="button" className="button button--secondary button--small" disabled={pendingSequenceId === sequence.id} onClick={() => toggleSequence(sequence)}>
+                          {sequence.is_active ? "Deactivate" : "Activate"}
+                        </button>
+                        <button type="button" className="button button--secondary button--small" onClick={() => setExpandedSequences((current) => ({ ...current, [sequence.id]: !current[sequence.id] }))}>
+                          {isExpanded ? "Hide steps" : "Show steps"}
+                        </button>
+                      </div>
+                      {isExpanded ? (
+                        <div className="crm-timeline" style={{ marginTop: "1rem" }}>
+                          {steps.length === 0 ? (
+                            <div className="crm-empty-card">No active email steps for this sequence yet.</div>
+                          ) : (
+                            steps.map((step) => (
+                              <div key={step.id} className="crm-timeline__item">
+                                <div className="crm-timeline__topline">
+                                  <span className="crm-timeline__state">Step {step.step_number}</span>
+                                  <span className="table-subtle">Delay {step.delay_days} day(s)</span>
+                                </div>
+                                <strong>{step.subject}</strong>
+                                <p>{step.body_text || "HTML email body configured."}</p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </article>
+
+          <article className="crm-card card">
+            <div className="crm-card__header">
+              <div>
+                <span className="crm-card__eyebrow">Recent sends</span>
+                <h3>Last 20 delivery attempts</h3>
+              </div>
+            </div>
+            <div className="crm-timeline-list">
+              {filteredSends.length === 0 ? (
+                <div className="crm-empty-card">No drip sends recorded yet.</div>
+              ) : (
+                filteredSends.slice(0, 20).map((send) => (
+                  <div key={send.id} className="crm-timeline-card">
+                    <div>
+                      <strong>{send.to_email}</strong>
+                      <p>{send.subject}</p>
+                    </div>
+                    <div className="inline-actions--stacked">
+                      <span className={getBadgeTone(send.status)}>{formatCrmStageLabel(send.status)}</span>
+                      <span className="table-subtle">{formatDateTime(send.sent_at)}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </article>
+        </section>
+
+        <LeadTable
+          title="Enrollments"
+          columns={enrollmentColumns}
+          rows={filteredEnrollments}
+          countLabel="enrollments"
+          emptyMessage="No enrollments match the current filters."
+        />
+      </div>
+    );
+  }
+
   function renderSection() {
     switch (activeSection) {
       case "leads": return renderLeads();
@@ -536,6 +838,7 @@ function CrmPage() {
       case "activities": return renderActivities();
       case "accounts": return renderAccounts();
       case "acres": return renderAcresView();
+      case "automations": return renderAutomations();
       case "dashboard":
       default: return renderDashboard();
     }

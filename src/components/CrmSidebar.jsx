@@ -57,6 +57,12 @@ const sidebarIcons = {
       <rect x="1" y="1" width="16" height="16" rx="2" />
     </svg>
   ),
+  automations: (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="14" height="12" rx="2" />
+      <path d="M6 1v4M12 1v4M5 9h2l1 2 2-4 1 2h2" />
+    </svg>
+  ),
 };
 
 const css = `
