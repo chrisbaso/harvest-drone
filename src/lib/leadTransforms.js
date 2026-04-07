@@ -92,7 +92,6 @@ export function createHylioLeadPayload(formData) {
     status: DEFAULT_LEAD_STATUS,
     lead_source: HYLIO_LEAD_SOURCE,
     source: HYLIO_LEAD_SOURCE,
-    lead_tag: usedCalculator ? "High Ticket | Used Calculator" : "High Ticket",
     first_name: splitName.firstName,
     last_name: splitName.lastName,
     mobile: formData.mobile,
@@ -161,7 +160,6 @@ export function mapOperatorLeadRowToEmailPayload(row) {
     interestType: row.interest_type,
     experienceLevel: row.experience_level,
     budgetRange: row.budget_range,
-    leadTag: row.lead_tag,
     calculatorInputs: {
       acresPerMonth: row.calculator_acres_per_month,
       revenuePerAcre: row.calculator_revenue_per_acre,

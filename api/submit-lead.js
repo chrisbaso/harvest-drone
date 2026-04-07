@@ -234,7 +234,6 @@ export default async function handler(req, res) {
           activityType: "lead_created",
           metadata: {
             source: preparedPayload.source || preparedPayload.lead_source,
-            lead_tag: preparedPayload.lead_tag ?? null,
             status: preparedPayload.status,
             route_type: preparedPayload.route_type ?? null,
             lead_score: preparedPayload.lead_score ?? null,

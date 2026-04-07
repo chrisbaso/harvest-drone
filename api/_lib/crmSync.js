@@ -114,7 +114,6 @@ export async function syncLeadToCrm({
       legacy_grower_lead_id: type === "grower" ? lead.id : null,
       legacy_operator_lead_id: type !== "grower" ? lead.id : null,
       route_type: routeTypeForLead(type, lead, routingDecision),
-      lead_tag: lead.lead_tag ?? null,
     },
   };
 
@@ -184,7 +183,6 @@ export async function syncLeadToCrm({
       route_type: routeTypeForLead(type, lead, routingDecision),
       lead_score: lead.lead_score ?? null,
       operator_score: lead.operator_score ?? null,
-      lead_tag: lead.lead_tag ?? null,
       calculator_used: Boolean(payload.calculatorInputs),
     },
   };

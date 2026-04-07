@@ -497,12 +497,6 @@ function LeadDetailPage() {
                         <dd>{lead.budget_range}</dd>
                       </div>
                     ) : null}
-                    {lead.lead_tag ? (
-                      <div className="crm-meta-list__row">
-                        <dt>Lead tag</dt>
-                        <dd>{lead.lead_tag}</dd>
-                      </div>
-                    ) : null}
                     {lead.calculator_acres_per_month ? (
                       <div className="crm-meta-list__row">
                         <dt>Calculator acres / month</dt>
