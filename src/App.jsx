@@ -6,6 +6,7 @@ const OperatorPage = lazy(() => import("./pages/OperatorPage"));
 const HylioPage = lazy(() => import("./pages/HylioPage"));
 const SourcePage = lazy(() => import("./pages/SourcePage"));
 const CrmPage = lazy(() => import("./pages/CrmPage"));
+const DashboardOverviewPage = lazy(() => import("./pages/DashboardOverviewPage"));
 const LeadDetailPage = lazy(() => import("./pages/LeadDetailPage"));
 const HowItWorksPage = lazy(() => import("./pages/HowItWorksPage"));
 
@@ -20,7 +21,7 @@ function App() {
         <Route path="/hylio" element={<HylioPage />} />
         <Route path="/source" element={<SourcePage />} />
         <Route path="/crm" element={<CrmPage />} />
-        <Route path="/dashboard" element={<Navigate to="/crm" replace />} />
+        <Route path="/dashboard" element={<DashboardOverviewPage />} />
         <Route path="/dashboard/leads/:leadType/:leadId" element={<LeadDetailPage />} />
       </Routes>
     </Suspense>
