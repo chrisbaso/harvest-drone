@@ -189,6 +189,17 @@ function LeadTable({
 }) {
   const [page, setPage] = useState(0);
 
+  function handleRowKeyDown(event, rowProps) {
+    if (!rowProps.onClick) {
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      rowProps.onClick(event);
+    }
+  }
+
   const totalPages = Math.max(1, Math.ceil(rows.length / ROWS_PER_PAGE));
   const showPagination = rows.length > ROWS_PER_PAGE;
 
@@ -232,15 +243,22 @@ function LeadTable({
                 <tbody>
                   {visibleRows.map((row) => {
                     const rowProps = getRowProps ? getRowProps(row) : {};
+                    const isClickable = Boolean(rowProps.onClick);
                     const className = [
                       rowProps.className || "",
-                      rowProps.onClick ? "lt-row--clickable" : "",
+                      isClickable ? "lt-row--clickable" : "",
                     ]
                       .filter(Boolean)
                       .join(" ");
 
                     return (
-                      <tr key={row.id} {...rowProps} className={className}>
+                      <tr
+                        key={row.id}
+                        {...rowProps}
+                        className={className}
+                        tabIndex={isClickable ? 0 : undefined}
+                        onKeyDown={(event) => handleRowKeyDown(event, rowProps)}
+                      >
                         {columns.map((column) => (
                           <td key={column.key}>
                             {column.render ? column.render(row) : row[column.key]}

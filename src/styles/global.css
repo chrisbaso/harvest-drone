@@ -2402,6 +2402,12 @@ tr:last-child td {
   color: var(--muted);
 }
 
+.crm-loading-state--error {
+  color: #f6b1b1;
+  border-color: rgba(248, 113, 113, 0.25);
+  background: rgba(248, 113, 113, 0.08);
+}
+
 .crm-activity-timeline {
   position: relative;
 }

@@ -94,7 +94,14 @@ function matchesSearch(record, searchQuery) {
 
 function renderActionCell(onSelect, row, label = "Open") {
   return (
-    <button type="button" className="button button--secondary button--small" onClick={() => onSelect(row)}>
+    <button
+      type="button"
+      className="button button--secondary button--small"
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect(row);
+      }}
+    >
       {label}
     </button>
   );
@@ -122,6 +129,7 @@ function CrmPage() {
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [actionMessage, setActionMessage] = useState(null);
   const [expandedSequences, setExpandedSequences] = useState({});
   const [pendingSequenceId, setPendingSequenceId] = useState("");
   const [pendingEnrollmentId, setPendingEnrollmentId] = useState("");
@@ -320,6 +328,7 @@ function CrmPage() {
 
   async function toggleSequence(sequence) {
     setPendingSequenceId(sequence.id);
+    setActionMessage(null);
 
     const { data, error } = await supabase
       .from("drip_sequences")
@@ -328,8 +337,19 @@ function CrmPage() {
       .select("*")
       .single();
 
+    if (error) {
+      setActionMessage({
+        tone: "error",
+        text: error.message || `Unable to update ${sequence.name}.`,
+      });
+    }
+
     if (!error && data) {
       setDripSequences((current) => current.map((row) => (row.id === sequence.id ? data : row)));
+      setActionMessage({
+        tone: "success",
+        text: `${data.name || "Sequence"} ${data.is_active ? "activated" : "deactivated"}.`,
+      });
     }
 
     setPendingSequenceId("");
@@ -337,6 +357,7 @@ function CrmPage() {
 
   async function updateEnrollmentStatus(enrollment, status) {
     setPendingEnrollmentId(enrollment.id);
+    setActionMessage(null);
     const updates = {
       status,
       updated_at: new Date().toISOString(),
@@ -351,8 +372,19 @@ function CrmPage() {
       .select("*")
       .single();
 
+    if (error) {
+      setActionMessage({
+        tone: "error",
+        text: error.message || "Unable to update enrollment status.",
+      });
+    }
+
     if (!error && data) {
       setDripEnrollments((current) => current.map((row) => (row.id === enrollment.id ? data : row)));
+      setActionMessage({
+        tone: "success",
+        text: `${data.email || "Enrollment"} moved to ${formatCrmStageLabel(data.status)}.`,
+      });
     }
 
     setPendingEnrollmentId("");
@@ -360,10 +392,22 @@ function CrmPage() {
 
   async function removeEnrollment(enrollment) {
     setPendingEnrollmentId(enrollment.id);
+    setActionMessage(null);
     const { error } = await supabase.from("drip_enrollments").delete().eq("id", enrollment.id);
+
+    if (error) {
+      setActionMessage({
+        tone: "error",
+        text: error.message || "Unable to remove enrollment.",
+      });
+    }
 
     if (!error) {
       setDripEnrollments((current) => current.filter((row) => row.id !== enrollment.id));
+      setActionMessage({
+        tone: "success",
+        text: `${enrollment.email || "Enrollment"} removed from automations.`,
+      });
     }
 
     setPendingEnrollmentId("");
@@ -689,17 +733,26 @@ function CrmPage() {
         key: "actions",
         label: "Actions",
         render: (row) => (
-          <div className="inline-actions">
-            {row.status === "active" ? (
-              <button type="button" className="button button--secondary button--small" disabled={pendingEnrollmentId === row.id} onClick={() => updateEnrollmentStatus(row, "paused")}>
+            <div className="inline-actions">
+              {row.status === "active" ? (
+              <button type="button" className="button button--secondary button--small" disabled={pendingEnrollmentId === row.id} onClick={(event) => {
+                event.stopPropagation();
+                updateEnrollmentStatus(row, "paused");
+              }}>
                 Pause
               </button>
             ) : (
-              <button type="button" className="button button--secondary button--small" disabled={pendingEnrollmentId === row.id} onClick={() => updateEnrollmentStatus(row, "active")}>
+              <button type="button" className="button button--secondary button--small" disabled={pendingEnrollmentId === row.id} onClick={(event) => {
+                event.stopPropagation();
+                updateEnrollmentStatus(row, "active");
+              }}>
                 Resume
               </button>
             )}
-            <button type="button" className="button button--secondary button--small" disabled={pendingEnrollmentId === row.id} onClick={() => removeEnrollment(row)}>
+            <button type="button" className="button button--secondary button--small" disabled={pendingEnrollmentId === row.id} onClick={(event) => {
+              event.stopPropagation();
+              removeEnrollment(row);
+            }}>
               Remove
             </button>
           </div>
@@ -880,6 +933,11 @@ function CrmPage() {
 
           {isLoading ? <section className="card crm-loading-state">Loading CRM data...</section> : null}
           {errorMessage ? <section className="card crm-loading-state">Supabase error: {errorMessage}</section> : null}
+          {actionMessage ? (
+            <section className={`card crm-loading-state${actionMessage.tone === "error" ? " crm-loading-state--error" : ""}`}>
+              {actionMessage.text}
+            </section>
+          ) : null}
           {!isLoading && !errorMessage ? renderSection() : null}
         </div>
       </div>

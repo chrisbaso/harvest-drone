@@ -253,7 +253,7 @@ function CrmFilters({
           </select>
         </div>
 
-        {activeFilters.length > 0 && (
+        {hasFilters && (
           <div className="cf__active-row">
             {activeFilters.map((filter) => (
               <button
@@ -266,11 +266,14 @@ function CrmFilters({
                 <span className="cf__active-pill__x">x</span>
               </button>
             ))}
-            {hasFilters && (
-              <button type="button" className="cf__clear-all" onClick={clearAll}>
-                Clear all
-              </button>
+            {searchQuery.length > 0 && (
+              <span className="cf__active-pill" aria-hidden="true">
+                Search: {searchQuery}
+              </span>
             )}
+            <button type="button" className="cf__clear-all" onClick={clearAll}>
+              Clear all
+            </button>
           </div>
         )}
       </section>
