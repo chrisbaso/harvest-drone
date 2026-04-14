@@ -281,6 +281,22 @@ create table if not exists public.crm_activities (
   metadata jsonb not null default '{}'::jsonb
 );
 
+create table if not exists public.agent_action_logs (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default timezone('utc', now()),
+  executed_at timestamptz,
+  action_type text not null,
+  target_table text not null,
+  target_id uuid,
+  target_label text,
+  request_message text,
+  reason text,
+  updates jsonb not null default '{}'::jsonb,
+  status text not null default 'completed',
+  result_summary text,
+  error_message text
+);
+
 create index if not exists grower_leads_status_idx on public.grower_leads (status);
 create index if not exists grower_leads_created_at_idx on public.grower_leads (created_at desc);
 create index if not exists grower_leads_sequence_state_idx on public.grower_leads (sequence_state);
@@ -316,6 +332,8 @@ create index if not exists crm_operators_status_idx on public.crm_operators (sta
 create index if not exists crm_operators_type_idx on public.crm_operators (operator_type);
 create index if not exists crm_activities_created_at_idx on public.crm_activities (created_at desc);
 create index if not exists crm_activities_owner_idx on public.crm_activities (owner);
+create index if not exists agent_action_logs_created_at_idx on public.agent_action_logs (created_at desc);
+create index if not exists agent_action_logs_action_type_idx on public.agent_action_logs (action_type);
 
 alter table public.grower_leads enable row level security;
 alter table public.operator_leads enable row level security;
@@ -328,6 +346,7 @@ alter table public.crm_opportunities enable row level security;
 alter table public.crm_acres enable row level security;
 alter table public.crm_operators enable row level security;
 alter table public.crm_activities enable row level security;
+alter table public.agent_action_logs enable row level security;
 
 drop policy if exists "Public can insert grower leads" on public.grower_leads;
 create policy "Public can insert grower leads"
@@ -427,6 +446,13 @@ for all
 to anon, authenticated
 using (true)
 with check (true);
+
+drop policy if exists "Authenticated users can read agent action logs" on public.agent_action_logs;
+create policy "Authenticated users can read agent action logs"
+on public.agent_action_logs
+for select
+to authenticated
+using (true);
 
 drop policy if exists "Public can read crm opportunities" on public.crm_opportunities;
 create policy "Public can read crm opportunities"

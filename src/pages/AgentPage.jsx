@@ -21,6 +21,10 @@ const css = `
   --accent-strong: #b7eb87;
   --user-bubble: rgba(163,217,119,0.12);
   --user-border: rgba(163,217,119,0.18);
+  --warning: #f4d36a;
+  --warning-dim: rgba(244,211,106,0.1);
+  --danger: #f08a8a;
+  --danger-dim: rgba(240,138,138,0.1);
   --shadow: 0 18px 40px rgba(0,0,0,0.24);
   --sans: "Instrument Sans", "Inter", system-ui, sans-serif;
   --serif: "DM Serif Display", Georgia, serif;
@@ -307,6 +311,136 @@ const css = `
   border-bottom: none;
 }
 
+.agent-page__action-card {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(244,211,106,0.18);
+  background: linear-gradient(180deg, rgba(244,211,106,0.08), rgba(255,255,255,0.02)), var(--surface);
+}
+
+.agent-page__action-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--warning);
+  margin-bottom: 12px;
+}
+
+.agent-page__action-eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.agent-page__action-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #fff;
+}
+
+.agent-page__action-card p {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.agent-page__action-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.agent-page__action-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+
+.agent-page__action-item span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.agent-page__action-item strong {
+  color: #fff;
+}
+
+.agent-page__action-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.agent-page__action-btn {
+  min-width: 128px;
+  height: 46px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.agent-page__action-btn:hover:enabled {
+  transform: translateY(-1px);
+}
+
+.agent-page__action-btn--confirm {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.agent-page__action-btn--confirm:hover:enabled {
+  background: var(--accent-strong);
+}
+
+.agent-page__action-btn--cancel {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.agent-page__action-btn--cancel:hover:enabled {
+  border-color: rgba(255,255,255,0.16);
+}
+
+.agent-page__action-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 14px;
+}
+
+.agent-page__action-badge--confirmed {
+  background: rgba(163,217,119,0.12);
+  color: var(--accent);
+}
+
+.agent-page__action-badge--cancelled {
+  background: var(--danger-dim);
+  color: var(--danger);
+}
+
 .agent-page__input-bar {
   position: fixed;
   left: 0;
@@ -374,7 +508,8 @@ const css = `
 }
 
 .agent-page__send:disabled,
-.agent-page__suggestion:disabled {
+.agent-page__suggestion:disabled,
+.agent-page__action-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -428,8 +563,13 @@ const css = `
     grid-template-columns: 1fr;
   }
 
-  .agent-page__send {
+  .agent-page__send,
+  .agent-page__action-btn {
     width: 100%;
+  }
+
+  .agent-page__action-actions {
+    flex-direction: column;
   }
 
   .agent-page__input-inner {
@@ -446,7 +586,7 @@ function formatTimestamp(timestamp) {
 }
 
 function applyInlineFormatting(text) {
-  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  return String(text || "").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 }
 
 function looksLikeTable(lines) {
@@ -469,7 +609,7 @@ function parseTable(lines) {
 }
 
 function looksLikeMetric(line) {
-  return /^[A-Za-z][A-Za-z0-9\s/%$()'’-]{1,40}:\s+.+$/.test(line) && !line.trim().startsWith("|");
+  return /^[A-Za-z][A-Za-z0-9\s/%$()'-]{1,40}:\s+.+$/.test(line) && !line.trim().startsWith("|");
 }
 
 function parseBlocks(content) {
@@ -508,6 +648,15 @@ function parseBlocks(content) {
       paragraphs: chunk.split("\n").filter(Boolean),
     };
   });
+}
+
+function createMessage(role, content, extra = {}) {
+  return {
+    role,
+    content,
+    timestamp: new Date(),
+    ...extra,
+  };
 }
 
 function AgentResponse({ content }) {
@@ -568,18 +717,77 @@ function AgentResponse({ content }) {
   );
 }
 
+function PendingActionCard({ action, onConfirm, onCancel, disabled }) {
+  if (!action) {
+    return null;
+  }
+
+  if (action.status === "confirmed") {
+    return <div className="agent-page__action-badge agent-page__action-badge--confirmed">Action confirmed</div>;
+  }
+
+  if (action.status === "cancelled") {
+    return <div className="agent-page__action-badge agent-page__action-badge--cancelled">Action cancelled</div>;
+  }
+
+  return (
+    <div className="agent-page__action-card">
+      <div className="agent-page__action-eyebrow">Confirmation required</div>
+      <h3>{action.actionLabel}</h3>
+      <p>{action.confirmationMessage}</p>
+
+      <div className="agent-page__action-list">
+        <div className="agent-page__action-item">
+          <span>Target</span>
+          <strong>{action.targetSummary}</strong>
+        </div>
+        <div className="agent-page__action-item">
+          <span>Change</span>
+          <strong>{action.updateSummary}</strong>
+        </div>
+        {action.reason ? (
+          <div className="agent-page__action-item">
+            <span>Why</span>
+            <strong>{action.reason}</strong>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="agent-page__action-actions">
+        <button
+          type="button"
+          className="agent-page__action-btn agent-page__action-btn--confirm"
+          onClick={onConfirm}
+          disabled={disabled}
+        >
+          Confirm action
+        </button>
+        <button
+          type="button"
+          className="agent-page__action-btn agent-page__action-btn--cancel"
+          onClick={onCancel}
+          disabled={disabled}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function AgentPage() {
   const [messages, setMessages] = useState([
-    {
-      role: "agent",
-      content: "Hey Jake. I can look up leads, check email campaigns, and pull pipeline data. What do you need?",
-      timestamp: new Date(),
-    },
+    createMessage(
+      "agent",
+      "Hey Jake. I can look up leads, check email campaigns, pull pipeline data, and now prepare a few safe internal actions. Any write action will always wait for your confirmation first.",
+    ),
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const historyRef = useRef(null);
   const messagesRef = useRef(messages);
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -592,30 +800,54 @@ function AgentPage() {
     });
   }, [messages, isLoading]);
 
+  async function callAgent(payload) {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Supabase is not configured in this environment.");
+    }
+
+    const headers = {
+      apikey: supabaseAnonKey,
+      "Content-Type": "application/json",
+    };
+
+    if (supabaseAnonKey.startsWith("eyJ")) {
+      headers.Authorization = `Bearer ${supabaseAnonKey}`;
+    }
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/agent`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.response || data.message || `Request failed (${response.status}).`);
+    }
+
+    return data;
+  }
+
   async function sendMessage(overrideMessage) {
     const messageText = (overrideMessage ?? input).trim();
     if (!messageText || isLoading) {
       return;
     }
 
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    if (!supabaseUrl || !supabaseAnonKey) {
       setMessages((current) => [
         ...current,
-        {
-          role: "agent",
-          content: "Supabase is not configured in this environment. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY before using the agent.",
-          timestamp: new Date(),
-        },
+        createMessage(
+          "agent",
+          "Supabase is not configured in this environment. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY before using the agent.",
+        ),
       ]);
       setInput("");
       return;
     }
 
-    const userMessage = {
-      role: "user",
-      content: messageText,
-      timestamp: new Date(),
-    };
+    const userMessage = createMessage("user", messageText);
     const history = messagesRef.current.slice(-10).map((message) => ({
       role: message.role,
       content: message.content,
@@ -626,40 +858,92 @@ function AgentPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: userMessage.content,
-          history,
-        }),
+      const data = await callAgent({
+        message: userMessage.content,
+        history,
       });
 
-      const data = await response.json();
-
       setMessages((current) => [
         ...current,
-        {
-          role: "agent",
-          content: data.response || "Something went wrong. Try again.",
-          timestamp: new Date(),
-        },
+        createMessage("agent", data.response || "Something went wrong. Try again.", {
+          pendingAction: data.pendingAction ? { ...data.pendingAction, status: "pending" } : null,
+        }),
       ]);
-    } catch {
+    } catch (error) {
       setMessages((current) => [
         ...current,
-        {
-          role: "agent",
-          content: "Connection error. Check if the agent function is deployed.",
-          timestamp: new Date(),
-        },
+        createMessage(
+          "agent",
+          error instanceof Error ? error.message : "Connection error. Check if the agent function is deployed.",
+        ),
       ]);
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function confirmAction(messageIndex, action) {
+    if (!action || isLoading) {
+      return;
+    }
+
+    const history = messagesRef.current.slice(-10).map((message) => ({
+      role: message.role,
+      content: message.content,
+    }));
+
+    setMessages((current) =>
+      current.map((message, index) =>
+        index === messageIndex
+          ? { ...message, pendingAction: { ...action, status: "confirmed" } }
+          : message,
+      ),
+    );
+    setMessages((current) => [...current, createMessage("user", `Confirm action: ${action.actionLabel}`)]);
+    setIsLoading(true);
+
+    try {
+      const data = await callAgent({
+        confirmation: "confirm",
+        pendingAction: action,
+        history,
+      });
+
+      setMessages((current) => [
+        ...current,
+        createMessage("agent", data.response || "Action completed."),
+      ]);
+    } catch (error) {
+      setMessages((current) => [
+        ...current,
+        createMessage(
+          "agent",
+          error instanceof Error ? error.message : "The action failed before it could finish.",
+        ),
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function cancelAction(messageIndex, action) {
+    if (!action || isLoading) {
+      return;
+    }
+
+    setMessages((current) => {
+      const updated = current.map((message, index) =>
+        index === messageIndex
+          ? { ...message, pendingAction: { ...action, status: "cancelled" } }
+          : message,
+      );
+
+      return [
+        ...updated,
+        createMessage("user", `Cancel action: ${action.actionLabel}`),
+        createMessage("agent", "No changes made. I cancelled that action."),
+      ];
+    });
   }
 
   function handleSubmit(event) {
@@ -684,7 +968,7 @@ function AgentPage() {
               <span className="agent-page__eyebrow">Internal operations assistant</span>
               <h1 className="agent-page__title">Harvest Drone Agent</h1>
               <p className="agent-page__subtitle">
-                Ask about leads, SOURCE orders, pipeline movement, or live email performance. This first phase is read-only and pulls from Supabase and Mailchimp in real time.
+                Ask about leads, SOURCE orders, pipeline movement, live email performance, or safe internal actions. Any write action stays read-only until you approve it.
               </p>
             </div>
             <div className="agent-page__status">
@@ -700,7 +984,7 @@ function AgentPage() {
                   <div className="agent-page__empty-card">
                     <h2>Start with one of these quick checks</h2>
                     <p>
-                      The agent can answer direct questions about lead counts, unpaid orders, campaign performance, and who deserves a follow-up first.
+                      The agent can answer direct questions about lead counts, unpaid orders, campaign performance, and who deserves a follow-up first. It can also prepare safe actions like updating lead stage, changing owner, pausing enrollments, or marking SOURCE orders paid.
                     </p>
                   </div>
                   <div className="agent-page__suggestions">
@@ -738,6 +1022,15 @@ function AgentPage() {
                         dangerouslySetInnerHTML={{ __html: applyInlineFormatting(message.content).replace(/\n/g, "<br />") }}
                       />
                     )}
+
+                    {message.pendingAction ? (
+                      <PendingActionCard
+                        action={message.pendingAction}
+                        disabled={isLoading}
+                        onConfirm={() => confirmAction(index, message.pendingAction)}
+                        onCancel={() => cancelAction(index, message.pendingAction)}
+                      />
+                    ) : null}
                   </article>
                 </div>
               ))}
@@ -770,7 +1063,7 @@ function AgentPage() {
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about leads, orders, campaigns, or priorities..."
+                placeholder="Ask about leads, orders, campaigns, priorities, or say what you want changed..."
                 rows={2}
                 disabled={isLoading}
               />
