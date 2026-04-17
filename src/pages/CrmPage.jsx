@@ -119,6 +119,7 @@ function CrmPage() {
   const [dripEmails, setDripEmails] = useState([]);
   const [dripEnrollments, setDripEnrollments] = useState([]);
   const [dripSends, setDripSends] = useState([]);
+  const [chatLeads, setChatLeads] = useState([]);
   const [activeSection, setActiveSection] = useState("dashboard");
   const [opportunityView, setOpportunityView] = useState("board");
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -133,6 +134,7 @@ function CrmPage() {
   const [expandedSequences, setExpandedSequences] = useState({});
   const [pendingSequenceId, setPendingSequenceId] = useState("");
   const [pendingEnrollmentId, setPendingEnrollmentId] = useState("");
+  const [expandedChatLeadId, setExpandedChatLeadId] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -141,7 +143,7 @@ function CrmPage() {
       setIsLoading(true);
       setErrorMessage("");
 
-      const [accountsResponse, contactsResponse, leadsResponse, opportunitiesResponse, acresResponse, operatorsResponse, activitiesResponse, sequencesResponse, emailsResponse, enrollmentsResponse, sendsResponse] = await Promise.all([
+      const [accountsResponse, contactsResponse, leadsResponse, opportunitiesResponse, acresResponse, operatorsResponse, activitiesResponse, sequencesResponse, emailsResponse, enrollmentsResponse, sendsResponse, chatLeadsResponse] = await Promise.all([
         supabase.from("crm_accounts").select("*").order("created_at", { ascending: false }),
         supabase.from("crm_contacts").select("*").order("created_at", { ascending: false }),
         supabase.from("crm_leads").select("*").order("created_at", { ascending: false }),
@@ -153,6 +155,7 @@ function CrmPage() {
         supabase.from("drip_emails").select("*").order("sequence_id").order("step_number"),
         supabase.from("drip_enrollments").select("*").order("created_at", { ascending: false }),
         supabase.from("drip_sends").select("*").order("sent_at", { ascending: false }).limit(20),
+        supabase.from("chat_leads").select("*").order("created_at", { ascending: false }).limit(250),
       ]);
 
       if (!isMounted) {
@@ -170,7 +173,8 @@ function CrmPage() {
         sequencesResponse.error ||
         emailsResponse.error ||
         enrollmentsResponse.error ||
-        sendsResponse.error;
+        sendsResponse.error ||
+        chatLeadsResponse.error;
 
       if (error) {
         setErrorMessage(error.message || "Unable to load CRM data.");
@@ -185,6 +189,7 @@ function CrmPage() {
         setDripEmails([]);
         setDripEnrollments([]);
         setDripSends([]);
+        setChatLeads([]);
         setIsLoading(false);
         return;
       }
@@ -200,6 +205,7 @@ function CrmPage() {
       setDripEmails(emailsResponse.data ?? []);
       setDripEnrollments(enrollmentsResponse.data ?? []);
       setDripSends(sendsResponse.data ?? []);
+      setChatLeads(chatLeadsResponse.data ?? []);
       setIsLoading(false);
     }
 
@@ -243,6 +249,11 @@ function CrmPage() {
   const filteredSequences = useMemo(() => dripSequences.filter((row) => (typeFilter === "all" || row.lead_type === typeFilter) && matchesSearch(row, searchQuery)), [dripSequences, searchQuery, typeFilter]);
   const filteredEnrollments = useMemo(() => dripEnrollments.filter((row) => (typeFilter === "all" || row.lead_type === typeFilter) && (stageFilter === "all" || row.status === stageFilter) && matchesSearch(row, searchQuery)), [dripEnrollments, searchQuery, stageFilter, typeFilter]);
   const filteredSends = useMemo(() => dripSends.filter((row) => (stageFilter === "all" || row.status === stageFilter) && matchesSearch(row, searchQuery)), [dripSends, searchQuery, stageFilter]);
+  const filteredChatLeads = useMemo(() => chatLeads.filter((row) => {
+    const captureStatus = row.lead_captured ? "captured" : "browsing";
+    const stageMatch = stageFilter === "all" || stageFilter === captureStatus;
+    return stageMatch && matchesSearch(row, searchQuery);
+  }), [chatLeads, searchQuery, stageFilter]);
 
   const growerLeads = useMemo(() => filteredLeads.filter((row) => row.lead_type === "grower"), [filteredLeads]);
   const hylioLeads = useMemo(() => filteredLeads.filter((row) => row.lead_type === "hylio"), [filteredLeads]);
@@ -311,6 +322,7 @@ function CrmPage() {
     accounts: filteredAccounts.length,
     acres: filteredAcres.length,
     automations: filteredEnrollments.length,
+    chat: filteredChatLeads.length,
   };
 
   const crmSections = [
@@ -324,6 +336,7 @@ function CrmPage() {
     { id: "accounts", label: "Accounts", description: "Contacts and account records", count: sectionCounts.accounts },
     { id: "acres", label: "Acres", description: "Territory and assignment visibility", count: sectionCounts.acres },
     { id: "automations", label: "Automations", description: "Drip sequences and sends", count: sectionCounts.automations },
+    { id: "chat", label: "Chat leads", description: "Website chat conversations", count: sectionCounts.chat },
   ];
 
   async function toggleSequence(sequence) {
@@ -881,6 +894,109 @@ function CrmPage() {
     );
   }
 
+  function renderChatLeads() {
+    const selectedChatLead = filteredChatLeads.find((row) => row.id === expandedChatLeadId) || null;
+    const chatColumns = [
+      {
+        key: "contact",
+        label: "Contact",
+        render: (row) => (
+          <div className="crm-table-primary">
+            <strong>{row.first_name || "Anonymous visitor"}</strong>
+            <span>{row.email || row.phone || "No contact shared"}</span>
+          </div>
+        ),
+      },
+      {
+        key: "page_url",
+        label: "Page",
+        render: (row) => row.page_url || "Unknown",
+      },
+      {
+        key: "captured",
+        label: "Status",
+        render: (row) => (
+          <span className={row.lead_captured ? "status-pill status-pill--success" : "status-pill"}>
+            {row.lead_captured ? "Lead captured" : "Browsing"}
+          </span>
+        ),
+      },
+      {
+        key: "created_at",
+        label: "Timestamp",
+        render: (row) => formatDateTime(row.created_at),
+      },
+    ];
+
+    return (
+      <div className="crm-view-stack">
+        <section className="crm-section-header">
+          <div>
+            <span className="crm-section-header__eyebrow">Chat leads</span>
+            <h2>Website chat conversations and captured follow-up details</h2>
+            <p>Review every public-page chat session and open transcripts where contact details were captured.</p>
+          </div>
+        </section>
+
+        <section className="crm-kpi-grid crm-kpi-grid--mini">
+          <article className="crm-kpi-card card">
+            <span>Total chats</span>
+            <strong>{formatCompactNumber(filteredChatLeads.length)}</strong>
+            <p>Conversations logged from the website widget.</p>
+          </article>
+          <article className="crm-kpi-card card">
+            <span>Captured leads</span>
+            <strong>{formatCompactNumber(filteredChatLeads.filter((row) => row.lead_captured).length)}</strong>
+            <p>Chats where contact info was shared.</p>
+          </article>
+          <article className="crm-kpi-card card">
+            <span>Browsing chats</span>
+            <strong>{formatCompactNumber(filteredChatLeads.filter((row) => !row.lead_captured).length)}</strong>
+            <p>Questions without contact info yet.</p>
+          </article>
+        </section>
+
+        <LeadTable
+          title="Chat conversations"
+          columns={chatColumns}
+          rows={filteredChatLeads}
+          countLabel="chat conversations"
+          emptyMessage="No chat conversations match the current filters."
+          getRowProps={(row) => ({
+            className: "table-row table-row--clickable",
+            onClick: () => setExpandedChatLeadId((current) => (current === row.id ? "" : row.id)),
+          })}
+        />
+
+        {selectedChatLead ? (
+          <section className="crm-card card">
+            <div className="crm-card__header">
+              <div>
+                <span className="crm-card__eyebrow">Conversation transcript</span>
+                <h3>{selectedChatLead.first_name || selectedChatLead.email || "Website visitor"}</h3>
+              </div>
+              <span className={selectedChatLead.lead_captured ? "status-pill status-pill--success" : "status-pill"}>
+                {selectedChatLead.lead_captured ? "Lead captured" : "Browsing"}
+              </span>
+            </div>
+            <div className="crm-timeline-list">
+              {Array.isArray(selectedChatLead.conversation) && selectedChatLead.conversation.length > 0 ? (
+                selectedChatLead.conversation.map((entry, index) => (
+                  <div key={`${selectedChatLead.id}-chat-${index}`} className="crm-timeline-card crm-timeline-card--stacked">
+                    <strong>{entry.role === "user" ? "Farmer" : "Agent"}</strong>
+                    <p>{entry.content}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="crm-empty-card">No transcript content was stored for this conversation.</div>
+              )}
+            </div>
+          </section>
+        ) : null}
+      </div>
+    );
+  }
+
   function renderSection() {
     switch (activeSection) {
       case "leads": return renderLeads();
@@ -892,6 +1008,7 @@ function CrmPage() {
       case "accounts": return renderAccounts();
       case "acres": return renderAcresView();
       case "automations": return renderAutomations();
+      case "chat": return renderChatLeads();
       case "dashboard":
       default: return renderDashboard();
     }

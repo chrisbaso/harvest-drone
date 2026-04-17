@@ -1,5 +1,6 @@
 import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import ChatWidget from "./components/ChatWidget";
 
 const GrowerPage = lazy(() => import("./pages/GrowerPage"));
 const OperatorPage = lazy(() => import("./pages/OperatorPage"));
@@ -26,6 +27,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardOverviewPage />} />
         <Route path="/dashboard/leads/:leadType/:leadId" element={<LeadDetailPage />} />
       </Routes>
+      <ChatWidget />
     </Suspense>
   );
 }

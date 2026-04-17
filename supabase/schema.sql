@@ -281,6 +281,45 @@ create table if not exists public.crm_activities (
   metadata jsonb not null default '{}'::jsonb
 );
 
+create table if not exists public.source_orders (
+  id uuid primary key default gen_random_uuid(),
+  first_name text,
+  email text,
+  state text,
+  county text,
+  crop_type text,
+  acres integer,
+  product text default 'SOURCE',
+  estimated_total numeric,
+  order_type text,
+  status text default 'pending',
+  invoice_reminder_sent timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public.automation_flags (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default timezone('utc', now()),
+  processed_at timestamptz,
+  email text not null,
+  action text not null,
+  tag text,
+  processed boolean not null default false,
+  metadata jsonb not null default '{}'::jsonb
+);
+
+create table if not exists public.chat_leads (
+  id uuid primary key default gen_random_uuid(),
+  first_name text,
+  email text,
+  phone text,
+  page_url text,
+  conversation jsonb,
+  lead_captured boolean default false,
+  created_at timestamptz default now()
+);
+
 create table if not exists public.agent_action_logs (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default timezone('utc', now()),
@@ -332,6 +371,11 @@ create index if not exists crm_operators_status_idx on public.crm_operators (sta
 create index if not exists crm_operators_type_idx on public.crm_operators (operator_type);
 create index if not exists crm_activities_created_at_idx on public.crm_activities (created_at desc);
 create index if not exists crm_activities_owner_idx on public.crm_activities (owner);
+create index if not exists source_orders_created_at_idx on public.source_orders (created_at desc);
+create index if not exists source_orders_status_idx on public.source_orders (status);
+create index if not exists automation_flags_processed_idx on public.automation_flags (processed, created_at desc);
+create index if not exists idx_chat_leads_captured on public.chat_leads (lead_captured);
+create index if not exists idx_chat_leads_created on public.chat_leads (created_at desc);
 create index if not exists agent_action_logs_created_at_idx on public.agent_action_logs (created_at desc);
 create index if not exists agent_action_logs_action_type_idx on public.agent_action_logs (action_type);
 
@@ -346,6 +390,9 @@ alter table public.crm_opportunities enable row level security;
 alter table public.crm_acres enable row level security;
 alter table public.crm_operators enable row level security;
 alter table public.crm_activities enable row level security;
+alter table public.source_orders enable row level security;
+alter table public.automation_flags enable row level security;
+alter table public.chat_leads enable row level security;
 alter table public.agent_action_logs enable row level security;
 
 drop policy if exists "Public can insert grower leads" on public.grower_leads;
@@ -452,6 +499,35 @@ create policy "Authenticated users can read agent action logs"
 on public.agent_action_logs
 for select
 to authenticated
+using (true);
+
+drop policy if exists "Allow anon insert on source_orders" on public.source_orders;
+create policy "Allow anon insert on source_orders"
+on public.source_orders
+for insert
+to anon, authenticated
+with check (true);
+
+drop policy if exists "Allow authenticated read on source_orders" on public.source_orders;
+create policy "Allow authenticated read on source_orders"
+on public.source_orders
+for select
+to authenticated
+using (true);
+
+drop policy if exists "Authenticated users can manage automation flags" on public.automation_flags;
+create policy "Authenticated users can manage automation flags"
+on public.automation_flags
+for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Public can read chat leads" on public.chat_leads;
+create policy "Public can read chat leads"
+on public.chat_leads
+for select
+to anon, authenticated
 using (true);
 
 drop policy if exists "Public can read crm opportunities" on public.crm_opportunities;

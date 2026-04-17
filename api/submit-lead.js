@@ -4,12 +4,7 @@ import {
   createOperatorLeadPayload,
 } from "../src/lib/leadTransforms.js";
 import { sendLeadEmails, sendLeadSmsFollowUp } from "./lead-email.js";
-import {
-  getFirstStep,
-  getNextStep,
-  resolveCampaignType,
-  getScheduledTime,
-} from "./_lib/dripCampaigns.js";
+import { resolveCampaignType } from "./_lib/dripCampaigns.js";
 import { createLeadActivity, logLeadActivities } from "./_lib/leadActivity.js";
 import { syncLeadToCrm } from "./_lib/crmSync.js";
 import {
@@ -208,12 +203,10 @@ export default async function handler(req, res) {
         };
       }
 
-      const firstStep = getFirstStep(campaignType);
-      const nextStep = getNextStep(campaignType, firstStep?.key, preparedPayload);
       const sequenceUpdate = {
-        sequence_state: firstStep?.key ?? "completed",
-        last_contacted_at: new Date().toISOString(),
-        next_follow_up_at: getScheduledTime(data.created_at, nextStep),
+        sequence_state: "mailchimp_enrolled",
+        last_contacted_at: null,
+        next_follow_up_at: null,
       };
 
       const { data: updatedLead, error: updateError } = await supabase
@@ -275,18 +268,6 @@ export default async function handler(req, res) {
           leadId: data.id,
           activityType: "email_sent",
           channel: "email",
-          templateKey: emailResult.confirmationTemplateKey,
-          subject: emailResult.confirmationSubject,
-          metadata: {
-            resend_message_id: emailResult.confirmationId,
-            recipient: formData.email,
-          },
-        }),
-        createLeadActivity({
-          leadType: activityLeadType,
-          leadId: data.id,
-          activityType: "email_sent",
-          channel: "email",
           templateKey: emailResult.internalAlertTemplateKey,
           subject: emailResult.internalAlertSubject,
           metadata: {
@@ -297,10 +278,10 @@ export default async function handler(req, res) {
         createLeadActivity({
           leadType: activityLeadType,
           leadId: data.id,
-          activityType: "follow_up_scheduled",
+          activityType: "automation_enrolled",
           metadata: {
             sequence_state: sequenceUpdate.sequence_state,
-            next_follow_up_at: sequenceUpdate.next_follow_up_at,
+            delivery_provider: "mailchimp",
           },
         }),
         ...(smsResult
@@ -331,7 +312,11 @@ export default async function handler(req, res) {
         routing: routingDecision,
         opportunity: opportunityRecord,
         crmSyncWarning,
-        email: emailResult,
+        email: {
+          ...emailResult,
+          delivery_provider: "mailchimp",
+          customer_delivery_managed_by: "mailchimp",
+        },
         sms: smsResult,
       });
     } catch (emailError) {

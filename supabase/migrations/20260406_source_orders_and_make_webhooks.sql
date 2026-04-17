@@ -1,4 +1,4 @@
-﻿create extension if not exists pgcrypto;
+create extension if not exists pgcrypto;
 create extension if not exists pg_net with schema extensions;
 
 create table if not exists public.source_orders (
@@ -32,45 +32,12 @@ for select
 to authenticated
 using (true);
 
-drop trigger if exists source_orders_make_webhook on public.source_orders;
-create trigger source_orders_make_webhook
-after insert on public.source_orders
-for each row
-execute function supabase_functions.http_request(
-  'https://hook.us1.make.com/SOURCE_ORDER_WEBHOOK_URL',
-  'POST',
-  '{"Content-Type":"application/json"}',
-  '{}',
-  '5000'
-);
-
-drop trigger if exists grower_leads_make_webhook on public.grower_leads;
-create trigger grower_leads_make_webhook
-after insert on public.grower_leads
-for each row
-execute function supabase_functions.http_request(
-  'https://hook.us1.make.com/GROWER_LEAD_WEBHOOK_URL',
-  'POST',
-  '{"Content-Type":"application/json"}',
-  '{}',
-  '5000'
-);
-
-drop trigger if exists operator_leads_make_webhook on public.operator_leads;
-create trigger operator_leads_make_webhook
-after insert on public.operator_leads
-for each row
-execute function supabase_functions.http_request(
-  'https://hook.us1.make.com/OPERATOR_LEAD_WEBHOOK_URL',
-  'POST',
-  '{"Content-Type":"application/json"}',
-  '{}',
-  '5000'
-);
+-- Legacy Make.com webhook triggers were previously created here using
+-- supabase_functions.http_request. They are intentionally skipped now
+-- because this project uses pg_net + edge functions for enrollment flow.
 
 -- Current app behavior note:
 -- Hylio form submissions are stored in public.operator_leads by the existing /api/submit-lead handler.
 -- In Make.com, branch Hylio records from operator_leads using lead_tag = 'High Ticket'
 -- or interest_type matching the Hylio flow.
 -- If you later introduce a dedicated public.hylio_leads table, create the same trigger pattern there.
-

@@ -63,6 +63,12 @@ const sidebarIcons = {
       <path d="M6 1v4M12 1v4M5 9h2l1 2 2-4 1 2h2" />
     </svg>
   ),
+  chat: (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 4.5a2.5 2.5 0 0 1 2.5-2.5h7A2.5 2.5 0 0 1 15 4.5v5A2.5 2.5 0 0 1 12.5 12H8l-3 3v-3H5.5A2.5 2.5 0 0 1 3 9.5z" />
+      <path d="M6 6.5h6M6 8.8h4" />
+    </svg>
+  ),
 };
 
 const css = `

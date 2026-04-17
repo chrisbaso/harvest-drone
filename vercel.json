@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/process-drips",
-      "schedule": "0 14 * * *"
+      "schedule": "*/15 * * * *"
     }
   ],
   "rewrites": [

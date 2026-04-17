@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { upsertContact } from "../_shared/mailchimp.ts";
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -363,6 +364,24 @@ async function executeAction(pendingAction: PendingAction) {
   if (error) {
     await logAgentAction({ pendingAction, status: "failed", errorMessage: error.message });
     return `I could not complete that action: ${error.message}`;
+  }
+  if (pendingAction.actionType === "update_source_order_status" && updates.status === "paid") {
+    const mailchimpResult = await upsertContact({
+      email: String(data.email || ""),
+      firstName: data.first_name ? String(data.first_name) : undefined,
+      state: data.state ? String(data.state) : undefined,
+      acres: data.acres ? String(data.acres) : undefined,
+      tags: ["source-paid"],
+    });
+
+    if (!mailchimpResult.success) {
+      await logAgentAction({
+        pendingAction,
+        status: "failed",
+        errorMessage: mailchimpResult.error || "Mailchimp tagging failed after updating order status.",
+      });
+      return `I updated the SOURCE order to paid in Supabase, but I could not add the Mailchimp post-purchase tag: ${mailchimpResult.error || "Unknown Mailchimp error"}`;
+    }
   }
   await logAgentAction({ pendingAction, status: "completed", resultSummary: applyActionSummary(pendingAction.actionType, updates) });
   return callOpenAI(

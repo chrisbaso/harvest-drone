@@ -727,35 +727,20 @@ export async function sendLeadEmails({ type, payload }) {
 
   const { resend, fromEmail, adminEmail } = createResendClient();
   const internalAlert = buildInternalAlert(type, payload);
-  const confirmation =
-    type === "grower"
-      ? buildGrowerConfirmation(payload)
-      : type === "hylio"
-        ? buildHylioConfirmation(payload)
-        : buildOperatorConfirmation(payload);
-
-  const [confirmationResult, internalAlertResult] = await Promise.all([
-    resend.emails.send({
-      from: fromEmail,
-      to: payload.email,
-      subject: confirmation.subject,
-      html: confirmation.html,
-    }),
-    resend.emails.send({
-      from: fromEmail,
-      to: adminEmail,
-      subject: internalAlert.subject,
-      html: internalAlert.html,
-    }),
-  ]);
+  const internalAlertResult = await resend.emails.send({
+    from: fromEmail,
+    to: adminEmail,
+    subject: internalAlert.subject,
+    html: internalAlert.html,
+  });
 
   return {
     success: true,
-    confirmationTemplateKey: getCampaign(type)?.steps[0]?.key ?? null,
-    confirmationSubject: confirmation.subject,
+    confirmationTemplateKey: null,
+    confirmationSubject: null,
     internalAlertTemplateKey: `${type}_internal_alert`,
     internalAlertSubject: internalAlert.subject,
-    confirmationId: confirmationResult.data?.id ?? null,
+    confirmationId: null,
     internalAlertId: internalAlertResult.data?.id ?? null,
   };
 }
@@ -855,25 +840,13 @@ export async function sendHighTicketReminder({ payload }) {
 }
 
 export async function sendFollowUpEmail({ type, sequenceState, payload }) {
-  if (!payload?.email) {
-    throw new Error("Lead email is required.");
-  }
-
-  const { resend, fromEmail } = createResendClient();
   const followUp = buildFollowUpEmail(type, sequenceState, payload);
-
-  const result = await resend.emails.send({
-    from: fromEmail,
-    to: payload.email,
-    subject: followUp.subject,
-    html: followUp.html,
-  });
 
   return {
     success: true,
     templateKey: followUp.templateKey,
     subject: followUp.subject,
-    messageId: result.data?.id ?? null,
+    messageId: null,
   };
 }
 
