@@ -922,6 +922,19 @@ function CrmPage() {
         ),
       },
       {
+        key: "notification",
+        label: "Notify Jake",
+        render: (row) => (
+          row.lead_captured ? (
+            <span className={row.notification_sent ? "status-pill status-pill--success" : "status-pill status-pill--danger"}>
+              {row.notification_sent ? "Sent" : "Failed"}
+            </span>
+          ) : (
+            <span className="table-subtle">N/A</span>
+          )
+        ),
+      },
+      {
         key: "created_at",
         label: "Timestamp",
         render: (row) => formatDateTime(row.created_at),
@@ -979,6 +992,14 @@ function CrmPage() {
                 {selectedChatLead.lead_captured ? "Lead captured" : "Browsing"}
               </span>
             </div>
+            {selectedChatLead.lead_captured ? (
+              <div className="crm-summary-list" style={{ marginBottom: "1rem" }}>
+                <div className="crm-summary-list__item">
+                  <strong>{selectedChatLead.notification_sent ? "Sent" : "Failed"}</strong>
+                  <span>Jake notification</span>
+                </div>
+              </div>
+            ) : null}
             <div className="crm-timeline-list">
               {Array.isArray(selectedChatLead.conversation) && selectedChatLead.conversation.length > 0 ? (
                 selectedChatLead.conversation.map((entry, index) => (

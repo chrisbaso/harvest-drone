@@ -25,8 +25,10 @@ const SYSTEM_PROMPT = `You are a helpful chat assistant on the Harvest Drone web
 PRODUCT KNOWLEDGE:
 - SOURCE: $15/acre. Synthetic soil activator with ultra-low use rate. One ounce replaces 25 lbs of nitrogen. Reduces spend on anhydrous ammonia, urea (46-0-0), and UAN (28-0-0). NOT a biological, it is synthetic.
 - BLUEPRINT: $11/acre. Solubilizes bound phosphorus already in the soil. Reduces need for DAP (18-46-0), MAP (11-52-0), and triple super phosphate.
-- Bundle SOURCE + BLUEPRINT: $25/acre.
-- Bundle + Harvest Drone drone application: $23/acre.
+- SOURCE + BLUEPRINT together: $25/acre total for the inputs.
+- If Harvest Drone handles the spraying, they get $2/acre off the product bundle, so the SOURCE + BLUEPRINT inputs become $23/acre.
+- Harvest Drone drone application is still a separate line item and usually runs $8-14/acre depending on the job.
+- If someone asks for total delivered pricing, explain it as: $23/acre for the SOURCE + BLUEPRINT bundle when Harvest Drone sprays, plus $8-14/acre for the drone application itself, depending on the job.
 - Growers report $25-45/acre savings on synthetic nitrogen and 3-4 bushel yield lifts on corn.
 - Product is in stock in Minnesota now.
 
@@ -46,13 +48,13 @@ EARTHOPTICS:
 CONTACT:
 - Jake Lund, founder
 - Phone: 612-258-0582
-- Email: jake@harvestdrone.com
+- Email: jake@goharvestdrone.com
 - Service area: Minnesota (expanding)
 
 YOUR RULES:
 1. Be friendly, brief, and direct.
 2. Keep responses to 1-3 sentences unless they ask for detail.
-3. Always give specific numbers for pricing.
+3. Always give specific numbers for pricing, and keep product pricing separate from drone application pricing unless the user asks for a full delivered estimate.
 4. If they seem interested or operationally specific, ask once: "What's your name and email? Jake can put together an acre plan specific to your fields."
 5. If they share name, email, or phone, acknowledge that Jake will follow up.
 6. If unsure, say Jake can call and ask for the best number.
@@ -148,17 +150,16 @@ serve(async (req) => {
 
       try {
         const leadData = JSON.parse(leadMatch[1]);
-
-        const { error: insertError } = await supabase.from("chat_leads").insert({
+        const { data: insertedLead, error: insertError } = await supabase.from("chat_leads").insert({
           first_name: leadData.name || null,
           email: leadData.email || null,
           phone: leadData.phone || null,
           page_url: page || null,
           conversation: transcript,
           lead_captured: true,
-        });
+        }).select("id").single();
 
-        if (!insertError) {
+        if (!insertError && insertedLead?.id) {
           leadCaptured = true;
 
           const transcriptHtml = transcript
@@ -179,19 +180,49 @@ serve(async (req) => {
             </div>
           `;
 
-          await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${RESEND_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              from: FROM_EMAIL,
-              to: [ADMIN_EMAIL],
-              subject: `Chat lead: ${leadData.name || "Unknown"} - ${page || "website"}`,
-              html: notifBody,
-            }),
-          });
+          try {
+            const notifyResponse = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${RESEND_API_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                from: FROM_EMAIL,
+                to: [ADMIN_EMAIL],
+                subject: `Chat lead: ${leadData.name || "Unknown"} - ${page || "website"}`,
+                html: notifBody,
+              }),
+            });
+
+            if (!notifyResponse.ok) {
+              const notifyData = await notifyResponse.json().catch(() => null);
+              await supabase
+                .from("chat_leads")
+                .update({
+                  notification_sent: false,
+                  notification_error: notifyData?.message || "Failed to send notification email.",
+                })
+                .eq("id", insertedLead.id);
+            } else {
+              await supabase
+                .from("chat_leads")
+                .update({
+                  notification_sent: true,
+                  notification_sent_at: new Date().toISOString(),
+                  notification_error: null,
+                })
+                .eq("id", insertedLead.id);
+            }
+          } catch (notificationError) {
+            await supabase
+              .from("chat_leads")
+              .update({
+                notification_sent: false,
+                notification_error: notificationError instanceof Error ? notificationError.message : "Unknown notification error",
+              })
+              .eq("id", insertedLead.id);
+          }
         }
       } catch {
         // If lead parsing fails, still return response text.

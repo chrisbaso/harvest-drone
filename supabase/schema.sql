@@ -317,6 +317,9 @@ create table if not exists public.chat_leads (
   page_url text,
   conversation jsonb,
   lead_captured boolean default false,
+  notification_sent boolean not null default false,
+  notification_sent_at timestamptz,
+  notification_error text,
   created_at timestamptz default now()
 );
 
