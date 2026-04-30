@@ -1,4 +1,5 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const PUBLIC_LANDING_ROUTES = new Set([
   "/growers",
@@ -11,6 +12,8 @@ const PUBLIC_LANDING_ROUTES = new Set([
   "/source-acre-review/thank-you",
   "/privacy",
   "/terms",
+  "/login",
+  "/join",
 ]);
 
 function normalizePathname(pathname = "/") {
@@ -31,7 +34,38 @@ function isPublicLandingRoute(pathname) {
 
 function Shell({ children, compact = false }) {
   const location = useLocation();
+  const { profile, isAuthenticated, signOut } = useAuth();
   const isPublic = isPublicLandingRoute(location.pathname);
+  const role = profile?.role;
+
+  const navItems =
+    role === "admin"
+      ? [
+          ["Dashboard", "/dashboard"],
+          ["CRM", "/crm"],
+          ["Admin", "/admin"],
+          ["Agent", "/agent"],
+          ["Training", "/training"],
+          ["How it works", "/how-it-works"],
+        ]
+      : role === "network_manager"
+        ? [
+            ["Network Dashboard", "/network"],
+            ["Dealers", "/network"],
+            ["Reports", "/network"],
+          ]
+        : role === "dealer"
+          ? [
+              ["My Dashboard", "/dealer"],
+              ["My Leads", "/dealer"],
+              ["My Training", "/training"],
+            ]
+          : role === "operator"
+            ? [
+                ["My Training", "/training"],
+                ["My Assignments", "/jobs/1842/readiness"],
+              ]
+            : [];
 
   return (
     <div className="site-shell">
@@ -44,23 +78,16 @@ function Shell({ children, compact = false }) {
           </span>
         </Link>
 
-        {!isPublic ? (
+        {!isPublic && isAuthenticated ? (
           <nav className="topnav">
-            <NavLink to="/dashboard">Dashboard</NavLink>
-            <NavLink to="/crm">CRM</NavLink>
-            <NavLink to="/admin">Admin</NavLink>
-            <NavLink to="/training">Training</NavLink>
-            <NavLink to="/how-it-works">How it works</NavLink>
-            <NavLink to="/agent" className="topnav__agent-link">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="4" width="10" height="8" rx="2" />
-                <path d="M6 1.5h4M8 4V2" />
-                <circle cx="6.5" cy="8" r="0.5" fill="currentColor" />
-                <circle cx="9.5" cy="8" r="0.5" fill="currentColor" />
-                <path d="M6.5 10h3" />
-              </svg>
-              <span>Agent</span>
-            </NavLink>
+            {navItems.map(([label, href]) => (
+              <NavLink key={`${label}-${href}`} to={href}>
+                {label}
+              </NavLink>
+            ))}
+            <button type="button" className="topnav__button" onClick={signOut}>
+              Logout
+            </button>
           </nav>
         ) : null}
       </header>

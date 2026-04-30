@@ -170,6 +170,8 @@ function buildLeadRecord(payload, evaluation, summary) {
     result_body: evaluation.resultBody,
     result_cta: evaluation.resultCta,
     offer_path: getPreferredOfferPath(evaluation.leadTier),
+    dealer_id: payload.dealerId || null,
+    dealer_slug: sanitizeString(payload.dealerSlug) || null,
   };
 }
 
@@ -337,10 +339,34 @@ export async function generateLeadSummary(lead) {
 
 export async function insertHarvestLead(payload) {
   const supabase = getHarvestSupabaseClient();
-  const evaluation = evaluateLead(payload);
-  const summarySeed = buildLeadRecord(payload, evaluation, null);
+  let attributedPayload = payload;
+
+  if (payload.dealerSlug) {
+    const { data: dealer, error: dealerError } = await supabase
+      .from("dealers")
+      .select("id, slug, name, contact_email")
+      .eq("slug", payload.dealerSlug)
+      .eq("is_active", true)
+      .single();
+
+    if (dealerError && dealerError.code !== "PGRST116") {
+      throw new Error(dealerError.message);
+    }
+
+    if (dealer) {
+      attributedPayload = {
+        ...payload,
+        dealerId: dealer.id,
+        dealerSlug: dealer.slug,
+        notes: [payload.notes, `Dealer attributed: ${dealer.name}`].filter(Boolean).join("\n\n"),
+      };
+    }
+  }
+
+  const evaluation = evaluateLead(attributedPayload);
+  const summarySeed = buildLeadRecord(attributedPayload, evaluation, null);
   const leadSummary = await generateLeadSummary(summarySeed);
-  const row = buildLeadRecord(payload, evaluation, leadSummary);
+  const row = buildLeadRecord(attributedPayload, evaluation, leadSummary);
 
   const { data, error } = await supabase
     .from("harvest_drone_leads")

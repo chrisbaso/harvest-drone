@@ -147,6 +147,22 @@ textarea {
   transition: 180ms ease;
 }
 
+.topnav__button {
+  color: var(--muted);
+  padding: 0.72rem 0.92rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: 180ms ease;
+}
+
+.topnav__button:hover {
+  color: var(--text);
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .topnav a.active,
 .topnav a:hover {
   color: var(--text);

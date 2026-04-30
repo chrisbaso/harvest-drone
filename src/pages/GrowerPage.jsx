@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import Shell from "../components/Shell";
 import { submitGrowerLead } from "../lib/submissions";
 
@@ -129,6 +129,7 @@ function buildInitialValues(searchParams) {
 }
 
 function GrowerPage() {
+  const { dealerSlug } = useParams();
   const [searchParams] = useSearchParams();
   const initialValues = useMemo(() => buildInitialValues(searchParams), [searchParams]);
   const [formData, setFormData] = useState(initialValues);
@@ -148,7 +149,7 @@ function GrowerPage() {
     setIsSubmitting(true);
     setErrorMessage("");
     try {
-      await submitGrowerLead({ ...formData, interestType: "Profitability review" });
+      await submitGrowerLead({ ...formData, interestType: "Profitability review", dealerSlug });
       setSubmitted(true);
     } catch (error) {
       setErrorMessage(error.message ?? "Something went wrong. Please try again.");

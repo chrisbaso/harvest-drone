@@ -54,6 +54,7 @@ function buildOpportunityPayload(growerLead, routingDecision) {
     crop_type: growerLead.crop_type,
     acres: growerLead.acres,
     route_type: routingDecision.routeType,
+    dealer_id: growerLead.dealer_id,
     source: growerLead.source || growerLead.lead_source,
     lead_source: growerLead.source || growerLead.lead_source,
     status: routingDecision.routeType === "route_to_operator" ? "assigned" : "unassigned",
@@ -85,8 +86,32 @@ export default async function handler(req, res) {
     const supabase = getSupabaseServerClient();
     const { table, payload } = leadConfig;
     let preparedPayload = payload;
+    let attributedDealer = null;
     let routingDecision = null;
     let opportunityRecord = null;
+
+    if (formData.dealerSlug) {
+      const { data: dealer, error: dealerError } = await supabase
+        .from("dealers")
+        .select("id, name, contact_email, slug")
+        .eq("slug", formData.dealerSlug)
+        .eq("is_active", true)
+        .single();
+
+      if (dealerError && dealerError.code !== "PGRST116") {
+        throw new Error(dealerError.message);
+      }
+
+      if (dealer) {
+        attributedDealer = dealer;
+        preparedPayload = {
+          ...preparedPayload,
+          dealer_id: dealer.id,
+          dealer_slug: dealer.slug,
+          assigned_to: preparedPayload.assigned_to || dealer.name,
+        };
+      }
+    }
 
     if (type === "grower") {
       const { data: operators, error: operatorsError } = await supabase
@@ -122,12 +147,12 @@ export default async function handler(req, res) {
         );
 
       preparedPayload = {
-        ...payload,
+        ...preparedPayload,
         status: routingDecision.status,
-        route_type: routingDecision.routeType,
+        route_type: attributedDealer ? "dealer_direct" : routingDecision.routeType,
         lead_score: routingDecision.leadScore,
-        assigned_to: routingDecision.assignedTo,
-        assigned_operator_id: routingDecision.assignedOperatorId,
+        assigned_to: attributedDealer ? attributedDealer.name : routingDecision.assignedTo,
+        assigned_operator_id: attributedDealer ? null : routingDecision.assignedOperatorId,
       };
     }
 
@@ -272,6 +297,8 @@ export default async function handler(req, res) {
           source: preparedPayload.source || preparedPayload.lead_source,
           status: preparedPayload.status,
           route_type: preparedPayload.route_type ?? null,
+          dealer_id: preparedPayload.dealer_id ?? null,
+          dealer_slug: preparedPayload.dealer_slug ?? null,
           lead_score: preparedPayload.lead_score ?? null,
           operator_score: preparedPayload.operator_score ?? null,
         },
@@ -319,8 +346,9 @@ export default async function handler(req, res) {
           "Internal alert",
         metadata: {
           resend_message_id: emailResult.internalAlertId,
-          recipient: emailResult.internalAlertRecipient,
-          error: emailResult.internalAlertReason ?? null,
+        recipient: emailResult.internalAlertRecipient,
+        dealer_recipient: attributedDealer?.contact_email ?? null,
+        error: emailResult.internalAlertReason ?? null,
         },
       }),
       createLeadActivity({

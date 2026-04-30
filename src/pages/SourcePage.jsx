@@ -1,5 +1,5 @@
 import { startTransition, useEffect, useMemo, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   CONTACT_METHOD_OPTIONS,
   RESULTS_DISCLAIMER,
@@ -79,6 +79,7 @@ const QUALIFICATION_PREVIEW = [
 function SourcePage() {
   const formRef = useRef(null);
   const navigate = useNavigate();
+  const { dealerSlug } = useParams();
   const [searchParams] = useSearchParams();
 
   const contactMethods = useMemo(() => CONTACT_METHOD_OPTIONS.join(", "), []);
@@ -114,6 +115,7 @@ function SourcePage() {
       ...draft,
       ...tracking,
       notes: [productNote, draft.notes].filter(Boolean).join("\n\n"),
+      dealerSlug,
       landing_page_url: tracking.landing_page_url,
       referrer: tracking.referrer,
     };
