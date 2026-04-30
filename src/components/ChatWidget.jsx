@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-const PUBLIC_ROUTES = ["/growers", "/operators", "/hylio", "/source"];
+const CHAT_ENABLED_ROUTES = ["/growers", "/operators", "/hylio"];
 const SUGGESTIONS = [
   "What does SOURCE cost?",
   "How does drone spraying work?",
@@ -289,7 +289,7 @@ function normalizePathname(pathname = "/") {
 
 function isPublicPath(pathname) {
   const normalizedPath = normalizePathname(pathname);
-  return PUBLIC_ROUTES.some((route) => normalizedPath === route || normalizedPath.startsWith(`${route}/`));
+  return CHAT_ENABLED_ROUTES.some((route) => normalizedPath === route || normalizedPath.startsWith(`${route}/`));
 }
 
 function formatAgentContent(content = "") {
@@ -380,7 +380,7 @@ function ChatWidget() {
       const data = await response.json();
       const agentMessage = {
         role: "agent",
-        content: data.response || "Sorry, I missed that. You can reach Jake at 612-258-0582.",
+        content: data.response || "Sorry, I missed that. You can reach Jake at 218-255-9111.",
       };
 
       setMessages((current) => [...current, agentMessage]);
@@ -399,7 +399,7 @@ function ChatWidget() {
         ...current,
         {
           role: "agent",
-          content: "Sorry, I'm having trouble connecting. You can reach Jake directly at 612-258-0582.",
+          content: "Sorry, I'm having trouble connecting. You can reach Jake directly at 218-255-9111.",
         },
       ]);
     } finally {

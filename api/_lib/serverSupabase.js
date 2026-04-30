@@ -1,12 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 
 export function getSupabaseServerClient() {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error(
-      "Server-side Supabase environment variables are missing. Set VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+      "Server-side Supabase environment variables are missing. Set SUPABASE_URL (or VITE_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY.",
     );
   }
 

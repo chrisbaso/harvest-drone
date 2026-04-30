@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { getCampaign } from "./_lib/dripCampaigns.js";
+import { buildSourceReviewSummary } from "../shared/sourceReview.js";
 
 function badRequest(res, message) {
   return res.status(400).json({ error: message });
@@ -589,6 +590,61 @@ function buildHylioFinalFollowUp(payload) {
 }
 
 function buildInternalAlert(type, payload) {
+  if (isSourceGrowerPayload(type, payload)) {
+    const review = buildSourceReviewSummary({
+      ...payload,
+      phone: payload.phone || payload.mobile,
+    });
+    const followUpBullets = [
+      `Lead priority: ${review.leadPriority}`,
+      `Review priority: ${review.reviewPriority}`,
+      ...review.conversationFocus,
+      `Recommended next step: ${review.recommendedNextStep}`,
+    ];
+
+    return {
+      subject: `New SOURCE Lead: ${formatLeadName(payload)} — ${payload.acres || "-"} acres — ${formatLeadLocation(payload)}`,
+      html: renderEmailShell({
+        eyebrow: "Harvest Drone | SOURCE Lead Alert",
+        title: "New SOURCE Acre Review request",
+        intro:
+          "A new SOURCE-first lead is ready for follow-up. Review the acreage, timing, and follow-up angle below.",
+        sections: [
+          infoCard("Lead summary", [
+            detailRow("Name", formatLeadName(payload)),
+            detailRow("Phone", payload.phone || payload.mobile),
+            detailRow("Email", payload.email),
+            detailRow("State", payload.state),
+            detailRow("County / town", payload.county || payload.countyOrTown),
+            detailRow("Crop", payload.cropType),
+            detailRow("Acres", payload.acres),
+            detailRow("Fertility concern", payload.fertilityConcern),
+            detailRow("Timeline", payload.timeline),
+            detailRow("Interest", payload.interestType),
+          ]),
+          section("Recommended follow-up angle", bulletList(followUpBullets)),
+          infoCard("SOURCE notes", [
+            detailRow("Preferred contact", payload.preferredContactMethod),
+            detailRow("Nitrogen program notes", payload.nitrogenProgramNotes),
+            detailRow("Phosphorus program notes", payload.phosphorusProgramNotes),
+            detailRow("Additional notes", payload.notes),
+          ]),
+          infoCard("Tracking", [
+            detailRow("Landing page", payload.landingPage || payload.landing_page),
+            detailRow("Page version", payload.pageVersion || payload.page_version),
+            detailRow("UTM source", payload.utm_source),
+            detailRow("UTM medium", payload.utm_medium),
+            detailRow("UTM campaign", payload.utm_campaign),
+            detailRow("UTM content", payload.utm_content),
+            detailRow("UTM term", payload.utm_term),
+          ]),
+        ],
+        footer:
+          "SOURCE performance, program eligibility, and application recommendations vary by crop, fertility plan, timing, label instructions, and field conditions.",
+      }),
+    };
+  }
+
   const title =
     type === "grower"
       ? "New grower lead submitted"
@@ -621,7 +677,7 @@ function buildInternalAlert(type, payload) {
           detailRow("Lead type", type),
           detailRow("Account", account),
           detailRow("Email", payload.email),
-          detailRow("Mobile", payload.mobile),
+          detailRow("Mobile", payload.mobile || payload.phone),
           detailRow("State", payload.state),
         ]),
         infoCard("Submission details", details),
@@ -643,12 +699,10 @@ function buildInternalAlert(type, payload) {
 function createResendClient() {
   const resendApiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.FROM_EMAIL;
-  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminEmail = process.env.INTERNAL_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL;
 
   if (!resendApiKey || !fromEmail || !adminEmail) {
-    throw new Error(
-      "Email environment variables are missing. Set RESEND_API_KEY, FROM_EMAIL, and ADMIN_EMAIL.",
-    );
+    return null;
   }
 
   return {
@@ -671,12 +725,13 @@ function createSmsClient() {
 }
 
 function getSmsMessage(type, payload) {
-  const growerMessage = `Hi ${payload.firstName || ""}, this is Harvest Drone. We received your acre plan request and are reviewing your acres now.`.trim();
+  const growerMessage = `Hi ${payload.firstName || payload.name || ""}, this is Harvest Drone. We received your acre plan request and are reviewing your acres now.`.trim();
+  const sourceMessage = `Hi ${payload.firstName || payload.name || ""}, this is Harvest Drone. We received your SOURCE Acre Review request and are reviewing your acres now.`.trim();
   const operatorMessage = `Hi ${payload.firstName || ""}, this is Harvest Drone. We received your area qualification request and are reviewing your territory now.`.trim();
   const hylioMessage = `Hi ${payload.name || payload.firstName || ""}, this is Harvest Drone. We received your Hylio opportunity request and are reviewing your area now.`.trim();
 
   if (type === "grower") {
-    return growerMessage;
+    return isSourceGrowerPayload(type, payload) ? sourceMessage : growerMessage;
   }
 
   if (type === "hylio") {
@@ -725,8 +780,26 @@ export async function sendLeadEmails({ type, payload }) {
     throw new Error("Invalid lead type.");
   }
 
-  const { resend, fromEmail, adminEmail } = createResendClient();
   const internalAlert = buildInternalAlert(type, payload);
+  const resendClient = createResendClient();
+
+  if (!resendClient) {
+    return {
+      success: true,
+      confirmationTemplateKey: null,
+      confirmationSubject: null,
+      internalAlertTemplateKey: `${type}_internal_alert`,
+      internalAlertSubject: internalAlert.subject,
+      confirmationId: null,
+      internalAlertId: null,
+      internalAlertStatus: "skipped",
+      internalAlertReason:
+        "Set RESEND_API_KEY, FROM_EMAIL, and INTERNAL_NOTIFICATION_EMAIL or ADMIN_EMAIL to send alerts.",
+      internalAlertRecipient: null,
+    };
+  }
+
+  const { resend, fromEmail, adminEmail } = resendClient;
   const internalAlertResult = await resend.emails.send({
     from: fromEmail,
     to: adminEmail,
@@ -742,11 +815,16 @@ export async function sendLeadEmails({ type, payload }) {
     internalAlertSubject: internalAlert.subject,
     confirmationId: null,
     internalAlertId: internalAlertResult.data?.id ?? null,
+    internalAlertStatus: "sent",
+    internalAlertReason: null,
+    internalAlertRecipient: adminEmail,
   };
 }
 
 export async function sendLeadSmsFollowUp({ type, payload }) {
-  if (!payload?.mobile) {
+  const mobile = payload?.mobile || payload?.phone;
+
+  if (!mobile) {
     return null;
   }
 
@@ -772,7 +850,7 @@ export async function sendLeadSmsFollowUp({ type, payload }) {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        To: payload.mobile,
+        To: mobile,
         From: smsClient.fromNumber,
         Body: body,
       }),
@@ -794,7 +872,15 @@ export async function sendLeadSmsFollowUp({ type, payload }) {
 }
 
 export async function sendHighTicketReminder({ payload }) {
-  const { resend, fromEmail, adminEmail } = createResendClient();
+  const resendClient = createResendClient();
+
+  if (!resendClient) {
+    throw new Error(
+      "Email environment variables are missing. Set RESEND_API_KEY, FROM_EMAIL, and INTERNAL_NOTIFICATION_EMAIL or ADMIN_EMAIL.",
+    );
+  }
+
+  const { resend, fromEmail, adminEmail } = resendClient;
   const subject = `Hylio follow-up due: ${payload.name || payload.companyName || payload.email}`;
   const html = renderEmailShell({
     eyebrow: "Harvest Drone | High-Ticket Reminder",
@@ -876,4 +962,31 @@ export default async function handler(req, res) {
       error: error.message || "Email send failed.",
     });
   }
+}
+function formatLeadName(payload) {
+  return (
+    payload.name ||
+    [payload.firstName, payload.lastName].filter(Boolean).join(" ").trim() ||
+    payload.email ||
+    "Unknown lead"
+  );
+}
+
+function formatLeadLocation(payload) {
+  return [payload.county || payload.countyOrTown, payload.state]
+    .filter(Boolean)
+    .join(", ") || "Location pending";
+}
+
+function isSourceGrowerPayload(type, payload) {
+  if (type !== "grower") {
+    return false;
+  }
+
+  const leadSource = payload.leadSource || payload.source || payload.lead_source || "";
+  return (
+    leadSource === "website-source-acre-review" ||
+    Boolean(payload.fertilityConcern) ||
+    Boolean(payload.pageVersion?.includes?.("source-acre-review"))
+  );
 }

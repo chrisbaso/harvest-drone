@@ -114,6 +114,8 @@ export async function syncLeadToCrm({
       legacy_grower_lead_id: type === "grower" ? lead.id : null,
       legacy_operator_lead_id: type !== "grower" ? lead.id : null,
       route_type: routeTypeForLead(type, lead, routingDecision),
+      landing_page: lead.landing_page ?? null,
+      page_version: lead.page_version ?? null,
     },
   };
 
@@ -143,6 +145,7 @@ export async function syncLeadToCrm({
     metadata: {
       budget_range: lead.budget_range ?? null,
       experience_level: lead.experience_level ?? null,
+      preferred_contact_method: lead.preferred_contact_method ?? null,
     },
   };
 
@@ -184,6 +187,19 @@ export async function syncLeadToCrm({
       lead_score: lead.lead_score ?? null,
       operator_score: lead.operator_score ?? null,
       calculator_used: Boolean(payload.calculatorInputs),
+      fit_score: lead.fit_score ?? null,
+      lead_priority: lead.lead_priority ?? null,
+      priority_tags: lead.priority_tags ?? [],
+      conversation_focus: lead.conversation_focus ?? [],
+      fertility_concern: lead.fertility_concern ?? null,
+      review_timeline: lead.review_timeline ?? null,
+      landing_page: lead.landing_page ?? null,
+      page_version: lead.page_version ?? null,
+      utm_source: lead.utm_source ?? null,
+      utm_medium: lead.utm_medium ?? null,
+      utm_campaign: lead.utm_campaign ?? null,
+      utm_content: lead.utm_content ?? null,
+      utm_term: lead.utm_term ?? null,
     },
   };
 
@@ -291,6 +307,8 @@ export async function syncLeadToCrm({
       source: crmLead.source,
       metadata: {
         legacy_grower_lead_id: lead.id,
+        fit_score: lead.fit_score ?? null,
+        lead_priority: lead.lead_priority ?? null,
       },
     });
 

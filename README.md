@@ -1,254 +1,335 @@
-# Harvest Drone MVP Funnel
+# Harvest Drone Lead Engine
 
-This project is now a working MVP version of the Harvest Drone funnel. It keeps the original premium front-end experience, while grower and operator submissions persist to Supabase in separate tables, a jobs table is ready for assignment workflows, and the dashboard reads live data directly with no login gate.
+This repo runs a behind-the-scenes qualified lead engine for Harvest Drone's SOURCE offer.
 
-## What this MVP does
+It is not a SaaS product. The public experience is a SOURCE fit-check funnel for growers. The internal experience is an admin workspace that helps Harvest Drone see who is worth calling first, why they matter, and what to say next.
 
-- Captures grower leads for drone spraying and acreage optimization
-- Captures operator leads for network recruitment and drone sales conversations
-- Stores grower submissions in `grower_leads`
-- Stores operator submissions in `operator_leads`
-- Includes a `jobs` table for future grower-to-operator assignment workflows
-- Stores every record with:
-  - `created_at`
-  - `lead_source`
-  - `status`
-- Reads live grower/operator data from Supabase on `/dashboard`
-- Filters live dashboard results by lead type and status
-- Lets admins create jobs from grower leads and assign operators from the dashboard
-- Keeps the existing public routes and Vercel-friendly SPA structure
+## What the system does
 
-## Tech stack
+- Upgrades the public SOURCE page into a conversion-focused qualification funnel
+- Replaces the simple form with a multi-step fit check
+- Scores every lead from `0-100`
+- Assigns a lead tier: `Hot`, `Warm`, `Nurture`, or `Low Fit`
+- Stores leads and events in Supabase when server env vars are configured
+- Falls back to browser-local mock mode when Supabase is not configured
+- Sends hot-lead alerts and lead confirmations if Resend is configured
+- Captures SMS consent language and timestamp for future compliant text automation
+- Captures UTM and campaign data across the funnel
+- Provides an internal `/admin` dashboard with filters, CSV export, and lead detail actions
+- Generates an AI-ready lead summary with OpenAI when configured, or rule-based copy when not
 
-- React
-- Vite
-- React Router
-- Supabase JavaScript client
-- Resend
-- Plain CSS with the existing custom design system
+## Funnel flow
 
-## Environment variables
+`Traffic -> Landing Page -> Multi-Step Qualification Flow -> Dynamic Results Page -> Lead Score -> CRM/Database -> Alerts -> Follow-Up -> Admin Dashboard -> Revenue Tracking`
 
-Create a local `.env` file based on `.env.example`:
+## Canonical routes
+
+- `/` -> primary Harvest Drone SOURCE fit-check landing page
+- `/source` -> same SOURCE fit-check landing page
+- `/source-acre-review` -> same SOURCE fit-check landing page
+- `/source-acre-review/results` -> dynamic result page
+- `/admin` -> Harvest Drone admin dashboard
+- `/admin/leads/:leadId` -> lead detail view
+
+Legacy grower, operator, Hylio, and older CRM surfaces are still preserved in the repo under `/legacy/*`, but the active Harvest workflow now centers on the routes above.
+
+## Required environment variables for live lead capture
+
+Frontend:
 
 ```bash
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your-public-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-RESEND_API_KEY=re_your_resend_api_key
-FROM_EMAIL=Harvest Drone <no-reply@yourdomain.com>
-ADMIN_EMAIL=ops@yourdomain.com
-CRON_SECRET=replace-with-a-long-random-string
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
 ```
 
-For Vercel, add the same variables in the Vercel project settings:
+Server:
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `RESEND_API_KEY`
-- `FROM_EMAIL`
-- `ADMIN_EMAIL`
-- `CRON_SECRET`
+```bash
+SUPABASE_SERVICE_ROLE_KEY=
+```
 
-If either variable is missing or incorrect, the forms will fail before submission with a Supabase configuration error instead of a generic fetch failure.
+Optional server alias:
+
+```bash
+SUPABASE_URL=
+```
+
+The server helper accepts `SUPABASE_URL` or `VITE_SUPABASE_URL`. The frontend still requires the `VITE_` variables because this is a Vite app.
+
+## Optional environment variables for alerts, AI, and tracking
+
+```bash
+RESEND_API_KEY=
+FROM_EMAIL=
+REPLY_TO_EMAIL=
+ALERT_EMAIL=
+ADMIN_EMAIL=
+INTERNAL_NOTIFICATION_EMAIL=
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4.1-mini
+APP_BASE_URL=https://yourdomain.com
+NEXT_PUBLIC_META_PIXEL_ID=
+VITE_META_PIXEL_ID=
+```
+
+Legacy optional vars that still exist elsewhere in the repo:
+
+```bash
+MAILCHIMP_API_KEY=
+MAILCHIMP_SERVER_PREFIX=
+MAILCHIMP_LIST_ID=
+CRON_SECRET=
+```
+
+Notes:
+
+- `ALERT_EMAIL` is the preferred internal hot-lead recipient.
+- `ADMIN_EMAIL` and `INTERNAL_NOTIFICATION_EMAIL` still work as fallbacks.
+- `REPLY_TO_EMAIL` is optional and lets replies route to a real inbox even if Resend has to use a fallback sender.
+- `FROM_EMAIL` is only required if you want Resend alerts or confirmation emails.
+- Meta Pixel helpers are safe no-ops if no pixel ID is set.
+- OpenAI is optional. If the key is missing or the request fails, the app uses rule-based lead summaries.
 
 ## Supabase setup
 
-1. Create a new Supabase project.
-2. In Supabase SQL Editor, run [supabase/schema.sql](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\supabase\schema.sql).
-3. Copy the project URL and anon key into `.env` locally and into Vercel env vars for deployment.
+1. Create or use an existing Supabase project.
+2. Add `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
+3. Run the Harvest migrations:
 
-The SQL file creates:
+```text
+supabase/migrations/20260424_harvest_drone_lead_engine.sql
+supabase/migrations/20260424_harvest_drone_offer_path.sql
+```
 
-- `grower_leads`
-- `operator_leads`
-- `jobs`
-- `lead_activities`
-- `created_at`, `lead_source`, and `status` fields on each core record type
-- `sequence_state`, `last_contacted_at`, and `next_follow_up_at` on grower and operator leads
-- indexes for status and recency-based reads
-- row level security policies so:
-  - anonymous users can submit grower and operator leads
-  - anonymous users can read lead and job records in the dashboard
-  - anonymous users can manage jobs in the current no-login dashboard flow
+4. If the original Harvest migration was already applied in an existing project, the `20260424_harvest_drone_offer_path.sql` migration adds the missing `offer_path` column safely.
+5. If you prefer a full schema bootstrap, `supabase/schema.sql` includes the same `harvest_drone_leads` and `harvest_drone_events` tables.
 
-## Submission flow
+### New tables
 
-- Grower form writes to `grower_leads`
-- Operator form writes to `operator_leads`
-- Each insert returns a success state with `created_at` and `status`
-- The thank-you state only renders after a successful server-side submission
-- The browser posts to [api/submit-lead.js](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\api\submit-lead.js), which:
-  - saves the lead to Supabase
-  - sends the lead confirmation and the internal alert from the server
-- Grower submissions send:
-  - a confirmation email to the grower
-  - an internal alert to `ADMIN_EMAIL`
-- Operator submissions send:
-  - a confirmation email to the operator
-  - an internal alert to `ADMIN_EMAIL`
-- If email delivery fails after the save, the server returns an error so the issue is visible instead of silently failing.
-- Every send and automation event is logged to `lead_activities`
-- Submission helpers live in [src/lib/submissions.js](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\src\lib\submissions.js)
+`harvest_drone_leads`
 
-## Drip automation
+- Stores grower fit-check answers
+- Stores score, tier, recommended action, offer path, reason codes, UTM data, internal notes, revenue tracking, generated lead summary, and SMS consent metadata
 
-The app includes server-side drip campaigns for growers and operators.
+`harvest_drone_events`
 
-Grower schedule:
+- Stores funnel and admin timeline events such as:
+  - `landing_page_view`
+  - `quiz_started`
+  - `quiz_step_completed`
+  - `quiz_submitted`
+  - `result_viewed`
+  - `cta_clicked`
+  - `admin_status_changed`
+  - `lead_contacted`
+  - `lead_qualified`
+  - `lead_disqualified`
+  - `sale_won`
+  - `sale_lost`
 
-- Day 0: confirmation email
-- Day 1: timing and speed follow-up
-- Day 3: fit and use-case follow-up
-- Day 5: acreage review CTA
-- Day 10: final check-in
+### Security notes
 
-Operator schedule:
+- The frontend does not use the service role key.
+- Harvest lead inserts, admin reads, and admin updates happen through server routes.
+- The Harvest tables are intended for server-side access. They do not expose public insert or update policies.
+- The repo still contains older legacy tables and older public policies for previous flows. Those are preserved for backward compatibility but are no longer the canonical Harvest lead engine.
 
-- Day 0: confirmation email
-- Day 1: operator-fit follow-up
-- Day 3: equipment and capacity follow-up
-- Day 5: routing CTA
-- Day 10: final check-in
+## Email notification setup
 
-Stop rules:
+If `RESEND_API_KEY`, `FROM_EMAIL`, and `ALERT_EMAIL` are set:
 
-- Growers stop when status becomes `qualified`, `quoted`, `scheduled`, `closed`, or `do_not_contact`
-- Operators stop when status becomes `approved`, `active`, `inactive`, or `do_not_contact`
+- Hot leads send an internal alert email
+- All submitted leads receive a confirmation email
 
-Scheduled processing:
+If Resend is not configured:
 
-- [api/cron/process-drips.js](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\api\cron\process-drips.js)
-- Vercel cron runs once daily at `14:00 UTC` via [vercel.json](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\vercel.json)
-- The cron endpoint checks due leads, sends eligible follow-ups, stops sequences when status rules are hit, and logs results to `lead_activities`
+- The app still works
+- Alerts and confirmations are skipped cleanly
+- The admin workflow remains usable
 
-## How to run locally
+## SMS consent readiness
 
-1. Install dependencies:
+The active Harvest contact step now captures SMS consent with explicit disclosure language and stores:
+
+- `sms_consent`
+- `sms_consent_at`
+- `sms_consent_language`
+
+Operational note:
+
+- If a grower chooses `Text` as the preferred contact method, the form now requires SMS consent before submission.
+- This helps keep the current lead engine ready for later SMS automation without changing the funnel shape again.
+
+## Meta Pixel setup
+
+Set either:
+
+```bash
+NEXT_PUBLIC_META_PIXEL_ID=
+```
+
+or:
+
+```bash
+VITE_META_PIXEL_ID=
+```
+
+Tracked safely when configured:
+
+- `PageView`
+- `Lead`
+- `CompleteRegistration`
+- `QualifiedLead`
+- `HotLead`
+
+## OpenAI setup
+
+Set:
+
+```bash
+OPENAI_API_KEY=
+```
+
+Optional:
+
+```bash
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+When configured, the server attempts to generate:
+
+- Plain-English lead summary
+- Why the lead matters
+- Suggested follow-up angle
+- Suggested first call script
+- Suggested email reply
+
+If the API is unavailable or returns an error, the system falls back to a deterministic rule-based summary.
+
+## Local development
+
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-2. For the full local flow including the server-side email function, run:
-
-```bash
-npm run vercel-dev
-```
-
-This uses the local Vercel CLI so the `/api/lead-email` route is available during development.
-It also makes the `/api/submit-lead` and `/api/cron/process-drips` routes available locally.
-The script includes `--yes` so the CLI can start without an extra confirmation prompt.
-
-If you only run `npm run dev`, the Vite frontend will work, but the local `/api/lead-email` route will not be available unless you proxy it separately.
-
-3. If you only need to work on the frontend, you can still start Vite directly:
+Run the frontend only:
 
 ```bash
 npm run dev
 ```
 
-4. Open the local URL shown in the terminal.
+Run the frontend plus Vercel API routes:
 
-## How to deploy to Vercel
+```bash
+npm run vercel-dev
+```
 
-1. Push this project to GitHub, GitLab, or Bitbucket.
-2. Import the repository into Vercel.
-3. Set these environment variables in Vercel:
+## Mock mode
+
+If Supabase or the local API routes are unavailable:
+
+- public submissions fall back to browser-local storage
+- the result page still works
+- the `/admin` dashboard reads local mock leads
+- updates and event logging work locally in the same browser
+
+This makes the funnel testable even before backend setup is complete.
+
+## How to test the funnel
+
+1. Open `/`.
+2. Click `Check My Acres`.
+3. Complete the full multi-step quiz.
+4. Confirm the result page changes by lead tier.
+5. Open `/admin`.
+6. Confirm the lead appears with the correct score and tier.
+7. Open the lead detail page.
+8. Update status, notes, revenue fields, and follow-up stage.
+9. Export filtered leads as CSV.
+
+## Pre-Ad Launch Test Checklist
+
+1. Add live Vercel env vars:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
-   - `RESEND_API_KEY`
-   - `FROM_EMAIL`
-   - `ADMIN_EMAIL`
-   - `CRON_SECRET`
-4. Keep the default Vite build settings:
-   - Build command: `npm run build`
-   - Output directory: `dist`
-5. Deploy.
+2. Run the Harvest migrations so `harvest_drone_leads` and `harvest_drone_events` exist and `offer_path` is present.
+3. Open `/source-acre-review?utm_source=meta&utm_medium=paid-social&utm_campaign=test-launch&utm_content=creative-a&utm_term=source-fit`
+4. Complete the quiz with a real email address and phone number.
+5. Confirm the submit redirects to `/source-acre-review/results?lead=...`
+6. Confirm the results page shows a tier, score, offer path, reason codes, and recommended next step.
+7. Open `/admin` and verify the new lead appears there.
+8. Open `/admin/leads/:leadId` and verify:
+   - qualification answers
+   - score and tier
+   - offer path
+   - UTM fields
+   - lead summary
+   - follow-up sequence
+9. Change status or notes in admin and verify the update saves.
+10. If using Resend, submit a Hot lead and confirm:
+   - internal alert email arrives
+   - lead confirmation email arrives
+11. If using Meta Pixel, verify:
+   - `PageView`
+   - `CompleteRegistration`
+   - `Lead`
+   - `QualifiedLead`
+   - `HotLead`
+12. Only start Meta ads after all checks above are confirmed in the live environment.
 
-The included `vercel.json` rewrite keeps React Router routes working on direct loads, and the `api/` directory is ready for Vercel Functions.
+## How to view leads in admin
 
-## Where future CRM, SMS, and automation integrations connect
+- Visit `/admin`
+- Use filters for tier, status, state, crop, acreage range, date range, and campaign/UTM
+- Open a lead for full detail, summary, notes, follow-up sequence, and timeline events
 
-Primary insertion point:
+## How to export leads
 
-- [src/components/FunnelForm.jsx](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\src\components\FunnelForm.jsx)
+- Open `/admin`
+- Apply any filters you want
+- Click `Export CSV`
 
-Database submission points:
+The export respects the current filtered lead set in the dashboard.
 
-- [src/pages/GrowerPage.jsx](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\src\pages\GrowerPage.jsx)
-- [src/pages/OperatorPage.jsx](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\src\pages\OperatorPage.jsx)
-- [src/lib/submissions.js](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\src\lib\submissions.js)
+## Follow-up templates
 
-Server-side email point:
-
-- [api/lead-email.js](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\api\lead-email.js)
-- [api/submit-lead.js](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\api\submit-lead.js)
-- [api/cron/process-drips.js](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\api\cron\process-drips.js)
-- [api/_lib/dripCampaigns.js](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\api\_lib\dripCampaigns.js)
-- [api/_lib/leadActivity.js](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\api\_lib\leadActivity.js)
-- [api/_lib/serverSupabase.js](C:\Users\c_bas\OneDrive\Email attachments\Documents\New folder\api\_lib\serverSupabase.js)
-
-Recommended next integrations:
-
-- Send each successful lead to HubSpot or Salesforce after Supabase insert succeeds
-- Trigger SMS sequences after the database write completes
-- Create jobs automatically when a grower lead becomes qualified
-- Assign operators to jobs when territory, status, and capacity are a fit
-- Add a server-side admin API later if you want protected lead mutations
-
-## Key files
+Follow-up templates are defined centrally in:
 
 ```text
-.
-|-- .env.example
-|-- api
-|   |-- _lib
-|   |   |-- dripCampaigns.js
-|   |   |-- leadActivity.js
-|   |   `-- serverSupabase.js
-|   |-- cron
-|   |   `-- process-drips.js
-|   `-- lead-email.js
-|   `-- submit-lead.js
-|-- index.html
-|-- package.json
-|-- vercel.json
-|-- supabase
-|   `-- schema.sql
-|-- src
-|   |-- App.jsx
-|   |-- main.jsx
-|   |-- components
-|   |   |-- DashboardFilters.jsx
-|   |   |-- FormField.jsx
-|   |   |-- FunnelForm.jsx
-|   |   |-- LeadTable.jsx
-|   |   |-- SectionHeading.jsx
-|   |   |-- Shell.jsx
-|   |   `-- StatCard.jsx
-|   |-- context
-|   |   `-- AuthContext.jsx
-|   |-- lib
-|   |   |-- leadTransforms.js
-|   |   `-- supabase.js
-|   |-- pages
-|   |   |-- DashboardPage.jsx
-|   |   |-- GrowerPage.jsx
-|   |   |-- LandingPage.jsx
-|   |   `-- OperatorPage.jsx
-|   `-- styles
-|       `-- global.css
-`-- README.md
+shared/harvestLeadEngine.js
 ```
 
-## Notes
+They are grouped by lead tier:
 
-- The dashboard is now directly accessible with no login gate.
-- The current dashboard combines live rows from `grower_leads` and `operator_leads` into one filtered admin view.
-- The dashboard can now create a job from a grower lead and assign it to an operator.
-- Email secrets stay server-side in the Vercel function and are never exposed to the React client.
-- The drip engine uses the Supabase service role key server-side so automation and activity logging do not depend on client-side RLS access.
-- Verified build command: `npm run build`
+- Hot
+- Warm
+- Nurture
+- Low Fit
+
+## Internal playbook
+
+The internal Harvest Drone sales playbook is here:
+
+```text
+docs/harvest-drone-sales-playbook.md
+```
+
+## Deployment
+
+This repo deploys as a Vite app with Vercel functions.
+
+- Build command: `npm run build`
+- Output directory: `dist`
+- API routes live under `api/`
+
+Make sure the server env vars are added in Vercel before relying on live Supabase writes, Resend alerts, or OpenAI summaries.
+
+## Commands used for verification
+
+```bash
+npm run build
+npm test
+```

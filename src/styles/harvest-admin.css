@@ -1,0 +1,207 @@
+.harvest-admin {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.harvest-admin__header,
+.harvest-admin__filters,
+.harvest-admin__summary-card,
+.harvest-admin__detail-card {
+  padding: 1.4rem;
+}
+
+.harvest-admin__header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.harvest-admin__header h1,
+.harvest-admin__detail-card h2,
+.harvest-admin__summary-block h3 {
+  margin: 0;
+}
+
+.harvest-admin__header p,
+.harvest-admin__detail-card p,
+.harvest-admin__detail-list dd,
+.harvest-admin__timeline-item pre {
+  color: var(--muted);
+}
+
+.harvest-admin__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.harvest-admin__filters-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.harvest-admin__filters-header p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+}
+
+.harvest-admin__mode-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.harvest-admin__summary-grid,
+.harvest-admin__detail-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.harvest-admin__summary-card span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.harvest-admin__summary-card strong {
+  display: block;
+  margin-top: 0.55rem;
+  font-size: 1.8rem;
+}
+
+.harvest-admin__filters-grid,
+.harvest-admin__action-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.harvest-admin__filters select,
+.harvest-admin__filters input,
+.harvest-admin__action-form input,
+.harvest-admin__action-form select,
+.harvest-admin__action-form textarea {
+  min-height: 3rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.harvest-admin__detail-list,
+.harvest-admin__timeline {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.harvest-admin__detail-list div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.harvest-admin__detail-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.harvest-admin__detail-section {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.harvest-admin__detail-section:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.harvest-admin__detail-list dt {
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.harvest-admin__summary-block {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.harvest-admin__action-form label {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.harvest-admin__timeline-item {
+  padding: 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.harvest-admin__timeline-item span {
+  display: block;
+  margin: 0.25rem 0 0.7rem;
+  color: var(--muted);
+}
+
+.harvest-admin__timeline-item pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.harvest-admin__sequence-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.harvest-admin__sequence-item {
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.harvest-admin__sequence-item p {
+  margin: 0.35rem 0 0;
+}
+
+.harvest-admin__empty {
+  padding: 1.5rem;
+}
+
+@media (min-width: 900px) {
+  .harvest-admin__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .harvest-admin__summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .harvest-admin__filters-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .harvest-admin__filters-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .harvest-admin__detail-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  }
+}

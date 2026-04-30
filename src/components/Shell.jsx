@@ -1,6 +1,15 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 
-const PUBLIC_LANDING_ROUTES = new Set(["/growers", "/operators", "/hylio", "/source"]);
+const PUBLIC_LANDING_ROUTES = new Set([
+  "/",
+  "/source",
+  "/source-acre-review",
+  "/source-review",
+  "/source-acre-review/results",
+  "/source-acre-review/thank-you",
+  "/privacy",
+  "/terms",
+]);
 
 function normalizePathname(pathname = "/") {
   if (!pathname || pathname === "/") {
@@ -35,13 +44,10 @@ function Shell({ children, compact = false }) {
           </Link>
 
           <nav className="topnav">
-            <NavLink to="/">Overview</NavLink>
+            <NavLink to="/">Fit Check</NavLink>
             <NavLink to="/how-it-works">How it works</NavLink>
-            <NavLink to="/growers">Growers</NavLink>
-            <NavLink to="/source">SOURCE</NavLink>
-            <NavLink to="/operators">Operators</NavLink>
-            <NavLink to="/hylio">Hylio</NavLink>
-            <NavLink to="/crm">CRM</NavLink>
+            <NavLink to="/training">Training</NavLink>
+            <NavLink to="/admin">Admin</NavLink>
             <NavLink to="/agent" className="topnav__agent-link">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="3" y="4" width="10" height="8" rx="2" />
@@ -52,7 +58,6 @@ function Shell({ children, compact = false }) {
               </svg>
               <span>Agent</span>
             </NavLink>
-            <NavLink to="/dashboard">Dashboard</NavLink>
           </nav>
         </header>
       ) : null}

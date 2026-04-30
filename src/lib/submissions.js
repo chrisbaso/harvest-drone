@@ -49,6 +49,11 @@ export async function submitGrowerLead(formData) {
   return submitLead("grower", formData);
 }
 
+export async function submitSourceReviewLead(formData) {
+  ensureSupabaseConfigured();
+  return submitLead("grower", formData);
+}
+
 export async function submitOperatorLead(formData) {
   ensureSupabaseConfigured();
   return submitLead("operator", formData);

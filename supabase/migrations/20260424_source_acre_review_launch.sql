@@ -1,0 +1,17 @@
+alter table public.grower_leads
+  add column if not exists fertility_concern text,
+  add column if not exists review_timeline text,
+  add column if not exists preferred_contact_method text,
+  add column if not exists nitrogen_program_notes text,
+  add column if not exists phosphorus_program_notes text,
+  add column if not exists fit_score text,
+  add column if not exists lead_priority text,
+  add column if not exists priority_tags text[],
+  add column if not exists conversation_focus text[],
+  add column if not exists landing_page text,
+  add column if not exists page_version text,
+  add column if not exists utm_source text,
+  add column if not exists utm_medium text,
+  add column if not exists utm_campaign text,
+  add column if not exists utm_content text,
+  add column if not exists utm_term text;

@@ -1,4 +1,5 @@
 import { ROUTING_CONFIG } from "./routingConfig.js";
+import { buildSourceReviewSummary } from "../../shared/sourceReview.js";
 
 const { grower: growerConfig, operator: operatorConfig } = ROUTING_CONFIG;
 
@@ -21,8 +22,27 @@ export function getOperatorSource() {
   return "website-operator-funnel";
 }
 
-export function scoreGrowerLead({ acres, state, county, interestType, notes, matchingOperatorCount }) {
-  let score = 0;
+export function scoreGrowerLead({
+  acres,
+  state,
+  county,
+  interestType,
+  notes,
+  matchingOperatorCount,
+  phone,
+  email,
+  fertilityConcern,
+  timeline,
+}) {
+  let score = buildSourceReviewSummary({
+    acres,
+    interestType,
+    notes,
+    phone,
+    email,
+    fertilityConcern,
+    timeline,
+  }).leadScore;
   const numericAcres = Number(acres ?? 0);
   const countyState = `${county || ""}, ${state || ""}`.trim();
 
@@ -110,6 +130,10 @@ export function decideGrowerRouting(growerLead, operatorMatches) {
     interestType: growerLead.interestType,
     notes: growerLead.notes,
     matchingOperatorCount: operatorMatches.length,
+    phone: growerLead.phone || growerLead.mobile,
+    email: growerLead.email,
+    fertilityConcern: growerLead.fertilityConcern || growerLead.challengeType,
+    timeline: growerLead.timeline,
   });
 
   if (nurtureLead) {

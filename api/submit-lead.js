@@ -4,7 +4,7 @@ import {
   createOperatorLeadPayload,
 } from "../src/lib/leadTransforms.js";
 import { sendLeadEmails, sendLeadSmsFollowUp } from "./lead-email.js";
-import { resolveCampaignType } from "./_lib/dripCampaigns.js";
+import { getFirstStep, resolveCampaignType } from "./_lib/dripCampaigns.js";
 import { createLeadActivity, logLeadActivities } from "./_lib/leadActivity.js";
 import { syncLeadToCrm } from "./_lib/crmSync.js";
 import {
@@ -98,24 +98,28 @@ export default async function handler(req, res) {
         throw new Error(operatorsError.message);
       }
 
-      const matches = findMatchingOperators(operators ?? [], {
-        state: formData.state,
-        county: formData.county,
-        acres: formData.acres,
-        interestType: formData.interestType,
-        notes: formData.notes,
-      });
-
-      routingDecision = decideGrowerRouting(
-        {
+        const matches = findMatchingOperators(operators ?? [], {
           state: formData.state,
           county: formData.county,
           acres: formData.acres,
           interestType: formData.interestType,
           notes: formData.notes,
-        },
-        matches,
-      );
+        });
+
+        routingDecision = decideGrowerRouting(
+          {
+            state: formData.state,
+            county: formData.county,
+            acres: formData.acres,
+            interestType: formData.interestType,
+            notes: formData.notes,
+            phone: formData.phone || formData.mobile,
+            email: formData.email,
+            fertilityConcern: formData.fertilityConcern,
+            timeline: formData.timeline,
+          },
+          matches,
+        );
 
       preparedPayload = {
         ...payload,
@@ -181,168 +185,194 @@ export default async function handler(req, res) {
       crmSyncWarning = crmError.message || "CRM sync failed.";
     }
 
+    // Future workflow hook:
+    // after a successful save, fan out to CRM sync, SMS, or job-routing workflows here.
+    let emailResult = {
+      success: false,
+      internalAlertTemplateKey: null,
+      internalAlertSubject: null,
+      internalAlertId: null,
+      internalAlertStatus: "skipped",
+      internalAlertReason: "Internal notification not attempted.",
+      internalAlertRecipient:
+        process.env.INTERNAL_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || null,
+    };
+
     try {
-      // Future workflow hook:
-      // after a successful save, fan out to CRM sync, SMS, or job-routing workflows here.
-      const emailResult = await sendLeadEmails({
+      emailResult = await sendLeadEmails({
         type: campaignType,
         payload: formData,
       });
-      let smsResult = null;
-
-      try {
-        smsResult = await sendLeadSmsFollowUp({
-          type: campaignType,
-          payload: formData,
-        });
-      } catch (smsError) {
-        smsResult = {
-          success: false,
-          status: "failed",
-          error: smsError.message || "SMS follow-up failed.",
-        };
-      }
-
-      const sequenceUpdate = {
-        sequence_state: "mailchimp_enrolled",
-        last_contacted_at: null,
-        next_follow_up_at: null,
-      };
-
-      const { data: updatedLead, error: updateError } = await supabase
-        .from(table)
-        .update(sequenceUpdate)
-        .eq("id", data.id)
-        .select("id, created_at, status, sequence_state, last_contacted_at, next_follow_up_at")
-        .single();
-
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
-
-      await logLeadActivities(supabase, [
-        createLeadActivity({
-          leadType: activityLeadType,
-          leadId: data.id,
-          activityType: "lead_created",
-          metadata: {
-            source: preparedPayload.source || preparedPayload.lead_source,
-            status: preparedPayload.status,
-            route_type: preparedPayload.route_type ?? null,
-            lead_score: preparedPayload.lead_score ?? null,
-            operator_score: preparedPayload.operator_score ?? null,
-          },
-        }),
-        ...(type === "grower" && routingDecision
-          ? [
-              createLeadActivity({
-                leadType: activityLeadType,
-                leadId: data.id,
-                activityType: "route_decided",
-                metadata: {
-                  route_type: routingDecision.routeType,
-                  lead_score: routingDecision.leadScore,
-                  assigned_to: routingDecision.assignedTo,
-                  assigned_operator_id: routingDecision.assignedOperatorId,
-                  reason: routingDecision.reason,
-                },
-              }),
-            ]
-          : []),
-        ...(opportunityRecord
-          ? [
-              createLeadActivity({
-                leadType: activityLeadType,
-                leadId: data.id,
-                activityType: "opportunity_created",
-                metadata: {
-                  opportunity_id: opportunityRecord.id,
-                  route_type: opportunityRecord.route_type,
-                  opportunity_status: opportunityRecord.status,
-                },
-              }),
-            ]
-          : []),
-        createLeadActivity({
-          leadType: activityLeadType,
-          leadId: data.id,
-          activityType: "email_sent",
-          channel: "email",
-          templateKey: emailResult.internalAlertTemplateKey,
-          subject: emailResult.internalAlertSubject,
-          metadata: {
-            resend_message_id: emailResult.internalAlertId,
-            recipient: process.env.ADMIN_EMAIL,
-          },
-        }),
-        createLeadActivity({
-          leadType: activityLeadType,
-          leadId: data.id,
-          activityType: "automation_enrolled",
-          metadata: {
-            sequence_state: sequenceUpdate.sequence_state,
-            delivery_provider: "mailchimp",
-          },
-        }),
-        ...(smsResult
-          ? [
-              createLeadActivity({
-                leadType: activityLeadType,
-                leadId: data.id,
-                activityType:
-                  smsResult.success ? "sms_sent" : smsResult.status === "skipped" ? "sms_skipped" : "sms_failed",
-                status:
-                  smsResult.success ? "completed" : smsResult.status === "skipped" ? "skipped" : "failed",
-                channel: "sms",
-                subject: smsResult.messagePreview || smsResult.error || "SMS follow-up",
-                metadata: {
-                  recipient: formData.mobile,
-                  provider: "twilio",
-                  message_id: smsResult.messageId ?? null,
-                  error: smsResult.error ?? null,
-                },
-              }),
-            ]
-          : []),
-      ]);
-
-      return res.status(200).json({
-        success: true,
-        lead: updatedLead,
-        routing: routingDecision,
-        opportunity: opportunityRecord,
-        crmSyncWarning,
-        email: {
-          ...emailResult,
-          delivery_provider: "mailchimp",
-          customer_delivery_managed_by: "mailchimp",
-        },
-        sms: smsResult,
-      });
     } catch (emailError) {
-      await logLeadActivities(supabase, [
-        createLeadActivity({
-          leadType: activityLeadType,
-          leadId: data.id,
-          activityType: "email_failed",
-          status: "failed",
-          channel: "email",
-          metadata: {
-            error:
-              emailError.message ||
-              "Lead was saved, but the initial email flow failed.",
-          },
-        }),
-      ]).catch(() => null);
-
-      return res.status(500).json({
-        error:
-          emailError.message ||
-          "Lead was saved, but the internal alert email failed.",
-        saved: true,
-        lead: data,
-      });
+      emailResult = {
+        success: false,
+        internalAlertTemplateKey: null,
+        internalAlertSubject: null,
+        internalAlertId: null,
+        internalAlertStatus: "failed",
+        internalAlertReason:
+          emailError.message || "Lead was saved, but the internal alert email failed.",
+        internalAlertRecipient:
+          process.env.INTERNAL_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || null,
+      };
     }
+
+    let smsResult = null;
+
+    try {
+      smsResult = await sendLeadSmsFollowUp({
+        type: campaignType,
+        payload: formData,
+      });
+    } catch (smsError) {
+      smsResult = {
+        success: false,
+        status: "failed",
+        error: smsError.message || "SMS follow-up failed.",
+      };
+    }
+
+    const firstStep = getFirstStep(campaignType);
+    const sequenceUpdate = {
+      sequence_state: firstStep?.key ?? data.sequence_state ?? "pending",
+      last_contacted_at: null,
+      next_follow_up_at: null,
+    };
+
+    const { data: updatedLead, error: updateError } = await supabase
+      .from(table)
+      .update(sequenceUpdate)
+      .eq("id", data.id)
+      .select("*")
+      .single();
+
+    if (updateError) {
+      throw new Error(updateError.message);
+    }
+
+    const emailActivityType =
+      emailResult.internalAlertStatus === "sent"
+        ? "email_sent"
+        : emailResult.internalAlertStatus === "failed"
+          ? "email_failed"
+          : "email_skipped";
+    const emailActivityStatus =
+      emailResult.internalAlertStatus === "sent"
+        ? "completed"
+        : emailResult.internalAlertStatus === "failed"
+          ? "failed"
+          : "skipped";
+
+    await logLeadActivities(supabase, [
+      createLeadActivity({
+        leadType: activityLeadType,
+        leadId: data.id,
+        activityType: "lead_created",
+        metadata: {
+          source: preparedPayload.source || preparedPayload.lead_source,
+          status: preparedPayload.status,
+          route_type: preparedPayload.route_type ?? null,
+          lead_score: preparedPayload.lead_score ?? null,
+          operator_score: preparedPayload.operator_score ?? null,
+        },
+      }),
+      ...(type === "grower" && routingDecision
+        ? [
+            createLeadActivity({
+              leadType: activityLeadType,
+              leadId: data.id,
+              activityType: "route_decided",
+              metadata: {
+                route_type: routingDecision.routeType,
+                lead_score: routingDecision.leadScore,
+                assigned_to: routingDecision.assignedTo,
+                assigned_operator_id: routingDecision.assignedOperatorId,
+                reason: routingDecision.reason,
+              },
+            }),
+          ]
+        : []),
+      ...(opportunityRecord
+        ? [
+            createLeadActivity({
+              leadType: activityLeadType,
+              leadId: data.id,
+              activityType: "opportunity_created",
+              metadata: {
+                opportunity_id: opportunityRecord.id,
+                route_type: opportunityRecord.route_type,
+                opportunity_status: opportunityRecord.status,
+              },
+            }),
+          ]
+        : []),
+      createLeadActivity({
+        leadType: activityLeadType,
+        leadId: data.id,
+        activityType: emailActivityType,
+        status: emailActivityStatus,
+        channel: "email",
+        templateKey: emailResult.internalAlertTemplateKey,
+        subject:
+          emailResult.internalAlertSubject ||
+          emailResult.internalAlertReason ||
+          "Internal alert",
+        metadata: {
+          resend_message_id: emailResult.internalAlertId,
+          recipient: emailResult.internalAlertRecipient,
+          error: emailResult.internalAlertReason ?? null,
+        },
+      }),
+      createLeadActivity({
+        leadType: activityLeadType,
+        leadId: data.id,
+        activityType: "automation_enrolled",
+        metadata: {
+          sequence_state: sequenceUpdate.sequence_state,
+          delivery_provider:
+            emailResult.internalAlertStatus === "sent" ? "resend" : "manual_follow_up",
+        },
+      }),
+      ...(smsResult
+        ? [
+            createLeadActivity({
+              leadType: activityLeadType,
+              leadId: data.id,
+              activityType:
+                smsResult.success ? "sms_sent" : smsResult.status === "skipped" ? "sms_skipped" : "sms_failed",
+              status:
+                smsResult.success ? "completed" : smsResult.status === "skipped" ? "skipped" : "failed",
+              channel: "sms",
+              subject: smsResult.messagePreview || smsResult.error || "SMS follow-up",
+              metadata: {
+                recipient: formData.mobile || formData.phone,
+                provider: "twilio",
+                message_id: smsResult.messageId ?? null,
+                error: smsResult.error ?? null,
+              },
+            }),
+          ]
+        : []),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      lead: updatedLead,
+      routing: routingDecision,
+      opportunity: opportunityRecord,
+      crmSyncWarning,
+      notification: {
+        status: emailResult.internalAlertStatus,
+        recipient: emailResult.internalAlertRecipient,
+        reason: emailResult.internalAlertReason,
+      },
+      email: {
+        ...emailResult,
+        delivery_provider:
+          emailResult.internalAlertStatus === "sent" ? "resend" : "not_configured",
+      },
+      sms: smsResult,
+    });
   } catch (error) {
     return res.status(500).json({
       error: error.message || "Lead submission failed.",

@@ -33,10 +33,14 @@ export const ROUTING_CONFIG = {
       "Acreage evaluation",
       "Profitability review",
       "Input / product opportunity",
+      "SOURCE product",
+      "SOURCE + application",
+      "Product availability/pricing",
+      "Guarantee/program eligibility",
     ],
 
     // Lower-intent grower requests should remain in nurture for the MVP.
-    nurtureTypes: ["Just exploring", "Just researching", "Not ready yet"],
+    nurtureTypes: ["Just exploring", "Just researching", "Not ready yet", "Not sure"],
   },
 
   operator: {

@@ -1,5 +1,8 @@
+import { buildSourceReviewSummary } from "../../shared/sourceReview.js";
+
 export const DEFAULT_LEAD_STATUS = "new";
 export const GROWER_LEAD_SOURCE = "website-grower-funnel";
+export const SOURCE_REVIEW_LEAD_SOURCE = "website-source-acre-review";
 export const OPERATOR_LEAD_SOURCE = "website-operator-funnel";
 export const HYLIO_LEAD_SOURCE = "website-hylio-funnel";
 
@@ -31,23 +34,60 @@ function mapHylioExperienceToCompliance(value) {
 }
 
 export function createGrowerLeadPayload(formData) {
+  const splitName = splitFullName(
+    formData.name || [formData.firstName, formData.lastName].filter(Boolean).join(" "),
+  );
+  const leadSource = formData.leadSource || GROWER_LEAD_SOURCE;
+  const sourceReview = buildSourceReviewSummary({
+    ...formData,
+    phone: formData.phone || formData.mobile,
+  });
+  const notes = [
+    formData.notes,
+    formData.nitrogenProgramNotes
+      ? `Nitrogen program notes: ${formData.nitrogenProgramNotes}`
+      : null,
+    formData.phosphorusProgramNotes
+      ? `Phosphorus program notes: ${formData.phosphorusProgramNotes}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
   return {
     status: DEFAULT_LEAD_STATUS,
-    lead_source: GROWER_LEAD_SOURCE,
-    source: GROWER_LEAD_SOURCE,
-    first_name: formData.firstName,
-    last_name: formData.lastName,
-    mobile: formData.mobile,
+    lead_source: leadSource,
+    source: leadSource,
+    first_name: formData.firstName || splitName.firstName || "Grower",
+    last_name: formData.lastName || splitName.lastName || "",
+    mobile: formData.phone || formData.mobile || "",
     email: formData.email,
-    farm_name: formData.farmName,
+    farm_name: formData.farmName || null,
     state: formData.state,
-    county: formData.county,
+    county: formData.county || formData.countyOrTown || null,
     crop_type: formData.cropType,
     acres: Number(formData.acres),
     interest_type: formData.interestType,
-    current_spraying_method: formData.sprayingMethod,
-    interested_in_product_recommendations: formData.productInterest === "Yes",
-    notes: formData.notes,
+    fertility_concern: formData.fertilityConcern || null,
+    review_timeline: formData.timeline || null,
+    preferred_contact_method: formData.preferredContactMethod || null,
+    nitrogen_program_notes: formData.nitrogenProgramNotes || null,
+    phosphorus_program_notes: formData.phosphorusProgramNotes || null,
+    fit_score: sourceReview.reviewPriority,
+    lead_priority: sourceReview.leadPriority,
+    priority_tags: sourceReview.priorityTags,
+    conversation_focus: sourceReview.conversationFocus,
+    landing_page: formData.landingPage || null,
+    page_version: formData.pageVersion || null,
+    utm_source: formData.utm_source || null,
+    utm_medium: formData.utm_medium || null,
+    utm_campaign: formData.utm_campaign || null,
+    utm_content: formData.utm_content || null,
+    utm_term: formData.utm_term || null,
+    current_spraying_method: formData.sprayingMethod || null,
+    interested_in_product_recommendations:
+      formData.productInterest === "Yes" || formData.interestType === "SOURCE product",
+    notes,
   };
 }
 
@@ -129,6 +169,8 @@ export function mapGrowerLeadRowToEmailPayload(row) {
   return {
     firstName: row.first_name,
     lastName: row.last_name,
+    name: [row.first_name, row.last_name].filter(Boolean).join(" ").trim(),
+    phone: row.mobile,
     mobile: row.mobile,
     email: row.email,
     farmName: row.farm_name,
@@ -137,6 +179,22 @@ export function mapGrowerLeadRowToEmailPayload(row) {
     cropType: row.crop_type,
     acres: row.acres?.toString?.() ?? row.acres,
     interestType: row.interest_type,
+    fertilityConcern: row.fertility_concern,
+    timeline: row.review_timeline,
+    preferredContactMethod: row.preferred_contact_method,
+    nitrogenProgramNotes: row.nitrogen_program_notes,
+    phosphorusProgramNotes: row.phosphorus_program_notes,
+    fitScore: row.fit_score,
+    leadPriority: row.lead_priority,
+    priorityTags: row.priority_tags,
+    conversationFocus: row.conversation_focus,
+    landingPage: row.landing_page,
+    pageVersion: row.page_version,
+    utm_source: row.utm_source,
+    utm_medium: row.utm_medium,
+    utm_campaign: row.utm_campaign,
+    utm_content: row.utm_content,
+    utm_term: row.utm_term,
     sprayingMethod: row.current_spraying_method,
     productInterest: row.interested_in_product_recommendations ? "Yes" : "No",
     notes: row.notes,
