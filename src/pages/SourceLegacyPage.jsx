@@ -8,12 +8,24 @@ const formFields = [
   { label: "State", name: "state", required: true, placeholder: "Illinois", autoComplete: "address-level1" },
   { label: "Crop type", name: "cropType", required: true, placeholder: "Corn, soybeans" },
   { label: "Total acres", name: "acres", type: "number", required: true, placeholder: "500", inputMode: "numeric", min: "0", step: "1" },
+  {
+    label: "Product",
+    name: "product",
+    type: "select",
+    required: true,
+    options: [
+      "SOURCE only - $15/acre",
+      "BLUEPRINT only - $11/acre",
+      "Both (bundle) - $25/acre",
+      "Both + Harvest Drone application - $23/acre",
+    ],
+  },
 ];
 
 const faqs = [
   {
     q: "What is SOURCE?",
-    a: "SOURCE is a biological soil activator from Sound Agriculture. It activates soil microbes to fix atmospheric nitrogen and solubilize bound phosphorus so growers can reduce dependency on synthetic fertilizer while maintaining or improving yield.",
+    a: "SOURCE is a synthetic soil activator from Sound Agriculture. It helps crops access nutrients already present in the field so growers can reduce dependency on synthetic fertilizer while maintaining or improving yield.",
   },
   {
     q: "How much does it cost per acre?",
@@ -560,6 +572,7 @@ function SourceLegacyPage() {
     state: "",
     cropType: "",
     acres: "500",
+    product: "Both (bundle) - $25/acre",
   });
   const [calculator, setCalculator] = useState({
     acres: "500",
@@ -619,8 +632,8 @@ function SourceLegacyPage() {
             <span className="sp__eyebrow">SOURCE by Sound Agriculture</span>
             <h1>Spend less on <em>synthetic fertilizer.</em> Get the same yield or better.</h1>
             <p className="sp__hero-sub">
-              SOURCE is a biological soil activator that helps microbes fix atmospheric
-              nitrogen and solubilize bound phosphorus, giving growers a simpler way to
+              SOURCE is a synthetic soil activator that helps crops access nutrients
+              already present in the field, giving growers a simpler way to
               cut synthetic input dependency without sacrificing performance.
             </p>
             <div className="sp__hero-proof">
@@ -657,19 +670,35 @@ function SourceLegacyPage() {
                       {field.label}
                       {field.required && <span className="sp__required">*</span>}
                     </label>
-                    <input
-                      className="sp__input"
-                      name={field.name}
-                      type={field.type ?? "text"}
-                      required={field.required}
-                      placeholder={field.placeholder}
-                      autoComplete={field.autoComplete}
-                      inputMode={field.inputMode}
-                      min={field.min}
-                      step={field.step}
-                      value={formData[field.name]}
-                      onChange={handleChange}
-                    />
+                    {field.type === "select" ? (
+                      <select
+                        className="sp__input"
+                        name={field.name}
+                        required={field.required}
+                        value={formData[field.name]}
+                        onChange={handleChange}
+                      >
+                        {field.options.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        className="sp__input"
+                        name={field.name}
+                        type={field.type ?? "text"}
+                        required={field.required}
+                        placeholder={field.placeholder}
+                        autoComplete={field.autoComplete}
+                        inputMode={field.inputMode}
+                        min={field.min}
+                        step={field.step}
+                        value={formData[field.name]}
+                        onChange={handleChange}
+                      />
+                    )}
                   </div>
                 ))}
 

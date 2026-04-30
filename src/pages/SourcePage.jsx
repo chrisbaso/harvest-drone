@@ -109,9 +109,11 @@ function SourcePage() {
     const tracking = captureHarvestTracking(searchParams, {
       source: "Harvest Drone Funnel",
     });
+    const productNote = draft.product ? `SOURCE offer selected: ${draft.product}` : "";
     const payload = {
       ...draft,
       ...tracking,
+      notes: [productNote, draft.notes].filter(Boolean).join("\n\n"),
       landing_page_url: tracking.landing_page_url,
       referrer: tracking.referrer,
     };

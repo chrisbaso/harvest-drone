@@ -50,6 +50,8 @@ export async function submitGrowerLead(formData) {
 }
 
 export async function submitSourceReviewLead(formData) {
+  // Kept as a semantic alias for the SOURCE acre-review funnel while it shares
+  // the grower lead submission path.
   ensureSupabaseConfigured();
   return submitLead("grower", formData);
 }
@@ -64,10 +66,31 @@ export async function submitHylioLead(formData) {
   return submitLead("hylio", formData);
 }
 
+function getPricePerAcre(product) {
+  if (!product) return 25;
+
+  const normalizedProduct = product.toLowerCase();
+
+  if (normalizedProduct.includes("source only") || normalizedProduct === "source") return 15;
+  if (normalizedProduct.includes("blueprint only") || normalizedProduct === "blueprint") return 11;
+  if (
+    normalizedProduct.includes("hd") ||
+    normalizedProduct.includes("drone") ||
+    normalizedProduct.includes("spraying") ||
+    normalizedProduct.includes("23")
+  ) {
+    return 23;
+  }
+  if (normalizedProduct.includes("bundle") || normalizedProduct.includes("both")) return 25;
+
+  return 25;
+}
+
 export async function submitSourceOrder(data) {
   ensureSupabaseConfigured();
 
   const acres = Number(data.acres);
+  const pricePerAcre = getPricePerAcre(data.product);
   const { error } = await supabase.from("source_orders").insert({
     first_name: data.firstName,
     email: data.email,
@@ -75,8 +98,8 @@ export async function submitSourceOrder(data) {
     county: data.county || null,
     crop_type: data.cropType,
     acres,
-    estimated_total: acres * 25,
-    product: "SOURCE",
+    estimated_total: acres * pricePerAcre,
+    product: data.product || "Bundle",
     order_type: acres >= 1000 ? "volume_quote" : "standard",
   });
 

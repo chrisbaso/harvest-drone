@@ -13,7 +13,7 @@ const modelPillars = [
 
 const revenueStack = [
   { label: "Application", range: "$8-14/acre", desc: "Drone spraying and seeding. Immediate service revenue on every job.", color: "#FBBF24" },
-  { label: "Inputs", range: "$2-9/acre", desc: "SOURCE and BLUEPRINT biological distribution. $9 direct, $2 through sub-dealers. Recurring annually.", color: "#A3D977" },
+  { label: "Inputs", range: "$2-9/acre", desc: "SOURCE and BLUEPRINT precision input distribution. $9 direct, $2 through sub-dealers. Recurring annually.", color: "#A3D977" },
   { label: "Soil data", range: "$1-3/acre", desc: "EarthOptics subsurface scanning. Drives the prescription that makes inputs sticky.", color: "#60A5FA" },
   { label: "Stacked total", range: "$11-26/acre", desc: "Per acre, per year, on every enrolled grower relationship.", color: "#fff" },
 ];

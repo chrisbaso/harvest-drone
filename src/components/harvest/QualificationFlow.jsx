@@ -24,11 +24,19 @@ const STATES = [
   "Wisconsin", "Wyoming",
 ];
 
+const PRODUCT_OPTIONS = [
+  "SOURCE only - $15/acre",
+  "BLUEPRINT only - $11/acre",
+  "Both (bundle) - $25/acre",
+  "Both + Harvest Drone application - $23/acre",
+];
+
 const stepMeta = [
   { key: "acreageRange", title: "How many acres do you farm or manage?", helper: "This helps us understand opportunity size and how quickly a human review should happen." },
   { key: "crops", title: "What crops are you primarily focused on?", helper: "Pick the crop mix that best matches the acres you want reviewed." },
   { key: "location", title: "Where are your acres located?", helper: "Location helps us review application fit, timing, and practical follow-up." },
   { key: "applicationMethod", title: "How are you currently applying crop inputs?", helper: "This helps us understand how SOURCE could fit into your current operation." },
+  { key: "product", title: "Which SOURCE offer are you considering?", helper: "Choose the product path you want Harvest Drone to price and review." },
   { key: "primaryGoal", title: "What are you most interested in?", helper: "Tell us what would make this conversation worth your time." },
   { key: "decisionTiming", title: "When are you looking to make a decision?", helper: "Timing matters when the next step is a real fit review instead of generic follow-up." },
   { key: "interestLevel", title: "How open are you to testing SOURCE or a drone-applied plan?", helper: "This helps us route strong-fit conversations quickly and educational leads more appropriately." },
@@ -90,6 +98,10 @@ function validateStep(stepIndex, draft) {
 
   if (currentStep.key === "applicationMethod" && !draft.applicationMethod) {
     return "Choose the application method that is closest to your current setup.";
+  }
+
+  if (currentStep.key === "product" && !draft.product) {
+    return "Choose the SOURCE product path you want reviewed.";
   }
 
   if (currentStep.key === "primaryGoal" && !draft.primaryGoal) {
@@ -343,6 +355,16 @@ function renderStep(stepIndex, draft, onChange, onChoiceSelect) {
         options={APPLICATION_METHOD_OPTIONS}
         value={draft.applicationMethod}
         onSelect={(option) => onChoiceSelect("applicationMethod", option)}
+      />
+    );
+  }
+
+  if (currentStep.key === "product") {
+    return (
+      <ChoiceGrid
+        options={PRODUCT_OPTIONS}
+        value={draft.product}
+        onSelect={(option) => onChoiceSelect("product", option)}
       />
     );
   }

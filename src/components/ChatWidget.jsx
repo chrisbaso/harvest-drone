@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-const CHAT_ENABLED_ROUTES = ["/growers", "/operators", "/hylio"];
+const CHAT_ENABLED_ROUTES = ["/growers", "/operators", "/hylio", "/source", "/source-acre-review", "/source-review"];
 const SUGGESTIONS = [
   "What does SOURCE cost?",
   "How does drone spraying work?",

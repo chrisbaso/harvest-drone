@@ -1,7 +1,9 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 
 const PUBLIC_LANDING_ROUTES = new Set([
-  "/",
+  "/growers",
+  "/operators",
+  "/hylio",
   "/source",
   "/source-acre-review",
   "/source-review",
@@ -29,25 +31,26 @@ function isPublicLandingRoute(pathname) {
 
 function Shell({ children, compact = false }) {
   const location = useLocation();
-  const showNavigation = !isPublicLandingRoute(location.pathname);
+  const isPublic = isPublicLandingRoute(location.pathname);
 
   return (
     <div className="site-shell">
-      {showNavigation ? (
-        <header className="topbar">
-          <Link className="brandmark" to="/">
-            <span className="brandmark__badge">HD</span>
-            <span>
-              Harvest Drone
-              <small>Revenue-first aerial operations</small>
-            </span>
-          </Link>
+      <header className="topbar">
+        <Link className="brandmark" to="/">
+          <span className="brandmark__badge">HD</span>
+          <span>
+            Harvest Drone
+            <small>Revenue-first aerial operations</small>
+          </span>
+        </Link>
 
+        {!isPublic ? (
           <nav className="topnav">
-            <NavLink to="/">Fit Check</NavLink>
-            <NavLink to="/how-it-works">How it works</NavLink>
-            <NavLink to="/training">Training</NavLink>
+            <NavLink to="/dashboard">Dashboard</NavLink>
+            <NavLink to="/crm">CRM</NavLink>
             <NavLink to="/admin">Admin</NavLink>
+            <NavLink to="/training">Training</NavLink>
+            <NavLink to="/how-it-works">How it works</NavLink>
             <NavLink to="/agent" className="topnav__agent-link">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="3" y="4" width="10" height="8" rx="2" />
@@ -59,8 +62,8 @@ function Shell({ children, compact = false }) {
               <span>Agent</span>
             </NavLink>
           </nav>
-        </header>
-      ) : null}
+        ) : null}
+      </header>
 
       <main className={compact ? "page compact-page" : "page"}>{children}</main>
     </div>

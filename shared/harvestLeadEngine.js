@@ -281,6 +281,7 @@ export function createEmptyLeadDraft() {
     county: "",
     zip: "",
     applicationMethod: "",
+    product: "",
     primaryGoal: "",
     decisionTiming: "",
     interestLevel: "",

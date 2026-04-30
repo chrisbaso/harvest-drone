@@ -21,7 +21,7 @@ const revenueStreams = [
   {
     label: "Input distribution",
     title: "Earn $2-9 per acre on every reorder.",
-    desc: "Distribute SOURCE and BLUEPRINT biologicals to your grower relationships. $9/acre margin on direct sales, $2/acre when sold through the network. Recurring annually on the same acres.",
+    desc: "Distribute SOURCE and BLUEPRINT precision inputs to your grower relationships. $9/acre margin on direct sales, $2/acre when sold through the network. Recurring annually on the same acres.",
     accent: "#A3D977",
   },
   {

@@ -14,7 +14,7 @@ const formFields = [
 const steps = [
   { num: "01", title: "Tell us about your acres", desc: "Five quick fields. Takes 30 seconds." },
   { num: "02", title: "We scan your soil", desc: "EarthOptics subsurface scanning maps compaction, drainage, and nutrient variability - so recommendations are based on data, not guesswork." },
-  { num: "03", title: "Get your acre plan", desc: "A field-level recommendation showing where precision application of SOURCE and BLUEPRINT biologicals will improve yield and reduce unnecessary input spend." },
+  { num: "03", title: "Get your acre plan", desc: "A field-level recommendation showing where precision application of SOURCE and BLUEPRINT crop inputs will improve yield and reduce unnecessary input spend." },
 ];
 
 const flywheel = [
@@ -25,7 +25,7 @@ const flywheel = [
 ];
 
 const objections = [
-  { q: "What is SOURCE and how does it work?", a: "SOURCE is a biological crop nutrition product from Sound Agriculture. It activates naturally occurring soil microbes to fix atmospheric nitrogen and solubilize bound phosphorus - reducing the need for synthetic fertilizer while maintaining or improving yield. It's applied at roughly $25 per acre." },
+  { q: "What is SOURCE and how does it work?", a: "SOURCE is a synthetic soil activator from Sound Agriculture. It helps crops access nutrients already present in the field - reducing the need for synthetic fertilizer while maintaining or improving yield. SOURCE only is $15 per acre." },
   { q: "What does EarthOptics actually scan?", a: "EarthOptics uses subsurface sensing technology to map soil conditions below the surface - things like compaction layers, drainage patterns, and nutrient distribution that you can't see from a soil probe or satellite image. The scan produces a field-level prescription map." },
   { q: "How is drone application different from a ground rig?", a: "Drone application gets into fields that ground rigs can't - wet conditions, tall canopy, tight spray windows. Zero compaction, zero crop damage, and 3-5x faster turnaround. Your application happens when timing matters most, not when the rig is available." },
   { q: "What does this cost per acre?", a: "Drone application runs $8-14 per acre. SOURCE and BLUEPRINT run approximately $25 per acre combined. Your acre plan will include a full cost breakdown specific to your fields so you can compare against current input spend." },
@@ -172,7 +172,7 @@ function GrowerPage() {
             <p className="gp__hero-sub">
               Drone application gets into your fields faster, with no compaction
               and no crop damage. Pair it with EarthOptics soil intelligence and
-              Sound Agriculture biologicals to spend less per acre and get more
+              Sound Agriculture precision inputs to spend less per acre and get more
               out of every field.
             </p>
             <div className="gp__hero-proof">
@@ -232,8 +232,8 @@ function GrowerPage() {
             <div className="gp__value-card">
               <span className="gp__value-card-eyebrow" style={{ color: "#A3D977" }}>SOURCE &amp; BLUEPRINT</span>
               <h3>Reduce synthetic input spend without losing yield.</h3>
-              <p>SOURCE activates soil microbes to fix atmospheric nitrogen. BLUEPRINT solubilizes bound phosphorus your soil already holds. Together they reduce dependency on synthetic fertilizer - applied precisely where EarthOptics data says they'll have the most impact.</p>
-              <div className="gp__value-card-stat"><strong>~$25</strong><span>per acre for both biologicals</span></div>
+              <p>SOURCE is a synthetic soil activator that helps crops access nutrients already present in the field. BLUEPRINT supports phosphorus availability. Together they reduce dependency on synthetic fertilizer - applied precisely where EarthOptics data says they'll have the most impact.</p>
+              <div className="gp__value-card-stat"><strong>~$25</strong><span>per acre for both crop inputs</span></div>
             </div>
           </div>
         </div>
@@ -294,7 +294,7 @@ function GrowerPage() {
 
         <section className="gp__bottom">
           <div className="gp__bottom-card">
-            <h2>Soil data. Biological inputs. Precision application. One acre plan ties it together.</h2>
+            <h2>Soil data. Precision inputs. Precision application. One acre plan ties it together.</h2>
             <p>Tell us about your fields and we'll show you where drone application and smarter inputs save you time, money, and crop.</p>
             <button type="button" className="gp__bottom-btn" onClick={scrollToForm}>{"Get My Acre Plan ->"}</button>
           </div>
