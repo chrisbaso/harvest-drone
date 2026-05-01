@@ -12,6 +12,13 @@ create table if not exists public.drip_sequences (
   is_active boolean not null default true
 );
 
+alter table public.drip_sequences add column if not exists slug text;
+alter table public.drip_sequences add column if not exists lead_type text;
+alter table public.drip_sequences add column if not exists name text;
+alter table public.drip_sequences add column if not exists description text;
+alter table public.drip_sequences add column if not exists is_active boolean not null default true;
+alter table public.drip_sequences add column if not exists updated_at timestamptz not null default timezone('utc', now());
+
 create table if not exists public.drip_emails (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default timezone('utc', now()),
@@ -25,6 +32,14 @@ create table if not exists public.drip_emails (
   unique (sequence_id, step_number),
   unique (sequence_id, slug)
 );
+
+alter table public.drip_emails add column if not exists sequence_id uuid references public.drip_sequences (id) on delete cascade;
+alter table public.drip_emails add column if not exists step_number integer;
+alter table public.drip_emails add column if not exists slug text;
+alter table public.drip_emails add column if not exists subject text;
+alter table public.drip_emails add column if not exists mailchimp_tag text;
+alter table public.drip_emails add column if not exists delay_days integer not null default 0;
+alter table public.drip_emails add column if not exists is_active boolean not null default true;
 
 create table if not exists public.drip_enrollments (
   id uuid primary key default gen_random_uuid(),
@@ -41,8 +56,20 @@ create table if not exists public.drip_enrollments (
   metadata jsonb not null default '{}'::jsonb
 );
 
+alter table public.drip_enrollments add column if not exists sequence_id uuid references public.drip_sequences (id) on delete set null;
+alter table public.drip_enrollments add column if not exists lead_type text;
+alter table public.drip_enrollments add column if not exists lead_id uuid;
+alter table public.drip_enrollments add column if not exists email text;
+alter table public.drip_enrollments add column if not exists first_name text;
+alter table public.drip_enrollments add column if not exists current_step integer not null default 0;
+alter table public.drip_enrollments add column if not exists status text not null default 'active';
+alter table public.drip_enrollments add column if not exists next_send_at timestamptz;
+alter table public.drip_enrollments add column if not exists metadata jsonb not null default '{}'::jsonb;
+
 create index if not exists drip_sequences_lead_type_idx on public.drip_sequences (lead_type, is_active);
 create index if not exists drip_emails_sequence_idx on public.drip_emails (sequence_id, step_number);
+create unique index if not exists drip_emails_sequence_step_unique_idx on public.drip_emails (sequence_id, step_number);
+create unique index if not exists drip_emails_sequence_slug_unique_idx on public.drip_emails (sequence_id, slug);
 create index if not exists drip_enrollments_status_idx on public.drip_enrollments (status, next_send_at);
 create index if not exists drip_enrollments_email_idx on public.drip_enrollments (email);
 
