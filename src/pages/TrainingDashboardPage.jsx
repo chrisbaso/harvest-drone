@@ -9,7 +9,7 @@ import {
   getExpiringCredentials,
   trainingCourses,
 } from "../../shared/trainingProgram";
-import "../styles/training.css";
+import TrainingStyles from "../components/training/TrainingStyles";
 
 function TrainingDashboardPage() {
   const operator = demoOperators[1];
@@ -19,6 +19,7 @@ function TrainingDashboardPage() {
   return (
     <Shell compact>
       <section className="section training-page">
+        <TrainingStyles />
         <div className="training-hero card">
           <div>
             <span className="eyebrow">Training + qualification</span>

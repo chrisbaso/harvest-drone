@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import Shell from "../components/Shell";
 import { findLesson, flattenLessons } from "../../shared/trainingProgram";
 import { getCompletedLessons, markLessonComplete } from "../lib/trainingLocalStore";
-import "../styles/training.css";
+import TrainingStyles from "../components/training/TrainingStyles";
 
 function TrainingLessonPage() {
   const { id } = useParams();
@@ -16,6 +16,7 @@ function TrainingLessonPage() {
     return (
       <Shell compact>
         <section className="section training-page">
+        <TrainingStyles />
           <div className="card training-card">Lesson not found.</div>
         </section>
       </Shell>
@@ -33,6 +34,7 @@ function TrainingLessonPage() {
   return (
     <Shell compact>
       <section className="section training-page">
+        <TrainingStyles />
         <Link className="back-link" to={`/training/courses/${lesson.courseSlug}`}>
           Back to course
         </Link>

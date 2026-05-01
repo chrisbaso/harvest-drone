@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import Shell from "../components/Shell";
 import { demoOperators, findCourse, getCourseProgress } from "../../shared/trainingProgram";
-import "../styles/training.css";
+import TrainingStyles from "../components/training/TrainingStyles";
 
 function TrainingCoursePage() {
   const { slug } = useParams();
@@ -12,6 +12,7 @@ function TrainingCoursePage() {
     return (
       <Shell compact>
         <section className="section training-page">
+        <TrainingStyles />
           <div className="card training-card">Course not found.</div>
         </section>
       </Shell>
@@ -23,6 +24,7 @@ function TrainingCoursePage() {
   return (
     <Shell compact>
       <section className="section training-page">
+        <TrainingStyles />
         <Link className="back-link" to="/training">
           Back to training
         </Link>

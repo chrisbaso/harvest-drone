@@ -1,12 +1,13 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import RouteLoading from "./RouteLoading";
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, profile, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
-    return <div className="route-loading">Loading...</div>;
+    return <RouteLoading label="Checking access" hint="Confirming your Harvest Drone workspace permissions." />;
   }
 
   if (!user) {

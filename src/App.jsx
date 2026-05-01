@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ChatWidget from "./components/ChatWidget";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RouteLoading from "./components/RouteLoading";
 import { initMetaPixel, registerMetaScheduleTracking, trackMetaPageView } from "./lib/metaPixel";
 
 const GrowerPage = lazy(() => import("./pages/GrowerPage"));
@@ -50,7 +51,7 @@ function MetaPixelManager() {
 
 function App() {
   return (
-    <Suspense fallback={<div className="route-loading">Loading...</div>}>
+    <Suspense fallback={<RouteLoading />}>
       <MetaPixelManager />
       <Routes>
         <Route path="/" element={<HowItWorksPage />} />

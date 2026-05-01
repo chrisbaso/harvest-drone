@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import Shell from "../components/Shell";
 import { findAssessment, scoreAssessment } from "../../shared/trainingProgram";
 import { saveAssessmentAttempt } from "../lib/trainingLocalStore";
-import "../styles/training.css";
+import TrainingStyles from "../components/training/TrainingStyles";
 
 function TrainingAssessmentPage() {
   const { id } = useParams();
@@ -15,6 +15,7 @@ function TrainingAssessmentPage() {
     return (
       <Shell compact>
         <section className="section training-page">
+        <TrainingStyles />
           <div className="card training-card">Assessment not found.</div>
         </section>
       </Shell>
@@ -37,6 +38,7 @@ function TrainingAssessmentPage() {
   return (
     <Shell compact>
       <section className="section training-page">
+        <TrainingStyles />
         <Link className="back-link" to="/training">
           Back to training
         </Link>

@@ -11,7 +11,7 @@ import {
   practicalEvaluationTemplates,
   trainingCourses,
 } from "../../shared/trainingProgram";
-import "../styles/training.css";
+import TrainingStyles from "../components/training/TrainingStyles";
 
 function OperatorTrainingProfilePage() {
   const { id } = useParams();
@@ -21,6 +21,7 @@ function OperatorTrainingProfilePage() {
   return (
     <Shell compact>
       <section className="section training-page">
+        <TrainingStyles />
         <Link className="back-link" to="/admin/training">
           Back to admin training
         </Link>

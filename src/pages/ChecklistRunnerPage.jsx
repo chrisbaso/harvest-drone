@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import Shell from "../components/Shell";
 import { checklistTemplates } from "../../shared/trainingProgram";
 import { saveChecklistRun } from "../lib/trainingLocalStore";
-import "../styles/training.css";
+import TrainingStyles from "../components/training/TrainingStyles";
 
 function ChecklistRunnerPage() {
   const { slug } = useParams();
@@ -17,6 +17,7 @@ function ChecklistRunnerPage() {
     return (
       <Shell compact>
         <section className="section training-page">
+        <TrainingStyles />
           <div className="card training-card">Checklist not found.</div>
         </section>
       </Shell>
@@ -38,6 +39,7 @@ function ChecklistRunnerPage() {
   return (
     <Shell compact>
       <section className="section training-page">
+        <TrainingStyles />
         <Link className="back-link" to="/training">
           Back to training
         </Link>

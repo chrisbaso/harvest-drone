@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Shell from "../components/Shell";
 import { computeHylioJobReadiness, demoHylioJob, demoOperators } from "../../shared/trainingProgram";
-import "../styles/training.css";
+import TrainingStyles from "../components/training/TrainingStyles";
 
 function JobReadinessPage() {
   const { id } = useParams();
@@ -13,6 +13,7 @@ function JobReadinessPage() {
   return (
     <Shell compact>
       <section className="section training-page">
+        <TrainingStyles />
         <Link className="back-link" to="/training">
           Back to training
         </Link>

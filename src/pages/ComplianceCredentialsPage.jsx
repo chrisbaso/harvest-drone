@@ -1,6 +1,6 @@
 import Shell from "../components/Shell";
 import { CREDENTIAL_TYPES, demoOperators, normalizeCredentialStatus } from "../../shared/trainingProgram";
-import "../styles/training.css";
+import TrainingStyles from "../components/training/TrainingStyles";
 
 function ComplianceCredentialsPage() {
   const credentialRows = demoOperators.flatMap((operator) =>
@@ -14,6 +14,7 @@ function ComplianceCredentialsPage() {
   return (
     <Shell compact>
       <section className="section training-page">
+        <TrainingStyles />
         <div className="training-header card">
           <span className="eyebrow">Compliance</span>
           <h1>Credential vault</h1>

@@ -9,7 +9,7 @@ import {
   practicalEvaluationTemplates,
   trainingCourses,
 } from "../../shared/trainingProgram";
-import "../styles/training.css";
+import TrainingStyles from "../components/training/TrainingStyles";
 
 function AdminTrainingPage() {
   const rows = demoOperators.map((operator) => ({
@@ -21,6 +21,7 @@ function AdminTrainingPage() {
   return (
     <Shell compact>
       <section className="section training-page">
+        <TrainingStyles />
         <div className="training-header card">
           <span className="eyebrow">Admin training</span>
           <h1>Qualification matrix</h1>
