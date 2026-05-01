@@ -33,6 +33,7 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const DealerDashboardPage = lazy(() => import("./pages/DealerDashboardPage"));
 const NetworkDashboardPage = lazy(() => import("./pages/NetworkDashboardPage"));
 const DealerOnboardingPage = lazy(() => import("./pages/DealerOnboardingPage"));
+const DemoIndexPage = lazy(() => import("./pages/DemoIndexPage"));
 
 function MetaPixelManager() {
   const location = useLocation();
@@ -71,6 +72,7 @@ function App() {
         <Route path="/join/:networkSlug" element={<DealerOnboardingPage />} />
         <Route path="/d/:dealerSlug" element={<SourcePage />} />
         <Route path="/d/:dealerSlug/growers" element={<GrowerPage />} />
+        <Route path="/demo" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer", "operator"]}><DemoIndexPage /></ProtectedRoute>} />
         <Route path="/crm" element={<ProtectedRoute allowedRoles={["admin"]}><CrmPage /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardOverviewPage /></ProtectedRoute>} />
         <Route path="/dashboard/leads/:leadType/:leadId" element={<ProtectedRoute allowedRoles={["admin"]}><LeadDetailPage /></ProtectedRoute>} />

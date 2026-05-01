@@ -46,6 +46,7 @@ function Shell({ children, compact = false }) {
           ["Admin", "/admin"],
           ["Agent", "/agent"],
           ["Training", "/training"],
+          ["Demo", "/demo"],
           ["How it works", "/how-it-works"],
         ]
       : role === "network_manager"
@@ -53,17 +54,20 @@ function Shell({ children, compact = false }) {
             ["Network Dashboard", "/network"],
             ["Dealers", "/network"],
             ["Reports", "/network"],
+            ["Demo", "/demo"],
           ]
         : role === "dealer"
           ? [
               ["My Dashboard", "/dealer"],
               ["My Leads", "/dealer"],
               ["My Training", "/training"],
+              ["Demo", "/demo"],
             ]
           : role === "operator"
             ? [
                 ["My Training", "/training"],
                 ["My Assignments", "/jobs/1842/readiness"],
+                ["Demo", "/demo"],
               ]
             : [];
 
