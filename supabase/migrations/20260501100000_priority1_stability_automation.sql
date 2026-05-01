@@ -37,9 +37,12 @@ alter table public.drip_emails add column if not exists sequence_id uuid referen
 alter table public.drip_emails add column if not exists step_number integer;
 alter table public.drip_emails add column if not exists slug text;
 alter table public.drip_emails add column if not exists subject text;
+alter table public.drip_emails add column if not exists body_html text not null default '';
+alter table public.drip_emails add column if not exists body_text text;
 alter table public.drip_emails add column if not exists mailchimp_tag text;
 alter table public.drip_emails add column if not exists delay_days integer not null default 0;
 alter table public.drip_emails add column if not exists is_active boolean not null default true;
+alter table public.drip_emails add column if not exists updated_at timestamptz not null default timezone('utc', now());
 
 create table if not exists public.drip_enrollments (
   id uuid primary key default gen_random_uuid(),
@@ -102,37 +105,40 @@ on conflict (slug) do update set
   is_active = true,
   updated_at = timezone('utc', now());
 
-with seed(sequence_slug, step_number, slug, subject, mailchimp_tag, delay_days) as (
+with seed(sequence_slug, step_number, slug, subject, body_html, body_text, mailchimp_tag, delay_days) as (
   values
-    ('grower-welcome', 1, 'grower-welcome-1', 'Your Harvest Drone acre review', 'grower-welcome-1', 0),
-    ('grower-welcome', 2, 'grower-welcome-2', 'What happens after the fit check', 'grower-welcome-2', 1),
-    ('grower-welcome', 3, 'grower-welcome-3', 'SOURCE pricing and application timing', 'grower-welcome-3', 3),
-    ('grower-welcome', 4, 'grower-welcome-4', 'Drone application windows', 'grower-welcome-4', 5),
-    ('grower-welcome', 5, 'grower-welcome-5', 'EarthOptics scan opportunity', 'grower-welcome-5', 7),
-    ('grower-welcome', 6, 'grower-welcome-6', 'Your next best acre decision', 'grower-welcome-6', 10),
-    ('grower-welcome', 7, 'grower-welcome-7', 'Still want an acre review?', 'grower-welcome-7', 14),
-    ('operator-welcome', 1, 'operator-welcome-1', 'Harvest Drone operator network', 'operator-welcome-1', 0),
-    ('operator-welcome', 2, 'operator-welcome-2', 'How routed acreage works', 'operator-welcome-2', 2),
-    ('operator-welcome', 3, 'operator-welcome-3', 'Qualification and compliance checklist', 'operator-welcome-3', 5),
-    ('operator-welcome', 4, 'operator-welcome-4', 'Dealer and operator economics', 'operator-welcome-4', 8),
-    ('operator-welcome', 5, 'operator-welcome-5', 'Schedule your territory review', 'operator-welcome-5', 12),
-    ('source-order', 1, 'source-order-1', 'Your SOURCE order request', 'source-order-1', 0),
-    ('source-order', 2, 'source-order-2', 'SOURCE order logistics and timing', 'source-order-2', 2),
-    ('source-post-purchase', 1, 'source-post-purchase-1', 'SOURCE application planning', 'source-post-purchase-1', 0),
-    ('source-post-purchase', 2, 'source-post-purchase-2', 'What to watch after application', 'source-post-purchase-2', 7),
-    ('source-post-purchase', 3, 'source-post-purchase-3', 'Capture your acre results', 'source-post-purchase-3', 21),
-    ('source-post-purchase', 4, 'source-post-purchase-4', 'Plan next season reorder acres', 'source-post-purchase-4', 45)
+    ('grower-welcome', 1, 'grower-welcome-1', 'Your Harvest Drone acre review', '<p>Your Harvest Drone acre review is ready for follow-up.</p>', 'Your Harvest Drone acre review is ready for follow-up.', 'grower-welcome-1', 0),
+    ('grower-welcome', 2, 'grower-welcome-2', 'What happens after the fit check', '<p>Here is what happens after the fit check.</p>', 'Here is what happens after the fit check.', 'grower-welcome-2', 1),
+    ('grower-welcome', 3, 'grower-welcome-3', 'SOURCE pricing and application timing', '<p>SOURCE is $15 per acre, with timing based on the acre plan.</p>', 'SOURCE is $15 per acre, with timing based on the acre plan.', 'grower-welcome-3', 3),
+    ('grower-welcome', 4, 'grower-welcome-4', 'Drone application windows', '<p>Drone application windows depend on crop stage, weather, and field access.</p>', 'Drone application windows depend on crop stage, weather, and field access.', 'grower-welcome-4', 5),
+    ('grower-welcome', 5, 'grower-welcome-5', 'EarthOptics scan opportunity', '<p>EarthOptics scanning can sharpen field-level recommendations.</p>', 'EarthOptics scanning can sharpen field-level recommendations.', 'grower-welcome-5', 7),
+    ('grower-welcome', 6, 'grower-welcome-6', 'Your next best acre decision', '<p>The next best acre decision is based on crop, timing, and input opportunity.</p>', 'The next best acre decision is based on crop, timing, and input opportunity.', 'grower-welcome-6', 10),
+    ('grower-welcome', 7, 'grower-welcome-7', 'Still want an acre review?', '<p>Reply if you still want Harvest Drone to review your acres.</p>', 'Reply if you still want Harvest Drone to review your acres.', 'grower-welcome-7', 14),
+    ('operator-welcome', 1, 'operator-welcome-1', 'Harvest Drone operator network', '<p>Welcome to the Harvest Drone operator network.</p>', 'Welcome to the Harvest Drone operator network.', 'operator-welcome-1', 0),
+    ('operator-welcome', 2, 'operator-welcome-2', 'How routed acreage works', '<p>Routed acreage connects qualified operators with grower demand.</p>', 'Routed acreage connects qualified operators with grower demand.', 'operator-welcome-2', 2),
+    ('operator-welcome', 3, 'operator-welcome-3', 'Qualification and compliance checklist', '<p>Qualification and compliance determine assignment readiness.</p>', 'Qualification and compliance determine assignment readiness.', 'operator-welcome-3', 5),
+    ('operator-welcome', 4, 'operator-welcome-4', 'Dealer and operator economics', '<p>Dealer and operator economics stack service, input, and soil data revenue.</p>', 'Dealer and operator economics stack service, input, and soil data revenue.', 'operator-welcome-4', 8),
+    ('operator-welcome', 5, 'operator-welcome-5', 'Schedule your territory review', '<p>Schedule a territory review to confirm coverage and readiness.</p>', 'Schedule a territory review to confirm coverage and readiness.', 'operator-welcome-5', 12),
+    ('source-order', 1, 'source-order-1', 'Your SOURCE order request', '<p>Your SOURCE order request has been received.</p>', 'Your SOURCE order request has been received.', 'source-order-1', 0),
+    ('source-order', 2, 'source-order-2', 'SOURCE order logistics and timing', '<p>SOURCE order logistics and timing will be coordinated before application.</p>', 'SOURCE order logistics and timing will be coordinated before application.', 'source-order-2', 2),
+    ('source-post-purchase', 1, 'source-post-purchase-1', 'SOURCE application planning', '<p>Plan SOURCE application around crop stage and field conditions.</p>', 'Plan SOURCE application around crop stage and field conditions.', 'source-post-purchase-1', 0),
+    ('source-post-purchase', 2, 'source-post-purchase-2', 'What to watch after application', '<p>After SOURCE application, watch field response and timing notes.</p>', 'After SOURCE application, watch field response and timing notes.', 'source-post-purchase-2', 7),
+    ('source-post-purchase', 3, 'source-post-purchase-3', 'Capture your acre results', '<p>Capture acre results so next season planning gets sharper.</p>', 'Capture acre results so next season planning gets sharper.', 'source-post-purchase-3', 21),
+    ('source-post-purchase', 4, 'source-post-purchase-4', 'Plan next season reorder acres', '<p>Use this season''s results to plan next season reorder acres.</p>', 'Use this season''s results to plan next season reorder acres.', 'source-post-purchase-4', 45)
 )
-insert into public.drip_emails (sequence_id, step_number, slug, subject, mailchimp_tag, delay_days)
-select ds.id, seed.step_number, seed.slug, seed.subject, seed.mailchimp_tag, seed.delay_days
+insert into public.drip_emails (sequence_id, step_number, slug, subject, body_html, body_text, mailchimp_tag, delay_days)
+select ds.id, seed.step_number, seed.slug, seed.subject, seed.body_html, seed.body_text, seed.mailchimp_tag, seed.delay_days
 from seed
 join public.drip_sequences ds on ds.slug = seed.sequence_slug
 on conflict (sequence_id, step_number) do update set
   slug = excluded.slug,
   subject = excluded.subject,
+  body_html = excluded.body_html,
+  body_text = excluded.body_text,
   mailchimp_tag = excluded.mailchimp_tag,
   delay_days = excluded.delay_days,
-  is_active = true;
+  is_active = true,
+  updated_at = timezone('utc', now());
 
 create or replace function public.sync_grower_to_crm()
 returns trigger
