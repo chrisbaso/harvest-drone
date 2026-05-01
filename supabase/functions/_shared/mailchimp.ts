@@ -1,4 +1,4 @@
-import { createHash } from "https://deno.land/std@0.177.0/hash/mod.ts";
+import md5 from "https://esm.sh/blueimp-md5@2.19.0";
 
 const MAILCHIMP_API_KEY = Deno.env.get("MAILCHIMP_API_KEY");
 const MAILCHIMP_SERVER = Deno.env.get("MAILCHIMP_SERVER_PREFIX");
@@ -35,10 +35,8 @@ async function parseMailchimpError(response: Response) {
   }
 }
 
-async function md5Hash(input: string) {
-  const hash = createHash("md5");
-  hash.update(input);
-  return hash.toString();
+function md5Hash(input: string) {
+  return md5(input);
 }
 
 export async function upsertContact(contact: MailchimpContact): Promise<{ success: boolean; error?: string }> {
