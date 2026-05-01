@@ -1,11 +1,5 @@
 # Blockers
 
-## Git staging and commits blocked
-
-- `git add` fails with `fatal: Unable to create 'C:/Users/c_bas/Projects/harvest-drone/.git/index.lock': Permission denied`.
-- `.git` has deny ACL entries for write/delete permissions, and no `index.lock` file or active Git process was present when checked.
-- Impact: task-level commits and pushes cannot be completed from this environment until repository Git permissions are fixed.
-
 ## Live browser route verification blocked
 
 - `npm run dev -- --host 127.0.0.1 --port 5173` fails while Vite loads config with `Error: spawn EPERM` from esbuild startup.
