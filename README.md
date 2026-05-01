@@ -30,6 +30,9 @@ It is not a SaaS product. The public experience is a SOURCE fit-check funnel for
 - `/source-acre-review/results` -> dynamic result page
 - `/admin` -> Harvest Drone admin dashboard
 - `/admin/leads/:leadId` -> lead detail view
+- `/training` -> operator training dashboard
+- `/training/qualification` -> operator qualification review module
+- `/admin/training` -> admin qualification matrix
 
 Legacy grower, operator, Hylio, and older CRM surfaces are still preserved in the repo under `/legacy/*`, but the active Harvest workflow now centers on the routes above.
 
@@ -99,6 +102,7 @@ Notes:
 ```text
 supabase/migrations/20260424_harvest_drone_lead_engine.sql
 supabase/migrations/20260424_harvest_drone_offer_path.sql
+supabase/migrations/20260501_training_operator_qualification_module.sql
 ```
 
 4. If the original Harvest migration was already applied in an existing project, the `20260424_harvest_drone_offer_path.sql` migration adds the missing `offer_path` column safely.

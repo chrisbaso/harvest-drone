@@ -25,6 +25,7 @@ const TrainingAssessmentPage = lazy(() => import("./pages/TrainingAssessmentPage
 const ChecklistRunnerPage = lazy(() => import("./pages/ChecklistRunnerPage"));
 const OperatorTrainingProfilePage = lazy(() => import("./pages/OperatorTrainingProfilePage"));
 const ComplianceCredentialsPage = lazy(() => import("./pages/ComplianceCredentialsPage"));
+const TrainingQualificationPage = lazy(() => import("./pages/TrainingQualificationPage"));
 const AdminTrainingPage = lazy(() => import("./pages/AdminTrainingPage"));
 const JobReadinessPage = lazy(() => import("./pages/JobReadinessPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
@@ -83,6 +84,7 @@ function App() {
         <Route path="/training/lessons/:id" element={<ProtectedRoute><TrainingLessonPage /></ProtectedRoute>} />
         <Route path="/training/assessments/:id" element={<ProtectedRoute><TrainingAssessmentPage /></ProtectedRoute>} />
         <Route path="/training/checklists/:slug" element={<ProtectedRoute><ChecklistRunnerPage /></ProtectedRoute>} />
+        <Route path="/training/qualification" element={<ProtectedRoute allowedRoles={["admin", "dealer", "operator"]}><TrainingQualificationPage /></ProtectedRoute>} />
         <Route path="/operators/:id/training" element={<ProtectedRoute><OperatorTrainingProfilePage /></ProtectedRoute>} />
         <Route path="/compliance/credentials" element={<ProtectedRoute><ComplianceCredentialsPage /></ProtectedRoute>} />
         <Route path="/jobs/:id/readiness" element={<ProtectedRoute><JobReadinessPage /></ProtectedRoute>} />

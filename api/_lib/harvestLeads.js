@@ -208,19 +208,6 @@ function renderLeadAlertHtml(lead) {
   `;
 }
 
-function renderConfirmationHtml() {
-  return `
-    <div style="font-family:Arial,sans-serif;padding:24px;background:#f7f3ea;color:#223025;">
-      <div style="max-width:620px;margin:0 auto;background:#fff;border:1px solid #ddd7cc;border-radius:20px;padding:24px;">
-        <p style="margin:0 0 12px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#2f6a45;font-weight:700;">Harvest Drone SOURCE fit check</p>
-        <h1 style="margin:0 0 16px;font-size:28px;line-height:1.1;">Thanks for completing the fit check.</h1>
-        <p style="margin:0 0 14px;line-height:1.7;">Based on your answers, we'll review your acres, timing, and application fit. If your operation looks like a strong fit, someone from Harvest Drone may reach out with next steps.</p>
-        <p style="margin:0 0 14px;line-height:1.7;">This is a practical fit review only. It is not a guarantee of yield increase, input savings, or field outcome.</p>
-      </div>
-    </div>
-  `;
-}
-
 export async function sendLeadNotifications(lead) {
   const { resendKey, fromEmail, alertEmail, replyToEmail } = getResendConfiguration();
 
@@ -228,9 +215,9 @@ export async function sendLeadNotifications(lead) {
     logNotificationSkip({ lead, resendKey, fromEmail, alertEmail });
     return {
       alertStatus: "skipped",
-      confirmationStatus: "skipped",
+      confirmationStatus: "mailchimp_only",
       reason:
-        "Resend is not configured. Set RESEND_API_KEY, FROM_EMAIL or RESEND_FROM_EMAIL, and ALERT_EMAIL or INTERNAL_NOTIFICATION_EMAIL or ADMIN_EMAIL or NOTIFICATION_EMAIL.",
+        "Resend is not configured for internal alerts. Customer-facing confirmations are handled by Mailchimp.",
     };
   }
 
@@ -248,17 +235,9 @@ export async function sendLeadNotifications(lead) {
     });
   }
 
-  await resend.emails.send({
-    from: fromEmail,
-    to: lead.email,
-    ...replyToField,
-    subject: "Your Harvest Drone SOURCE fit check",
-    html: renderConfirmationHtml(),
-  });
-
   return {
     alertStatus: lead.lead_tier === LEAD_TIERS.HOT ? "sent" : "not_required",
-    confirmationStatus: "sent",
+    confirmationStatus: "mailchimp_only",
     reason: null,
   };
 }
@@ -400,7 +379,7 @@ export async function insertHarvestLead(payload) {
     logNotificationFailure(data, error);
     notifications = {
       alertStatus: "failed",
-      confirmationStatus: "failed",
+      confirmationStatus: "mailchimp_only",
       reason: error.message || "Lead saved but notifications failed.",
     };
   }

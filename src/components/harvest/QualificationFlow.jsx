@@ -252,7 +252,7 @@ function ContactFields({ draft, onChange }) {
             onChange={onChange}
             autoComplete="tel"
             inputMode="tel"
-            placeholder="218-255-9111"
+            placeholder="612-555-0148"
             required
           />
         </SourceField>

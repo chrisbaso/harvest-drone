@@ -51,9 +51,14 @@ function AdminTrainingPage() {
         <article className="table-card card">
           <div className="table-card__header">
             <h3>Operators</h3>
-            <Link className="button button--secondary button--small" to="/compliance/credentials">
-              Credential vault
-            </Link>
+            <div className="inline-actions">
+              <Link className="button button--secondary button--small" to="/training/qualification">
+                Qualification module
+              </Link>
+              <Link className="button button--secondary button--small" to="/compliance/credentials">
+                Credential vault
+              </Link>
+            </div>
           </div>
           <div className="table-wrap">
             <table>

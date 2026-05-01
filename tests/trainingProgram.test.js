@@ -8,6 +8,9 @@ import {
   demoOperators,
   findAssessment,
   getCourseProgress,
+  getOperatorQualificationPlan,
+  getQualificationGateChecks,
+  getQualificationQueue,
   scoreAssessment,
   trainingCourses,
 } from "../shared/trainingProgram.js";
@@ -73,4 +76,38 @@ run("allows Hylio assignment when hard gates pass", () => {
 
   assert.equal(readiness.ready, true);
   assert.deepEqual(readiness.blockers, []);
+});
+
+run("builds qualification gate checks across training, credentials, practical, and assignment", () => {
+  const gates = getQualificationGateChecks({
+    operator: demoOperators[1],
+    job: demoHylioJob,
+    now: new Date("2026-04-30"),
+  });
+
+  assert.ok(gates.some((gate) => gate.group === "Training" && gate.status === "blocker"));
+  assert.ok(gates.some((gate) => gate.group === "Credentials" && gate.id === "credential-pesticide"));
+  assert.ok(gates.some((gate) => gate.group === "Practical" && gate.status === "blocker"));
+  assert.ok(gates.some((gate) => gate.group === "Assignment" && gate.id === "job-checklists" && gate.status === "warning"));
+});
+
+run("qualification plan exposes next actions when operator is not review-ready", () => {
+  const plan = getOperatorQualificationPlan({
+    operator: demoOperators[1],
+    job: demoHylioJob,
+    now: new Date("2026-04-30"),
+  });
+
+  assert.equal(plan.canRequestReview, false);
+  assert.equal(plan.reviewStatus, "NOT_READY");
+  assert.ok(plan.counts.blockers > 0);
+  assert.ok(plan.nextActions.some((action) => action.action.includes("Schedule supervised field evaluation")));
+});
+
+run("qualification queue sorts review-ready operators first", () => {
+  const queue = getQualificationQueue(demoOperators, demoHylioJob, new Date("2026-04-30"));
+
+  assert.equal(queue[0].operatorId, demoOperators[0].id);
+  assert.equal(queue[0].canRequestReview, true);
+  assert.equal(queue[0].canAssignToJob, true);
 });

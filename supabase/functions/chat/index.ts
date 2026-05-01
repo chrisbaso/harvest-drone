@@ -48,7 +48,7 @@ EARTHOPTICS:
 CONTACT:
 - Jake Lund, founder
 - Phone: 612-258-0582
-- Email: jake@goharvestdrone.com
+- Email: jake@harvestdrone.com
 - Service area: Minnesota (expanding)
 
 YOUR RULES:

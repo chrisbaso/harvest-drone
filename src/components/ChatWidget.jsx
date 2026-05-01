@@ -380,7 +380,7 @@ function ChatWidget() {
       const data = await response.json();
       const agentMessage = {
         role: "agent",
-        content: data.response || "Sorry, I missed that. You can reach Jake at 218-255-9111.",
+        content: data.response || "Sorry, I missed that. You can reach Jake Lund at 612-258-0582.",
       };
 
       setMessages((current) => [...current, agentMessage]);
@@ -399,7 +399,7 @@ function ChatWidget() {
         ...current,
         {
           role: "agent",
-          content: "Sorry, I'm having trouble connecting. You can reach Jake directly at 218-255-9111.",
+          content: "Sorry, I'm having trouble connecting. You can reach Jake Lund directly at 612-258-0582.",
         },
       ]);
     } finally {

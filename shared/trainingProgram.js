@@ -6,6 +6,13 @@ export const QUALIFICATION_LEVELS = {
   CHIEF_PILOT_OR_ADMIN: "CHIEF_PILOT_OR_ADMIN",
 };
 
+export const QUALIFICATION_REVIEW_STATUSES = {
+  NOT_READY: "NOT_READY",
+  READY_FOR_REVIEW: "READY_FOR_REVIEW",
+  APPROVED: "APPROVED",
+  NEEDS_REMEDIATION: "NEEDS_REMEDIATION",
+};
+
 export const CREDENTIAL_TYPES = {
   FAA_PART_107: "FAA_PART_107",
   FAA_PART_107_RECENCY: "FAA_PART_107_RECENCY",
@@ -591,6 +598,25 @@ export const demoHylioJob = {
   priorRecordsOverdue: false,
 };
 
+function normalizeLabel(value = "") {
+  return value
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function buildGate({ id, group, label, passed, warning = false, evidence, action, required = true }) {
+  return {
+    id,
+    group,
+    label,
+    status: passed ? "pass" : warning ? "warning" : "blocker",
+    evidence,
+    action,
+    required,
+  };
+}
+
 export function flattenLessons(courses = trainingCourses) {
   return courses.flatMap((course) =>
     course.modules.flatMap((module, moduleIndex) =>
@@ -813,6 +839,217 @@ export function computeHylioJobReadiness({ operator, job = demoHylioJob, now = n
     blockers,
     warnings,
   };
+}
+
+export function getQualificationGateChecks({ operator, job = demoHylioJob, now = new Date() }) {
+  const foundations = findCourse("hylio-operator-foundations");
+  const foundationProgress = getCourseProgress(operator, foundations);
+  const practicalPassed = (operator.practicalEvaluations || []).filter((evaluation) => evaluation.status === "passed").length;
+  const requiredChecklistSlugs = job.requiredChecklistSlugs || [];
+  const completedChecklistSlugs = job.completedChecklistSlugs || [];
+  const incompleteChecklists = requiredChecklistSlugs.filter((slug) => !completedChecklistSlugs.includes(slug));
+  const credentialCriteria = { state: job.state, aircraftModel: job.aircraftModel, payloadType: job.payloadType };
+  const pesticideCredential = getCredential(operator, CREDENTIAL_TYPES.PESTICIDE_APPLICATOR_LICENSE, { state: job.state }, now);
+
+  const gates = [
+    buildGate({
+      id: "foundations-course",
+      group: "Training",
+      label: "Hylio Operator Foundations complete",
+      passed: foundationProgress.percentage === 100,
+      evidence: `${foundationProgress.completed} of ${foundationProgress.total} required lessons complete`,
+      action: foundationProgress.nextLesson
+        ? `Continue with ${foundationProgress.nextLesson.title}`
+        : "Keep course completion evidence attached",
+    }),
+    ...assessments.map((assessment) => {
+      const attempt = getLatestAttempt(operator, assessment.id);
+      return buildGate({
+        id: `assessment-${assessment.id}`,
+        group: "Assessments",
+        label: assessment.title,
+        passed: Boolean(attempt?.passed),
+        evidence: attempt ? `${attempt.score}% on ${attempt.attemptedAt || "latest attempt"}` : "No passing attempt recorded",
+        action: attempt?.passed ? "No action required" : `Pass with ${assessment.passingScore}% or higher`,
+      });
+    }),
+    buildGate({
+      id: "practical-signoffs",
+      group: "Practical",
+      label: "Lead/chief pilot practical signoff",
+      passed: hasAllPracticalSignoffs(operator),
+      evidence: `${practicalPassed} of ${practicalEvaluationTemplates.length} rubric templates passed`,
+      action: "Schedule supervised field evaluation and attach evidence",
+    }),
+    buildGate({
+      id: "credential-part-107",
+      group: "Credentials",
+      label: "FAA Part 107 credential verified",
+      passed: Boolean(getCredential(operator, CREDENTIAL_TYPES.FAA_PART_107, {}, now)),
+      evidence: getCredential(operator, CREDENTIAL_TYPES.FAA_PART_107, {}, now) ? "Verified and current" : "Missing, pending, rejected, or expired",
+      action: "Upload current Part 107 evidence for compliance review",
+    }),
+    buildGate({
+      id: "credential-part-107-recency",
+      group: "Credentials",
+      label: "Part 107 recency verified",
+      passed: Boolean(getCredential(operator, CREDENTIAL_TYPES.FAA_PART_107_RECENCY, {}, now)),
+      evidence: getCredential(operator, CREDENTIAL_TYPES.FAA_PART_107_RECENCY, {}, now) ? "Verified and current" : "Missing or expired",
+      action: "Record recency evidence before assignment",
+    }),
+    buildGate({
+      id: "credential-pesticide",
+      group: "Credentials",
+      label: `${job.state} pesticide applicator credential`,
+      passed: job.operationType !== "pesticide_application" || Boolean(pesticideCredential),
+      evidence: pesticideCredential
+        ? [pesticideCredential.state, pesticideCredential.category].filter(Boolean).join(" / ") || "Verified"
+        : `${job.state} credential not verified for this operation`,
+      action: "Upload state/category pesticide applicator evidence",
+      required: job.operationType === "pesticide_application",
+    }),
+    buildGate({
+      id: "credential-hylio-onboarding",
+      group: "Credentials",
+      label: "Hylio onboarding verified",
+      passed: Boolean(getCredential(operator, CREDENTIAL_TYPES.HYLIO_ONBOARDING, credentialCriteria, now)),
+      evidence: getCredential(operator, CREDENTIAL_TYPES.HYLIO_ONBOARDING, credentialCriteria, now) ? "Verified and current" : "No verified Hylio onboarding record",
+      action: "Verify official Hylio onboarding/training evidence",
+    }),
+    buildGate({
+      id: "credential-harvest-internal",
+      group: "Credentials",
+      label: "Harvest internal qualification current",
+      passed: Boolean(getCredential(operator, CREDENTIAL_TYPES.HARVEST_INTERNAL_QUALIFICATION, {}, now)),
+      evidence: getCredential(operator, CREDENTIAL_TYPES.HARVEST_INTERNAL_QUALIFICATION, {}, now) ? "Verified and current" : "Missing or expired",
+      action: "Request Harvest qualification review",
+    }),
+    buildGate({
+      id: "aircraft-model",
+      group: "Assignment",
+      label: `${job.aircraftModel} aircraft model authorization`,
+      passed: Boolean(operator.aircraftModels?.includes(job.aircraftModel)),
+      evidence: (operator.aircraftModels || []).join(", ") || "No aircraft models on profile",
+      action: `Add ${job.aircraftModel} supervised qualification`,
+    }),
+    buildGate({
+      id: "payload-type",
+      group: "Assignment",
+      label: `${normalizeLabel(job.payloadType)} payload authorization`,
+      passed: Boolean(operator.payloadTypes?.includes(job.payloadType)),
+      evidence: (operator.payloadTypes || []).map(normalizeLabel).join(", ") || "No payload types on profile",
+      action: `Add ${normalizeLabel(job.payloadType)} payload signoff`,
+    }),
+    buildGate({
+      id: "aircraft-status",
+      group: "Assignment",
+      label: "Aircraft active, registered, Remote ID ready, and unblocked",
+      passed:
+        job.aircraft?.status === "active" &&
+        job.aircraft?.registrationStatus === "verified" &&
+        job.aircraft?.remoteIdStatus === "verified" &&
+        !job.aircraft?.maintenanceBlocked,
+      evidence: `Status: ${job.aircraft?.status || "unknown"} | Registration: ${job.aircraft?.registrationStatus || "unknown"} | Remote ID: ${job.aircraft?.remoteIdStatus || "unknown"}`,
+      action: "Resolve aircraft registration, Remote ID, or maintenance blockers",
+    }),
+    buildGate({
+      id: "weather-acknowledged",
+      group: "Assignment",
+      label: "Weather and drift precheck acknowledged",
+      passed: Boolean(job.weatherAcknowledged),
+      evidence: job.weatherAcknowledged ? "Acknowledged for this job" : "Not acknowledged",
+      action: "Complete weather/drift review before dispatch",
+    }),
+    buildGate({
+      id: "job-documents",
+      group: "Assignment",
+      label: "Required job documents attached",
+      passed: Boolean(job.documentsAttached),
+      warning: true,
+      evidence: job.documentsAttached ? "Documents attached" : "Documents missing",
+      action: "Attach label, field plan, customer notes, and application records",
+    }),
+    buildGate({
+      id: "job-checklists",
+      group: "Assignment",
+      label: "Required SOP checklists completed",
+      passed: incompleteChecklists.length === 0,
+      warning: true,
+      evidence: incompleteChecklists.length ? incompleteChecklists.join(", ") : "All required checklists complete",
+      action: "Complete required SOP checklists before launch",
+    }),
+    buildGate({
+      id: "prior-records",
+      group: "Assignment",
+      label: "Prior job records closed",
+      passed: !job.priorRecordsOverdue,
+      evidence: job.priorRecordsOverdue ? "Prior records overdue" : "No overdue records",
+      action: "Close overdue postflight/application records",
+    }),
+  ];
+
+  if (job.requiresMedical) {
+    gates.push(
+      buildGate({
+        id: "credential-medical",
+        group: "Credentials",
+        label: "Medical certificate verified",
+        passed: Boolean(getCredential(operator, CREDENTIAL_TYPES.MEDICAL_CERTIFICATE, {}, now)),
+        evidence: getCredential(operator, CREDENTIAL_TYPES.MEDICAL_CERTIFICATE, {}, now) ? "Verified and current" : "Missing or expired",
+        action: "Upload current medical certificate evidence",
+      }),
+    );
+  }
+
+  return gates;
+}
+
+export function getOperatorQualificationPlan({ operator, job = demoHylioJob, now = new Date() }) {
+  const readiness = computeHylioJobReadiness({ operator, job, now });
+  const gates = getQualificationGateChecks({ operator, job, now });
+  const blockers = gates.filter((gate) => gate.status === "blocker");
+  const warnings = gates.filter((gate) => gate.status === "warning");
+  const passed = gates.filter((gate) => gate.status === "pass");
+  const completionScore = gates.length ? Math.round((passed.length / gates.length) * 100) : 0;
+  const canRequestReview = blockers.length === 0;
+  const reviewStatus = canRequestReview
+    ? QUALIFICATION_REVIEW_STATUSES.READY_FOR_REVIEW
+    : QUALIFICATION_REVIEW_STATUSES.NOT_READY;
+
+  return {
+    operatorId: operator.id,
+    operatorName: operator.name,
+    jobId: job.id,
+    jobTitle: job.title,
+    level: readiness.level,
+    reviewStatus,
+    canRequestReview,
+    canAssignToJob: readiness.ready,
+    completionScore,
+    gates,
+    counts: {
+      passed: passed.length,
+      blockers: blockers.length,
+      warnings: warnings.length,
+      total: gates.length,
+    },
+    nextActions: [...blockers, ...warnings].slice(0, 6).map((gate) => ({
+      gateId: gate.id,
+      label: gate.label,
+      group: gate.group,
+      action: gate.action,
+      status: gate.status,
+    })),
+    summary: canRequestReview
+      ? `${operator.name} is ready for lead/chief pilot qualification review for ${job.aircraftModel} ${normalizeLabel(job.payloadType)} work.`
+      : `${operator.name} has ${blockers.length} blocker(s) before qualification review.`,
+  };
+}
+
+export function getQualificationQueue(operators = demoOperators, job = demoHylioJob, now = new Date()) {
+  return operators
+    .map((operator) => getOperatorQualificationPlan({ operator, job, now }))
+    .sort((a, b) => a.counts.blockers - b.counts.blockers || b.completionScore - a.completionScore);
 }
 
 export function getExpiringCredentials(operator, now = new Date(), days = 45) {

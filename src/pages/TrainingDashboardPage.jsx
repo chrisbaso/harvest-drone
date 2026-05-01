@@ -31,6 +31,9 @@ function TrainingDashboardPage() {
               <Link className="button button--primary" to="/training/courses/hylio-operator-foundations">
                 Continue training
               </Link>
+              <Link className="button button--secondary" to="/training/qualification">
+                Open qualification module
+              </Link>
               <Link className="button button--secondary" to="/jobs/1842/readiness">
                 View job readiness
               </Link>

@@ -28,6 +28,14 @@ function OperatorTrainingProfilePage() {
           <span className="eyebrow">Operator profile</span>
           <h1>{operator.name}</h1>
           <p>{operator.role} | {operator.state} | {readiness.level.replaceAll("_", " ")}</p>
+          <div className="training-actions">
+            <Link className="button button--secondary" to="/training/qualification">
+              Open qualification module
+            </Link>
+            <Link className="button button--secondary" to="/jobs/1842/readiness">
+              View readiness gates
+            </Link>
+          </div>
         </div>
 
         <div className="training-grid training-grid--two">

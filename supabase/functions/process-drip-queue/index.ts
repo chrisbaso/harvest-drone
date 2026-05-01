@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { removeTag } from "../_shared/mailchimp.ts";
+import { removeTag, upsertContact } from "../_shared/mailchimp.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -30,7 +30,7 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-async function sendResendEmail(to: string[], subject: string, html: string) {
+async function sendInternalResendEmail(to: string[], subject: string, html: string) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -47,7 +47,7 @@ async function sendResendEmail(to: string[], subject: string, html: string) {
 
   if (!response.ok) {
     const data = await response.json().catch(() => null);
-    throw new Error(data?.message || "Resend request failed.");
+    throw new Error(data?.message || "Internal Resend notification failed.");
   }
 }
 
@@ -76,21 +76,27 @@ serve(async (req) => {
     }
 
     for (const order of unpaidOrders || []) {
-      await sendResendEmail(
-        [order.email],
-        "Quick follow-up on your SOURCE order",
-        `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-          <p>Hey ${order.first_name || "there"},</p>
-          <p>Just checking in. We sent over an invoice for your SOURCE order a few days ago and wanted to make sure it did not get lost in the shuffle.</p>
-          <p>If you have any questions or need the invoice resent, just reply to this email.</p>
-          <p>- Jake<br/>Harvest Drone</p>
-        </div>`,
-      );
+      const mailchimpReminder = await upsertContact({
+        email: order.email,
+        firstName: order.first_name || undefined,
+        state: order.state || undefined,
+        county: order.county || undefined,
+        acres: order.acres ? String(order.acres) : undefined,
+        tags: ["source-invoice-reminder-due"],
+        mergeFields: {
+          PRODUCT: order.product || "SOURCE",
+          TOTAL: order.estimated_total || "",
+        },
+      });
 
-      await sendResendEmail(
+      if (!mailchimpReminder.success) {
+        throw new Error(mailchimpReminder.error || "Mailchimp reminder tagging failed.");
+      }
+
+      await sendInternalResendEmail(
         [adminEmail],
         `Unpaid order: ${order.first_name || "Unknown"} - ${order.acres || "?"} acres - $${order.estimated_total || "?"}`,
-        `<p>3+ days unpaid. Reminder sent to ${order.email}. Consider a follow-up call.</p>`,
+        `<p>3+ days unpaid. Mailchimp reminder tag applied to ${order.email}. Consider a follow-up call.</p>`,
       );
 
       const { error: updateError } = await supabase

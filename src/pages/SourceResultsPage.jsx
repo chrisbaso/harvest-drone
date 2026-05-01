@@ -63,7 +63,7 @@ function ResultsAction({ lead }) {
       >
         {ctaLabel}
       </SourceButton>
-      <SourceButton as="a" href="tel:+12182559111" variant="secondary">
+      <SourceButton as="a" href="tel:+16122580582" variant="secondary">
         Call Harvest Drone
       </SourceButton>
 
