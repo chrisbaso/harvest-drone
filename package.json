@@ -8,7 +8,8 @@
     "vercel-dev": "vercel dev --yes",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node tests/harvestLeadEngine.test.js && node tests/trainingProgram.test.js"
+    "export:rdo-seed": "node scripts/export-rdo-enterprise-seed.mjs",
+    "test": "node tests/harvestLeadEngine.test.js && node tests/revenueOps.test.js && node tests/trainingProgram.test.js && node tests/enterpriseDivision.test.js && node tests/enterpriseDemoPath.test.js && node tests/enterpriseSeed.test.js && node tests/enterpriseWorkspace.test.js && node tests/enterpriseEvidence.test.js && node tests/enterpriseRlsMigration.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",

@@ -34,6 +34,7 @@ const DealerDashboardPage = lazy(() => import("./pages/DealerDashboardPage"));
 const NetworkDashboardPage = lazy(() => import("./pages/NetworkDashboardPage"));
 const DealerOnboardingPage = lazy(() => import("./pages/DealerOnboardingPage"));
 const DemoIndexPage = lazy(() => import("./pages/DemoIndexPage"));
+const EnterprisePage = lazy(() => import("./pages/EnterprisePage"));
 
 function MetaPixelManager() {
   const location = useLocation();
@@ -73,6 +74,16 @@ function App() {
         <Route path="/d/:dealerSlug" element={<SourcePage />} />
         <Route path="/d/:dealerSlug/growers" element={<GrowerPage />} />
         <Route path="/demo" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer", "operator"]}><DemoIndexPage /></ProtectedRoute>} />
+        <Route path="/enterprise" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="home" /></ProtectedRoute>} />
+        <Route path="/enterprise/:orgId/division" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="division" /></ProtectedRoute>} />
+        <Route path="/enterprise/:orgId/blueprint" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="blueprint" /></ProtectedRoute>} />
+        <Route path="/enterprise/:orgId/spray-calendar" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="spray-calendar" /></ProtectedRoute>} />
+        <Route path="/enterprise/:orgId/operators" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="operators" /></ProtectedRoute>} />
+        <Route path="/enterprise/:orgId/fleet" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="fleet" /></ProtectedRoute>} />
+        <Route path="/enterprise/:orgId/readiness" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="readiness" /></ProtectedRoute>} />
+        <Route path="/enterprise/:orgId/application-records" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="application-records" /></ProtectedRoute>} />
+        <Route path="/enterprise/:orgId/support" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="support" /></ProtectedRoute>} />
+        <Route path="/enterprise/:orgId/performance" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="performance" /></ProtectedRoute>} />
         <Route path="/crm" element={<ProtectedRoute allowedRoles={["admin"]}><CrmPage /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardOverviewPage /></ProtectedRoute>} />
         <Route path="/dashboard/leads/:leadType/:leadId" element={<ProtectedRoute allowedRoles={["admin"]}><LeadDetailPage /></ProtectedRoute>} />

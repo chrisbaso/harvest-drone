@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 
 function AdminGate({ children }) {
-  const { isAuthenticated, isAuthLoading, signIn, signUp } = useAuth();
+  const { isAuthenticated, isLoading, signIn, signUp } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,25 +16,28 @@ function AdminGate({ children }) {
     setErrorMessage("");
     setInfoMessage("");
 
-    const authAction = mode === "signin" ? signIn : signUp;
-    const { data, error } = await authAction({ email, password });
+    try {
+      if (mode === "signin") {
+        await signIn(email, password);
+      } else {
+        const data = await signUp({ email, password });
 
-    if (error) {
-      setErrorMessage(error.message);
+        if (!data?.session) {
+          setInfoMessage(
+            "Account created. If email confirmations are enabled in Supabase, verify your email before signing in."
+          );
+        }
+      }
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to authenticate.");
       setIsSubmitting(false);
       return;
-    }
-
-    if (mode === "signup" && !data?.session) {
-      setInfoMessage(
-        "Account created. If email confirmations are enabled in Supabase, verify your email before signing in."
-      );
     }
 
     setIsSubmitting(false);
   }
 
-  if (isAuthLoading) {
+  if (isLoading) {
     return (
       <section className="auth-card card">
         <span className="eyebrow">Admin access</span>

@@ -2,6 +2,69 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
+const DEMO_SESSION_STORAGE_KEY = "harvest_drone_demo_session";
+const DEMO_USER_ID = "00000000-0000-4000-8000-000000000001";
+const DEMO_NETWORK_ID = "11111111-1111-4111-8111-111111111111";
+const DEMO_DEALER_ID = "22222222-2222-4222-8222-222222222222";
+const isLocalDemoAuthAvailable = import.meta.env.DEV;
+
+function createDemoSession(role = "admin") {
+  const profile = {
+    id: DEMO_USER_ID,
+    email: "demo@harvestdrone.local",
+    full_name: "Harvest Drone Demo",
+    role,
+    dealer_id: DEMO_DEALER_ID,
+    network_id: DEMO_NETWORK_ID,
+    is_active: true,
+    is_demo: true,
+    dealers: {
+      id: DEMO_DEALER_ID,
+      name: "Harvest Demo Territory",
+      slug: "demo-territory",
+      state: "Upper Midwest",
+      counties_served: ["Demo County A", "Demo County B", "Demo County C"],
+      territory_description: "Generic demo territory for attribution and operator readiness walkthroughs.",
+      training_status: "active",
+    },
+    dealer_networks: {
+      id: DEMO_NETWORK_ID,
+      name: "Harvest Demo Network",
+      slug: "harvest-demo-network",
+    },
+  };
+
+  return {
+    user: {
+      id: DEMO_USER_ID,
+      email: profile.email,
+      app_metadata: {},
+      user_metadata: { full_name: profile.full_name, demo: true },
+      aud: "authenticated",
+      role: "authenticated",
+    },
+    profile,
+  };
+}
+
+function loadDemoSession() {
+  if (!isLocalDemoAuthAvailable || typeof window === "undefined") return null;
+  return window.localStorage.getItem(DEMO_SESSION_STORAGE_KEY) === "true"
+    ? createDemoSession("admin")
+    : null;
+}
+
+function saveDemoSession() {
+  if (isLocalDemoAuthAvailable && typeof window !== "undefined") {
+    window.localStorage.setItem(DEMO_SESSION_STORAGE_KEY, "true");
+  }
+}
+
+function clearDemoSession() {
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(DEMO_SESSION_STORAGE_KEY);
+  }
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -36,7 +99,9 @@ export function AuthProvider({ children }) {
       if (session?.user) {
         await loadProfile(session.user.id);
       } else {
-        setProfile(null);
+        const demoSession = loadDemoSession();
+        setUser(demoSession?.user ?? null);
+        setProfile(demoSession?.profile ?? null);
         setIsLoading(false);
       }
     });
@@ -47,9 +112,12 @@ export function AuthProvider({ children }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
+        clearDemoSession();
         await loadProfile(session.user.id);
       } else {
-        setProfile(null);
+        const demoSession = loadDemoSession();
+        setUser(demoSession?.user ?? null);
+        setProfile(demoSession?.profile ?? null);
         setIsLoading(false);
       }
     });
@@ -61,8 +129,21 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function signIn(email, password) {
+    clearDemoSession();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+  }
+
+  function signInDemo() {
+    if (!isLocalDemoAuthAvailable) {
+      throw new Error("Local demo mode is only available while running the Vite dev server.");
+    }
+
+    const demoSession = createDemoSession("admin");
+    saveDemoSession();
+    setUser(demoSession.user);
+    setProfile(demoSession.profile);
+    setIsLoading(false);
   }
 
   async function signUp({ email, password }) {
@@ -72,6 +153,7 @@ export function AuthProvider({ children }) {
   }
 
   async function signOut() {
+    clearDemoSession();
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
@@ -91,7 +173,10 @@ export function AuthProvider({ children }) {
       isOperator: role === "operator",
       dealerId: profile?.dealer_id ?? null,
       networkId: profile?.network_id ?? null,
+      isDemo: Boolean(profile?.is_demo),
+      canUseLocalDemoAuth: isLocalDemoAuthAvailable,
       signIn,
+      signInDemo,
       signUp,
       signOut,
     };

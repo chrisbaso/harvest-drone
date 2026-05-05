@@ -592,7 +592,7 @@ export const demoHylioJob = {
     maintenanceBlocked: false,
   },
   requiredChecklistSlugs: ["preflight", "drift-weather-review", "chemical-mixing-loading"],
-  completedChecklistSlugs: ["drift-weather-review"],
+  completedChecklistSlugs: ["preflight", "drift-weather-review", "chemical-mixing-loading"],
   documentsAttached: true,
   weatherAcknowledged: true,
   priorRecordsOverdue: false,
@@ -714,6 +714,22 @@ export function canSignPracticalEvaluation(roleOrLevel) {
   return ["Lead Operator", "Chief Pilot", "Admin", "Compliance Admin", QUALIFICATION_LEVELS.LEAD_OPERATOR, QUALIFICATION_LEVELS.CHIEF_PILOT_OR_ADMIN].includes(roleOrLevel);
 }
 
+export function canVerifyOperatorCredential({ actor, operator }) {
+  if (!actor || !operator || actor.id === operator.id) {
+    return false;
+  }
+
+  return ["Lead Operator", "Chief Pilot", "Admin", "Compliance Admin", QUALIFICATION_LEVELS.LEAD_OPERATOR, QUALIFICATION_LEVELS.CHIEF_PILOT_OR_ADMIN].includes(actor.role || actor.level);
+}
+
+export function canSignPracticalForOperator({ actor, operator }) {
+  if (!actor || !operator || actor.id === operator.id) {
+    return false;
+  }
+
+  return canSignPracticalEvaluation(actor.role || actor.level);
+}
+
 export function hasAllPracticalSignoffs(operator) {
   return practicalEvaluationTemplates.every((template) =>
     (operator.practicalEvaluations || []).some((evaluation) => evaluation.templateId === template.id && evaluation.status === "passed"),
@@ -818,11 +834,11 @@ export function computeHylioJobReadiness({ operator, job = demoHylioJob, now = n
 
   const incompleteChecklists = (job.requiredChecklistSlugs || []).filter((slug) => !(job.completedChecklistSlugs || []).includes(slug));
   if (incompleteChecklists.length) {
-    warnings.push(`Required SOP checklist pending: ${incompleteChecklists.join(", ")}`);
+    blockers.push(`Required SOP checklist pending: ${incompleteChecklists.join(", ")}`);
   }
 
   if (!job.documentsAttached) {
-    warnings.push("Required job documents are not attached");
+    blockers.push("Required job documents are not attached");
   }
 
   if (!job.weatherAcknowledged) {
@@ -965,7 +981,6 @@ export function getQualificationGateChecks({ operator, job = demoHylioJob, now =
       group: "Assignment",
       label: "Required job documents attached",
       passed: Boolean(job.documentsAttached),
-      warning: true,
       evidence: job.documentsAttached ? "Documents attached" : "Documents missing",
       action: "Attach label, field plan, customer notes, and application records",
     }),
@@ -974,7 +989,6 @@ export function getQualificationGateChecks({ operator, job = demoHylioJob, now =
       group: "Assignment",
       label: "Required SOP checklists completed",
       passed: incompleteChecklists.length === 0,
-      warning: true,
       evidence: incompleteChecklists.length ? incompleteChecklists.join(", ") : "All required checklists complete",
       action: "Complete required SOP checklists before launch",
     }),

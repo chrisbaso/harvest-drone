@@ -177,16 +177,16 @@ create policy harvest_drone_leads_access on public.harvest_drone_leads
   );
 
 insert into public.dealer_networks (name, slug, contact_name, contact_email)
-values ('RDO Equipment', 'rdo', 'Demo Contact', 'demo@rdo.com')
+values ('Harvest Demo Network', 'harvest-demo-network', 'Demo Contact', 'demo@harvestdrone.local')
 on conflict (slug) do update set name = excluded.name, contact_name = excluded.contact_name, contact_email = excluded.contact_email;
 
 insert into public.dealers (network_id, name, slug, state, counties_served, training_status, is_active)
 values
-((select id from public.dealer_networks where slug = 'rdo'), 'RDO - Marshall, MN', 'rdo-marshall-mn', 'Minnesota', array['Lyon', 'Redwood', 'Yellow Medicine'], 'active', true),
-((select id from public.dealer_networks where slug = 'rdo'), 'RDO - Fargo, ND', 'rdo-fargo-nd', 'North Dakota', array['Cass', 'Clay', 'Richland'], 'qualified', true),
-((select id from public.dealer_networks where slug = 'rdo'), 'RDO - Aberdeen, SD', 'rdo-aberdeen-sd', 'South Dakota', array['Brown', 'Spink', 'Day'], 'in_progress', true),
-((select id from public.dealer_networks where slug = 'rdo'), 'RDO - Moorhead, MN', 'rdo-moorhead-mn', 'Minnesota', array['Clay', 'Becker', 'Wilkin'], 'active', true),
-((select id from public.dealer_networks where slug = 'rdo'), 'RDO - Wahpeton, ND', 'rdo-wahpeton-nd', 'North Dakota', array['Richland', 'Sargent', 'Ransom'], 'pending', true)
+((select id from public.dealer_networks where slug = 'harvest-demo-network'), 'Harvest Demo Territory', 'demo-territory', 'Upper Midwest', array['Demo County A', 'Demo County B', 'Demo County C'], 'active', true),
+((select id from public.dealer_networks where slug = 'harvest-demo-network'), 'North Demo Territory', 'north-demo-territory', 'Northern Plains', array['Demo County D', 'Demo County E', 'Demo County F'], 'qualified', true),
+((select id from public.dealer_networks where slug = 'harvest-demo-network'), 'South Demo Territory', 'south-demo-territory', 'Southern Plains', array['Demo County G', 'Demo County H', 'Demo County I'], 'in_progress', true),
+((select id from public.dealer_networks where slug = 'harvest-demo-network'), 'East Demo Territory', 'east-demo-territory', 'Eastern Corn Belt', array['Demo County J', 'Demo County K', 'Demo County L'], 'active', true),
+((select id from public.dealer_networks where slug = 'harvest-demo-network'), 'West Demo Territory', 'west-demo-territory', 'Western Plains', array['Demo County M', 'Demo County N', 'Demo County O'], 'pending', true)
 on conflict (slug) do update set
   network_id = excluded.network_id,
   name = excluded.name,

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import {
   QUALIFICATION_LEVELS,
   canSignPracticalEvaluation,
+  canSignPracticalForOperator,
+  canVerifyOperatorCredential,
   computeHylioJobReadiness,
   computeOperatorQualification,
   demoHylioJob,
@@ -50,6 +52,25 @@ run("only lead/chief/admin roles can sign practical evaluations", () => {
   assert.equal(canSignPracticalEvaluation("Trainee"), false);
 });
 
+run("ordinary operators cannot verify their own credentials", () => {
+  const operator = { id: "operator-1", role: "Operator" };
+  const lead = { id: "lead-1", role: "Lead Operator" };
+  const admin = { id: "admin-1", role: "Admin" };
+
+  assert.equal(canVerifyOperatorCredential({ actor: operator, operator }), false);
+  assert.equal(canVerifyOperatorCredential({ actor: lead, operator }), true);
+  assert.equal(canVerifyOperatorCredential({ actor: admin, operator }), true);
+});
+
+run("practical signoff requires lead/chief/admin authority and a separate subject", () => {
+  const lead = { id: "lead-1", role: "Lead Operator" };
+  const trainee = { id: "trainee-1", role: "Operator trainee" };
+
+  assert.equal(canSignPracticalForOperator({ actor: lead, operator: trainee }), true);
+  assert.equal(canSignPracticalForOperator({ actor: lead, operator: lead }), false);
+  assert.equal(canSignPracticalForOperator({ actor: trainee, operator: lead }), false);
+});
+
 run("computes qualified operator level for complete demo operator", () => {
   const level = computeOperatorQualification(demoOperators[0], new Date("2026-04-30"));
   assert.equal(level, QUALIFICATION_LEVELS.LEAD_OPERATOR);
@@ -70,7 +91,10 @@ run("blocks Hylio job assignment when training and credentials are missing", () 
 run("allows Hylio assignment when hard gates pass", () => {
   const readiness = computeHylioJobReadiness({
     operator: demoOperators[0],
-    job: demoHylioJob,
+    job: {
+      ...demoHylioJob,
+      completedChecklistSlugs: demoHylioJob.requiredChecklistSlugs,
+    },
     now: new Date("2026-04-30"),
   });
 
@@ -78,17 +102,36 @@ run("allows Hylio assignment when hard gates pass", () => {
   assert.deepEqual(readiness.blockers, []);
 });
 
+run("blocks Hylio assignment when required checklists or documents are incomplete", () => {
+  const readiness = computeHylioJobReadiness({
+    operator: demoOperators[0],
+    job: {
+      ...demoHylioJob,
+      completedChecklistSlugs: ["drift-weather-review"],
+      documentsAttached: false,
+    },
+    now: new Date("2026-04-30"),
+  });
+
+  assert.equal(readiness.ready, false);
+  assert.ok(readiness.blockers.some((blocker) => blocker.includes("Required SOP checklist pending")));
+  assert.ok(readiness.blockers.some((blocker) => blocker.includes("Required job documents are not attached")));
+});
+
 run("builds qualification gate checks across training, credentials, practical, and assignment", () => {
   const gates = getQualificationGateChecks({
     operator: demoOperators[1],
-    job: demoHylioJob,
+    job: {
+      ...demoHylioJob,
+      completedChecklistSlugs: ["drift-weather-review"],
+    },
     now: new Date("2026-04-30"),
   });
 
   assert.ok(gates.some((gate) => gate.group === "Training" && gate.status === "blocker"));
   assert.ok(gates.some((gate) => gate.group === "Credentials" && gate.id === "credential-pesticide"));
   assert.ok(gates.some((gate) => gate.group === "Practical" && gate.status === "blocker"));
-  assert.ok(gates.some((gate) => gate.group === "Assignment" && gate.id === "job-checklists" && gate.status === "warning"));
+  assert.ok(gates.some((gate) => gate.group === "Assignment" && gate.id === "job-checklists" && gate.status === "blocker"));
 });
 
 run("qualification plan exposes next actions when operator is not review-ready", () => {

@@ -50,10 +50,10 @@ export function initMetaPixel() {
     script.async = true;
     script.src = "https://connect.facebook.net/en_US/fbevents.js";
     document.head.appendChild(script);
-    currentWindow.fbq("init", pixelId);
   }
   /* eslint-enable no-underscore-dangle */
 
+  currentWindow.fbq("init", pixelId);
   currentWindow[PIXEL_INIT_FLAG] = true;
   return true;
 }

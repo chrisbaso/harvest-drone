@@ -134,13 +134,13 @@ const publicRoutes = [
 
 const dealerRoutes = [
   {
-    title: "RDO SOURCE Funnel",
-    path: "/d/rdo-marshall-mn",
+    title: "Demo Territory SOURCE Funnel",
+    path: "/d/demo-territory",
     description: "Dealer-attributed SOURCE funnel. This intentionally renders the SOURCE page.",
   },
   {
-    title: "RDO Grower Funnel",
-    path: "/d/rdo-marshall-mn/growers",
+    title: "Demo Territory Grower Funnel",
+    path: "/d/demo-territory/growers",
     description: "Dealer-attributed grower funnel. This intentionally renders the Grower page.",
   },
 ];
@@ -192,6 +192,11 @@ const internalRoutes = [
     description: "Assignment readiness check for a demo job.",
   },
   {
+    title: "Enterprise Drone Division",
+    path: "/enterprise/rdo/division",
+    description: "RDO drone division command center, blueprint, spray calendar, readiness gates, records, support, and ROI.",
+  },
+  {
     title: "Dealer Dashboard",
     path: "/dealer",
     description: "Dealer-scoped leads, orders, training, and URL tools.",
@@ -227,7 +232,7 @@ function DemoIndexPage() {
           <span className="eyebrow">Demo navigation</span>
           <h1>Every Harvest OS demo route in one place.</h1>
           <p>
-            Public pages are funnels. Dealer URLs are intentionally attributed funnels. Internal
+            Public pages are funnels. Demo territory URLs are intentionally attributed funnels. Internal
             dashboards require the logged-in role shown in the app navigation.
           </p>
           <div className="demo-index__note">
@@ -247,8 +252,8 @@ function DemoIndexPage() {
         </article>
 
         <article className="demo-index__section">
-          <span className="eyebrow">Dealer attribution</span>
-          <h2>Dealer-branded funnel URLs</h2>
+          <span className="eyebrow">Demo attribution</span>
+          <h2>Generic attributed funnel URLs</h2>
           <div className="demo-index__grid">
             {dealerRoutes.map((route) => (
               <RouteCard key={route.path} route={route} tone="Dealer URL" />

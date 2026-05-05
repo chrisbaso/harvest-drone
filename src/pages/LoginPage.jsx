@@ -14,6 +14,11 @@ const css = `
 .login__field span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted)}
 .login__field input{min-height:46px;border-radius:8px;border:1px solid var(--border);background:#0C0F0A;color:var(--text);padding:11px 12px}
 .login__error{color:#FCA5A5;margin:0;font-size:14px}
+.login__form + .login__demo{margin-top:18px}
+.login__divider{display:flex;align-items:center;gap:12px;margin:4px 0;color:var(--text-muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.login__divider::before,.login__divider::after{content:"";height:1px;flex:1;background:var(--border)}
+.login__demo{display:grid;gap:8px}
+.login__demo p{margin:0;color:var(--text-muted);font-size:13px}
 `;
 
 function redirectForRole(role) {
@@ -27,7 +32,7 @@ function redirectForRole(role) {
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, isLoading, signIn } = useAuth();
+  const { user, profile, isLoading, signIn, signInDemo, canUseLocalDemoAuth } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +53,17 @@ function LoginPage() {
       setErrorMessage(error.message || "Unable to sign in.");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  function handleDemoSignIn() {
+    setErrorMessage("");
+
+    try {
+      signInDemo();
+      navigate(location.state?.from || redirectForRole("admin"), { replace: true });
+    } catch (error) {
+      setErrorMessage(error.message || "Unable to start local demo mode.");
     }
   }
 
@@ -72,6 +88,16 @@ function LoginPage() {
               {isSubmitting ? "Signing in..." : "Sign in"}
             </button>
           </form>
+
+          {canUseLocalDemoAuth ? (
+            <div className="login__demo">
+              <div className="login__divider">Local demo</div>
+              <button className="button button--secondary" type="button" onClick={handleDemoSignIn}>
+                Enter demo mode
+              </button>
+              <p>Available only on the local dev server. Production routes still require real Supabase Auth.</p>
+            </div>
+          ) : null}
         </div>
       </section>
     </Shell>
