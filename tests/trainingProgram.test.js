@@ -13,6 +13,7 @@ import {
   getOperatorQualificationPlan,
   getQualificationGateChecks,
   getQualificationQueue,
+  mapTrainingRowsToOperator,
   scoreAssessment,
   trainingCourses,
 } from "../shared/trainingProgram.js";
@@ -153,4 +154,48 @@ run("qualification queue sorts review-ready operators first", () => {
   assert.equal(queue[0].operatorId, demoOperators[0].id);
   assert.equal(queue[0].canRequestReview, true);
   assert.equal(queue[0].canAssignToJob, true);
+});
+
+run("maps Supabase training rows into the operator readiness shape", () => {
+  const operator = mapTrainingRowsToOperator({
+    profile: { id: "user-1", full_name: "Real Operator", email: "real@example.com" },
+    operatorLead: {
+      id: "operator-real",
+      first_name: "Real",
+      last_name: "Operator",
+      state: "Arkansas",
+      aircraft_models: ["Hylio AG-272"],
+      payload_types: ["liquid"],
+    },
+    enrollments: [
+      { status: "active", training_courses: { slug: "hylio-operator-foundations" } },
+    ],
+    lessonProgress: [
+      { status: "completed", training_lessons: { slug: "hylio-foundations-operating-model" } },
+      { status: "not_started", training_lessons: { slug: "hylio-foundations-compliance" } },
+    ],
+    assessmentAttempts: [
+      { score: 95, passed: true, created_at: "2026-05-01T12:00:00Z", training_assessments: { slug: "compliance-foundations" } },
+    ],
+    credentials: [
+      {
+        credential_type: "FAA_PART_107",
+        verification_status: "verified",
+        expiration_date: "2027-01-01",
+        state_territory: null,
+      },
+    ],
+    practicalEvaluations: [
+      { template_slug: "preflight-and-setup", status: "passed", signed_at: "2026-05-02T12:00:00Z" },
+    ],
+  });
+
+  assert.equal(operator.id, "operator-real");
+  assert.equal(operator.name, "Real Operator");
+  assert.equal(operator.enrollments[0].courseId, "hylio-operator-foundations");
+  assert.deepEqual(operator.completedLessons, ["hylio-foundations-operating-model"]);
+  assert.equal(operator.assessmentAttempts[0].assessmentId, "compliance-foundations");
+  assert.equal(operator.credentials[0].type, "FAA_PART_107");
+  assert.equal(operator.credentials[0].status, "verified");
+  assert.equal(operator.practicalEvaluations[0].templateId, "preflight-and-setup");
 });
