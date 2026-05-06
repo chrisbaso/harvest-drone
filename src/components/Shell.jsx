@@ -56,9 +56,7 @@ function Shell({ children, compact = false }) {
         ]
       : role === "network_manager"
         ? [
-            ["Network Dashboard", "/network"],
-            ["Dealers", "/network"],
-            ["Reports", "/network"],
+            ["Network", "/network"],
             ["Fleet", "/fleet"],
             ["Scheduler", "/scheduler"],
             ["Enterprise", "/enterprise/rdo/division"],
@@ -66,18 +64,17 @@ function Shell({ children, compact = false }) {
           ]
         : role === "dealer"
           ? [
-              ["My Dashboard", "/dealer"],
-              ["My Leads", "/dealer"],
-              ["My Training", "/training"],
+              ["Dashboard", "/dealer"],
               ["Fleet", "/fleet"],
               ["Scheduler", "/scheduler"],
+              ["Training", "/training"],
               ["Enterprise", "/enterprise/rdo/division"],
               ["Demo", "/demo"],
             ]
           : role === "operator"
             ? [
-                ["My Training", "/training"],
-                ["My Assignments", "/jobs/1842/readiness"],
+                ["Training", "/training"],
+                ["Qualification", "/training/qualification"],
                 ["Demo", "/demo"],
               ]
             : [];

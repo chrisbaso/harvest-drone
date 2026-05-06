@@ -95,8 +95,16 @@ function NetworkDashboardPage() {
     const opens = item.window_opens ? new Date(item.window_opens).getTime() : 0;
     return opens >= Date.now() && opens <= Date.now() + 7 * 86400000;
   }).length;
+  const acresScheduledThisWeek = networkSchedule.reduce((sum, item) => {
+    const opens = item.window_opens ? new Date(item.window_opens).getTime() : 0;
+    return opens >= Date.now() && opens <= Date.now() + 7 * 86400000
+      ? sum + Number(item.field_acres || 0)
+      : sum;
+  }, 0);
   const completedApps = networkSchedule.filter((item) => item.status === "completed").length;
   const seasonCompletionRate = networkSchedule.length ? Math.round((completedApps / networkSchedule.length) * 100) : 0;
+  const complianceReadyDealers = dealers.filter((dealer) => ["active", "qualified"].includes(dealer.training_status)).length;
+  const complianceReadyRate = dealers.length ? Math.round((complianceReadyDealers / dealers.length) * 100) : 0;
 
   function exportCsv() {
     const rows = ["Dealer,State,Leads,Orders,Revenue,Acres,Training"];
@@ -132,7 +140,9 @@ function NetworkDashboardPage() {
           <div className="network__kpi"><span>Available drones</span><strong>{availableDrones}</strong></div>
           <div className="network__kpi"><span>Maintenance</span><strong>{maintenanceDrones}</strong></div>
           <div className="network__kpi"><span>Apps this week</span><strong>{applicationsThisWeek}</strong></div>
+          <div className="network__kpi"><span>Acres this week</span><strong>{acresScheduledThisWeek.toLocaleString()}</strong></div>
           <div className="network__kpi"><span>Season complete</span><strong>{seasonCompletionRate}%</strong></div>
+          <div className="network__kpi"><span>Compliance ready</span><strong>{complianceReadyRate}%</strong></div>
         </div>
 
         <article className="network__card">

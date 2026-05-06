@@ -885,6 +885,27 @@ textarea {
   color: var(--muted);
 }
 
+.route-error {
+  display: grid;
+  gap: 1rem;
+  padding: 1.4rem;
+}
+
+.route-error h1 {
+  margin: 0;
+  font-family: "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: 0;
+  font-size: clamp(2.2rem, 7vw, 4.4rem);
+}
+
+.route-error p {
+  margin: 0;
+  max-width: 42rem;
+  color: var(--muted);
+}
+
 .activity-summary {
   padding: 1rem 1.2rem;
   margin-bottom: 1rem;

@@ -25,7 +25,7 @@ const css = `
 .dealer__mini-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .dealer__status{display:inline-flex;border-radius:999px;border:1px solid rgba(163,217,119,.24);background:rgba(163,217,119,.1);padding:4px 8px;color:#fff;font-size:12px;font-weight:800;text-transform:capitalize}
 .dealer__status--urgent{border-color:rgba(248,113,113,.32);background:rgba(248,113,113,.12)}
-@media(min-width:820px){.dealer__hero{grid-template-columns:1fr 360px}.dealer__grid{grid-template-columns:repeat(4,1fr)}.dealer__split{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}}
+@media(min-width:820px){.dealer__hero{grid-template-columns:1fr 360px}.dealer__grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}.dealer__split{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}}
 `;
 
 function formatCurrency(value) {
@@ -75,8 +75,20 @@ function DealerDashboardPage() {
     const acres = leads.reduce((sum, lead) => sum + Number(lead.acres || 0), 0);
     const value = orders.reduce((sum, order) => sum + Number(order.estimated_total || 0), 0);
     const training = dealer?.training_status === "active" ? 100 : dealer?.training_status === "qualified" ? 85 : dealer?.training_status === "in_progress" ? 45 : 10;
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    const lastMonthDate = new Date(thisYear, thisMonth - 1, 1);
+    const leadsThisMonth = leads.filter((lead) => {
+      const created = lead.created_at ? new Date(lead.created_at) : null;
+      return created && created.getMonth() === thisMonth && created.getFullYear() === thisYear;
+    }).length;
+    const leadsLastMonth = leads.filter((lead) => {
+      const created = lead.created_at ? new Date(lead.created_at) : null;
+      return created && created.getMonth() === lastMonthDate.getMonth() && created.getFullYear() === lastMonthDate.getFullYear();
+    }).length;
 
-    return { acres, value, training };
+    return { acres, value, training, leadsThisMonth, leadsLastMonth };
   }, [dealer?.training_status, leads, orders]);
 
   const leadUrl = `${window.location.origin}/d/${dealer?.slug || "dealer-slug"}`;
@@ -119,6 +131,7 @@ function DealerDashboardPage() {
           <div className="dealer__kpi"><span>Pipeline value</span><strong>{formatCurrency(kpis.value)}</strong></div>
           <div className="dealer__kpi"><span>My acres</span><strong>{kpis.acres.toLocaleString()}</strong></div>
           <div className="dealer__kpi"><span>Training</span><strong>{kpis.training}%</strong></div>
+          <div className="dealer__kpi"><span>Lead trend</span><strong>{kpis.leadsThisMonth} {kpis.leadsThisMonth >= kpis.leadsLastMonth ? "up" : "down"}</strong><p>{kpis.leadsLastMonth} last month</p></div>
         </div>
 
         <div className="dealer__split">
