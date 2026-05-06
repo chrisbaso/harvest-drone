@@ -19,6 +19,13 @@ const DashboardOverviewPage = lazy(() => import("./pages/DashboardOverviewPage")
 const LeadDetailPage = lazy(() => import("./pages/LeadDetailPage"));
 const HowItWorksPage = lazy(() => import("./pages/HowItWorksPage"));
 const HarvestAdminPage = lazy(() => import("./pages/HarvestAdminPage"));
+const IntegrationAdminPage = lazy(() => import("./pages/IntegrationAdminPage"));
+const IntegrationEventsPage = lazy(() => import("./pages/IntegrationEventsPage"));
+const DailyOpsPage = lazy(() => import("./pages/DailyOpsPage"));
+const OpenLoopsPage = lazy(() => import("./pages/OpenLoopsPage"));
+const GoogleIntegrationPage = lazy(() => import("./pages/GoogleIntegrationPage"));
+const WeeklyBriefPage = lazy(() => import("./pages/WeeklyBriefPage"));
+const ProfitCentersPage = lazy(() => import("./pages/ProfitCentersPage"));
 const HarvestLeadDetailPage = lazy(() => import("./pages/HarvestLeadDetailPage"));
 const TrainingDashboardPage = lazy(() => import("./pages/TrainingDashboardPage"));
 const TrainingCoursePage = lazy(() => import("./pages/TrainingCoursePage"));
@@ -83,6 +90,16 @@ function App() {
           <Route path="/d/:dealerSlug/growers" element={<GrowerPage />} />
           <Route path="/demo" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer", "operator"]}><DemoIndexPage /></ProtectedRoute>} />
           <Route path="/enterprise" element={<EnterprisePage view="landing" />} />
+          <Route path="/enterprise/rdo" element={<Navigate to="/enterprise/rdo/division" replace />} />
+          <Route path="/enterprise/rdo/division" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="division" /></ProtectedRoute>} />
+          <Route path="/enterprise/rdo/blueprint" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="blueprint" /></ProtectedRoute>} />
+          <Route path="/enterprise/rdo/spray-calendar" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="spray-calendar" /></ProtectedRoute>} />
+          <Route path="/enterprise/rdo/operators" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="operators" /></ProtectedRoute>} />
+          <Route path="/enterprise/rdo/fleet" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="fleet" /></ProtectedRoute>} />
+          <Route path="/enterprise/rdo/readiness" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="readiness" /></ProtectedRoute>} />
+          <Route path="/enterprise/rdo/application-records" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="application-records" /></ProtectedRoute>} />
+          <Route path="/enterprise/rdo/support" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="support" /></ProtectedRoute>} />
+          <Route path="/enterprise/rdo/performance" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="performance" /></ProtectedRoute>} />
           <Route path="/roi-calculator" element={<RoiCalculatorPage />} />
           <Route path="/enterprise/:orgId/division" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="division" /></ProtectedRoute>} />
           <Route path="/enterprise/:orgId/blueprint" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="blueprint" /></ProtectedRoute>} />
@@ -98,6 +115,13 @@ function App() {
           <Route path="/dashboard/leads/:leadType/:leadId" element={<ProtectedRoute allowedRoles={["admin"]}><LeadDetailPage /></ProtectedRoute>} />
           <Route path="/agent" element={<ProtectedRoute allowedRoles={["admin"]}><AgentPage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><HarvestAdminPage /></ProtectedRoute>} />
+          <Route path="/admin/integrations" element={<ProtectedRoute allowedRoles={["admin"]}><IntegrationAdminPage /></ProtectedRoute>} />
+          <Route path="/admin/integration-events" element={<ProtectedRoute allowedRoles={["admin"]}><IntegrationEventsPage /></ProtectedRoute>} />
+          <Route path="/admin/daily-ops" element={<ProtectedRoute allowedRoles={["admin"]}><DailyOpsPage /></ProtectedRoute>} />
+          <Route path="/admin/open-loops" element={<ProtectedRoute allowedRoles={["admin"]}><OpenLoopsPage /></ProtectedRoute>} />
+          <Route path="/admin/integrations/google" element={<ProtectedRoute allowedRoles={["admin"]}><GoogleIntegrationPage /></ProtectedRoute>} />
+          <Route path="/admin/weekly-brief" element={<ProtectedRoute allowedRoles={["admin"]}><WeeklyBriefPage /></ProtectedRoute>} />
+          <Route path="/admin/profit-centers" element={<ProtectedRoute allowedRoles={["admin"]}><ProfitCentersPage /></ProtectedRoute>} />
           <Route path="/admin/leads/:leadId" element={<ProtectedRoute allowedRoles={["admin"]}><HarvestLeadDetailPage /></ProtectedRoute>} />
           <Route path="/admin/training" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTrainingPage /></ProtectedRoute>} />
           <Route path="/network" element={<ProtectedRoute allowedRoles={["network_manager", "admin"]}><NetworkDashboardPage /></ProtectedRoute>} />

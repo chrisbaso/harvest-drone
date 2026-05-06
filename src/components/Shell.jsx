@@ -46,6 +46,7 @@ function Shell({ children, compact = false }) {
           ["Dashboard", "/dashboard"],
           ["CRM", "/crm"],
           ["Admin", "/admin"],
+          ["Ops", "/admin/daily-ops"],
           ["Agent", "/agent"],
           ["Training", "/training"],
           ["Fleet", "/fleet"],
