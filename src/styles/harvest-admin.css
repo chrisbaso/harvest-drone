@@ -59,7 +59,8 @@
 }
 
 .harvest-admin__summary-grid,
-.harvest-admin__detail-grid {
+.harvest-admin__detail-grid,
+.harvest-admin__ops-grid {
   display: grid;
   gap: 1rem;
 }
@@ -73,6 +74,73 @@
   display: block;
   margin-top: 0.55rem;
   font-size: 1.8rem;
+}
+
+.harvest-admin__ops-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.harvest-admin__ops-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.harvest-admin__ops-header h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.2rem;
+}
+
+.harvest-admin__ops-header > strong {
+  color: var(--accent);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.harvest-admin__ops-list,
+.harvest-admin__dealer-table {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.harvest-admin__ops-row,
+.harvest-admin__dealer-row,
+.harvest-admin__dealer-head {
+  display: grid;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.8rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.harvest-admin__ops-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.harvest-admin__ops-row span,
+.harvest-admin__dealer-row span,
+.harvest-admin__dealer-head {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.harvest-admin__ops-row strong,
+.harvest-admin__dealer-row strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.harvest-admin__dealer-head {
+  display: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .harvest-admin__filters-grid,
@@ -188,7 +256,16 @@
   }
 
   .harvest-admin__summary-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .harvest-admin__ops-grid {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  }
+
+  .harvest-admin__dealer-head,
+  .harvest-admin__dealer-row {
+    grid-template-columns: minmax(0, 1.25fr) 0.8fr 1fr 1fr;
   }
 
   .harvest-admin__filters-header {
@@ -203,5 +280,11 @@
 
   .harvest-admin__detail-grid {
     grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  }
+}
+
+@media (min-width: 1180px) {
+  .harvest-admin__summary-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }

@@ -1,0 +1,1091 @@
+{
+  "metadata": {
+    "seedMode": "repeatable_demo_seed",
+    "sourceFixture": "rdo_enterprise_demo",
+    "generatedAt": "2026-05-05T12:00:00.000Z",
+    "disclaimer": "Demo fixture for RDO pilot conversations; not live RDO production data."
+  },
+  "organizations": [
+    {
+      "id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "name": "R.D. Offutt Farms",
+      "short_name": "RDO",
+      "organization_type": "enterprise_grower",
+      "headquarters": "Fargo, North Dakota",
+      "operating_states": [
+        "North Dakota",
+        "Minnesota"
+      ],
+      "metadata": {
+        "source_slug": "rdo",
+        "owner_positioning": "RDO owns the internal drone application capability. Harvest provides implementation, OS, training workflow, support, maintenance process, and operating assistance.",
+        "source_fixture": "rdo_enterprise_demo"
+      }
+    }
+  ],
+  "enterpriseDivisions": [
+    {
+      "id": "d15dbc1a-1f0c-507f-a760-c17e7b574e1a",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "name": "RDO Hylio Drone Application Division",
+      "crop_focus": "Potatoes",
+      "operating_model": "Internal enterprise drone division with Harvest implementation support",
+      "aircraft_family": "Hylio aircraft",
+      "status": "Implementation sprint",
+      "readiness_target_date": "2026-05-20",
+      "metadata": {
+        "source_slug": "rdo-division",
+        "source_fixture": "rdo_enterprise_demo"
+      }
+    }
+  ],
+  "divisionBlueprints": [
+    {
+      "id": "4b716fbb-f035-5203-aeb1-c6f21e3cdab3",
+      "division_id": "d15dbc1a-1f0c-507f-a760-c17e7b574e1a",
+      "phase": "Readiness validation",
+      "steps": [
+        {
+          "id": "discovery",
+          "title": "Division design",
+          "status": "complete",
+          "owner": "Harvest + RDO operations"
+        },
+        {
+          "id": "equipment",
+          "title": "Aircraft, payload, batteries, trailer, and spares plan",
+          "status": "complete",
+          "owner": "RDO equipment lead"
+        },
+        {
+          "id": "training",
+          "title": "Operator training and Harvest qualification workflow",
+          "status": "in_progress",
+          "owner": "Harvest training lead"
+        },
+        {
+          "id": "sops",
+          "title": "State-aware SOPs and checklists",
+          "status": "in_progress",
+          "owner": "RDO compliance"
+        },
+        {
+          "id": "calendar",
+          "title": "Potato spray calendar and dispatch readiness",
+          "status": "active",
+          "owner": "RDO crop managers"
+        },
+        {
+          "id": "reporting",
+          "title": "Application records, maintenance, ROI reporting",
+          "status": "queued",
+          "owner": "Harvest success"
+        }
+      ],
+      "assumptions": [
+        "Demo fixture only; not live RDO production data",
+        "Credential requirements must be configured from current official sources before pilot use"
+      ],
+      "source_slug": "rdo-blueprint-2026",
+      "source_fixture": "rdo_enterprise_demo"
+    }
+  ],
+  "farmLocations": [
+    {
+      "id": "a7f5a078-2d75-569e-9082-ad1bad96646c",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "name": "Grand Forks Valley Unit",
+      "state": "North Dakota",
+      "county": "Grand Forks",
+      "metadata": {
+        "source_slug": "farm-grand-forks",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "farm-grand-forks"
+    },
+    {
+      "id": "7a56d963-f959-5ddf-988c-b10c5472ac05",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "name": "Park Rapids Unit",
+      "state": "Minnesota",
+      "county": "Hubbard",
+      "metadata": {
+        "source_slug": "farm-park-rapids",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "farm-park-rapids"
+    }
+  ],
+  "fields": [
+    {
+      "id": "c5424ee0-ebf2-5392-87d7-546125eed5d6",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "farm_location_id": "a7f5a078-2d75-569e-9082-ad1bad96646c",
+      "name": "GF Potato 12",
+      "crop": "Potatoes",
+      "acres": 128,
+      "boundary_geojson": null,
+      "metadata": {
+        "source_slug": "field-gf-12",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "field-gf-12"
+    },
+    {
+      "id": "ba85afc6-866a-5b3b-b199-fc7707b34011",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "farm_location_id": "a7f5a078-2d75-569e-9082-ad1bad96646c",
+      "name": "GF Potato 18",
+      "crop": "Potatoes",
+      "acres": 96,
+      "boundary_geojson": null,
+      "metadata": {
+        "source_slug": "field-gf-18",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "field-gf-18"
+    },
+    {
+      "id": "7a56cd35-9426-5d59-aab5-a6a9e4e67bfe",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "farm_location_id": "7a56d963-f959-5ddf-988c-b10c5472ac05",
+      "name": "PR Potato 7",
+      "crop": "Potatoes",
+      "acres": 112,
+      "boundary_geojson": null,
+      "metadata": {
+        "source_slug": "field-pr-7",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "field-pr-7"
+    }
+  ],
+  "cropSeasons": [
+    {
+      "id": "d7758445-e9e5-5dff-8a34-b738be168078",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "crop": "Potatoes",
+      "season_year": 2026,
+      "stage": "In-season foliar program",
+      "metadata": {
+        "source_slug": "season-2026-potatoes",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "season-2026-potatoes"
+    }
+  ],
+  "sprayPrograms": [
+    {
+      "id": "dbda97aa-b77c-5247-8ec6-fcc597822913",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "crop_season_id": "d7758445-e9e5-5dff-8a34-b738be168078",
+      "name": "2026 potato in-season foliar and crop protection program",
+      "operation_type": "pesticide_application",
+      "compliance_config": {
+        "configurable_by": [
+          "state",
+          "aircraft",
+          "payload",
+          "operation type"
+        ],
+        "rules": [
+          {
+            "id": "nd-potato-pesticide",
+            "state": "North Dakota",
+            "operationType": "pesticide_application",
+            "payloadType": "liquid",
+            "requiredCredentialTypes": [
+              "PESTICIDE_APPLICATOR_LICENSE"
+            ],
+            "categoryLabel": "State/category pesticide applicator credential tracked and verified"
+          },
+          {
+            "id": "mn-potato-pesticide",
+            "state": "Minnesota",
+            "operationType": "pesticide_application",
+            "payloadType": "liquid",
+            "requiredCredentialTypes": [
+              "PESTICIDE_APPLICATOR_LICENSE"
+            ],
+            "categoryLabel": "State/category pesticide applicator credential tracked and verified"
+          }
+        ]
+      },
+      "source_slug": "rdo-potato-foliar-2026"
+    }
+  ],
+  "sprayWindows": [
+    {
+      "id": "23939fe7-9f44-584a-b274-fee467f3de02",
+      "spray_program_id": "dbda97aa-b77c-5247-8ec6-fcc597822913",
+      "title": "Early blight preventative window",
+      "starts_at": null,
+      "ends_at": null,
+      "state": "North Dakota",
+      "status": "ready",
+      "weather_summary": "Low wind morning window",
+      "field_ids": [
+        "c5424ee0-ebf2-5392-87d7-546125eed5d6"
+      ],
+      "readiness_snapshot": {},
+      "source_slug": "rdo-window-001"
+    },
+    {
+      "id": "91eb548e-fa9d-5841-baf3-b3430ac13933",
+      "spray_program_id": "dbda97aa-b77c-5247-8ec6-fcc597822913",
+      "title": "Tight canopy rescue window",
+      "starts_at": null,
+      "ends_at": null,
+      "state": "North Dakota",
+      "status": "blocked",
+      "weather_summary": "Narrow wind shift, needs morning dispatch",
+      "field_ids": [
+        "ba85afc6-866a-5b3b-b199-fc7707b34011"
+      ],
+      "readiness_snapshot": {},
+      "source_slug": "rdo-window-002"
+    },
+    {
+      "id": "dfff2187-e4ed-5ff0-9dd0-dfa628cee350",
+      "spray_program_id": "dbda97aa-b77c-5247-8ec6-fcc597822913",
+      "title": "Minnesota foliar pass",
+      "starts_at": null,
+      "ends_at": null,
+      "state": "Minnesota",
+      "status": "watching",
+      "weather_summary": "Scouting hold",
+      "field_ids": [
+        "7a56cd35-9426-5d59-aab5-a6a9e4e67bfe"
+      ],
+      "readiness_snapshot": {},
+      "source_slug": "rdo-window-003"
+    }
+  ],
+  "enterpriseOperators": [
+    {
+      "id": "f3512eaa-208e-55e7-ae9e-77cb5a198e51",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "name": "Ada Miller",
+      "role": "Lead Operator",
+      "base_location_id": null,
+      "state": "North Dakota",
+      "aircraft_models": [
+        "Hylio AG-272",
+        "Hylio AG-230"
+      ],
+      "payload_types": [
+        "liquid",
+        "granular"
+      ],
+      "training_snapshot": {
+        "completed_lessons": [
+          "hylio-foundations-operating-model",
+          "hylio-foundations-compliance",
+          "hylio-foundations-hardware",
+          "hylio-foundations-agrosol",
+          "hylio-foundations-field-safety",
+          "hylio-foundations-weather-drift",
+          "hylio-foundations-chemical-handling",
+          "hylio-foundations-batteries",
+          "hylio-foundations-maintenance",
+          "hylio-foundations-emergency-procedures",
+          "hylio-foundations-job-workflow",
+          "hylio-foundations-final-assessment"
+        ],
+        "assessment_attempts": [
+          {
+            "assessmentId": "compliance-foundations",
+            "score": 92,
+            "passed": true,
+            "attemptedAt": "2026-04-18"
+          },
+          {
+            "assessmentId": "agrosol-mission-planning",
+            "score": 92,
+            "passed": true,
+            "attemptedAt": "2026-04-18"
+          },
+          {
+            "assessmentId": "emergency-procedures",
+            "score": 92,
+            "passed": true,
+            "attemptedAt": "2026-04-18"
+          }
+        ],
+        "practical_evaluations": [
+          {
+            "templateId": "hylio-equipment-setup",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "hylio-preflight",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "agrosol-mission-planning",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "dry-run",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "supervised-live-operation",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "postflight-and-recordkeeping",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "emergency-procedure-verbal-check",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          }
+        ]
+      },
+      "source_slug": "rdo-operator-ada"
+    },
+    {
+      "id": "22daf050-a5f1-5666-9d3d-712ef4c6487d",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "name": "Ben Castillo",
+      "role": "Operator trainee",
+      "base_location_id": null,
+      "state": "North Dakota",
+      "aircraft_models": [
+        "Hylio AG-272"
+      ],
+      "payload_types": [
+        "liquid"
+      ],
+      "training_snapshot": {
+        "completed_lessons": [
+          "hylio-foundations-operating-model",
+          "hylio-foundations-compliance",
+          "hylio-foundations-hardware",
+          "hylio-foundations-agrosol",
+          "hylio-foundations-field-safety",
+          "hylio-foundations-weather-drift",
+          "hylio-foundations-chemical-handling",
+          "hylio-foundations-batteries",
+          "hylio-foundations-maintenance"
+        ],
+        "assessment_attempts": [
+          {
+            "assessmentId": "compliance-foundations",
+            "score": 92,
+            "passed": true,
+            "attemptedAt": "2026-04-18"
+          },
+          {
+            "assessmentId": "agrosol-mission-planning",
+            "score": 92,
+            "passed": true,
+            "attemptedAt": "2026-04-18"
+          }
+        ],
+        "practical_evaluations": [
+          {
+            "templateId": "hylio-equipment-setup",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "hylio-preflight",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "agrosol-mission-planning",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          }
+        ]
+      },
+      "source_slug": "rdo-operator-ben"
+    },
+    {
+      "id": "1dabb76e-421a-583e-91da-8098f08f979f",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "name": "Cara Nguyen",
+      "role": "Backup Operator",
+      "base_location_id": null,
+      "state": "Minnesota",
+      "aircraft_models": [
+        "Hylio AG-230"
+      ],
+      "payload_types": [
+        "liquid"
+      ],
+      "training_snapshot": {
+        "completed_lessons": [
+          "hylio-foundations-operating-model",
+          "hylio-foundations-compliance",
+          "hylio-foundations-hardware",
+          "hylio-foundations-agrosol",
+          "hylio-foundations-field-safety",
+          "hylio-foundations-weather-drift",
+          "hylio-foundations-chemical-handling",
+          "hylio-foundations-batteries",
+          "hylio-foundations-maintenance",
+          "hylio-foundations-emergency-procedures",
+          "hylio-foundations-job-workflow",
+          "hylio-foundations-final-assessment"
+        ],
+        "assessment_attempts": [
+          {
+            "assessmentId": "compliance-foundations",
+            "score": 92,
+            "passed": true,
+            "attemptedAt": "2026-04-18"
+          },
+          {
+            "assessmentId": "agrosol-mission-planning",
+            "score": 92,
+            "passed": true,
+            "attemptedAt": "2026-04-18"
+          },
+          {
+            "assessmentId": "emergency-procedures",
+            "score": 92,
+            "passed": true,
+            "attemptedAt": "2026-04-18"
+          }
+        ],
+        "practical_evaluations": [
+          {
+            "templateId": "hylio-equipment-setup",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "hylio-preflight",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "agrosol-mission-planning",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "dry-run",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "supervised-live-operation",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "postflight-and-recordkeeping",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          },
+          {
+            "templateId": "emergency-procedure-verbal-check",
+            "status": "passed",
+            "evaluator": "Lead operator signoff",
+            "evaluatedAt": "2026-04-22"
+          }
+        ]
+      },
+      "source_slug": "rdo-operator-cara"
+    }
+  ],
+  "operatorCredentials": [
+    {
+      "id": "088afe8c-5d8d-57be-b154-ae538f9f649b",
+      "operator_id": "f3512eaa-208e-55e7-ae9e-77cb5a198e51",
+      "credential_type": "FAA_PART_107",
+      "status": "verified",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-ada-FAA_PART_107-global-0"
+    },
+    {
+      "id": "86f1a08b-0e93-52f3-9e04-d6268b2121eb",
+      "operator_id": "f3512eaa-208e-55e7-ae9e-77cb5a198e51",
+      "credential_type": "FAA_PART_107_RECENCY",
+      "status": "verified",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-ada-FAA_PART_107_RECENCY-global-1"
+    },
+    {
+      "id": "33c03706-d3c6-5e0d-a908-60fd62ee84db",
+      "operator_id": "f3512eaa-208e-55e7-ae9e-77cb5a198e51",
+      "credential_type": "HYLIO_ONBOARDING",
+      "status": "verified",
+      "aircraft_model": "Hylio AG-272",
+      "payload_type": "liquid",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-ada-HYLIO_ONBOARDING-global-2"
+    },
+    {
+      "id": "009879f8-1712-5b49-a86a-fbb5327639d2",
+      "operator_id": "f3512eaa-208e-55e7-ae9e-77cb5a198e51",
+      "credential_type": "HARVEST_INTERNAL_QUALIFICATION",
+      "status": "verified",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-ada-HARVEST_INTERNAL_QUALIFICATION-global-3"
+    },
+    {
+      "id": "4c342b1b-294d-5741-82d6-061d1c294652",
+      "operator_id": "f3512eaa-208e-55e7-ae9e-77cb5a198e51",
+      "credential_type": "PESTICIDE_APPLICATOR_LICENSE",
+      "status": "verified",
+      "state": "North Dakota",
+      "category": "Ag aerial application",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-ada-PESTICIDE_APPLICATOR_LICENSE-North Dakota-4"
+    },
+    {
+      "id": "13c1b51e-0068-52d3-8655-ad0d2031f207",
+      "operator_id": "f3512eaa-208e-55e7-ae9e-77cb5a198e51",
+      "credential_type": "PESTICIDE_APPLICATOR_LICENSE",
+      "status": "verified",
+      "state": "Minnesota",
+      "category": "Ag aerial application",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-ada-PESTICIDE_APPLICATOR_LICENSE-Minnesota-5"
+    },
+    {
+      "id": "669a2691-c9d0-5dd9-bdf4-df2b3ec60e9a",
+      "operator_id": "22daf050-a5f1-5666-9d3d-712ef4c6487d",
+      "credential_type": "FAA_PART_107",
+      "status": "verified",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-ben-FAA_PART_107-global-0"
+    },
+    {
+      "id": "c5dfdc13-143b-5481-9a69-973b56d28e84",
+      "operator_id": "22daf050-a5f1-5666-9d3d-712ef4c6487d",
+      "credential_type": "FAA_PART_107_RECENCY",
+      "status": "verified",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-ben-FAA_PART_107_RECENCY-global-1"
+    },
+    {
+      "id": "23ca5b2c-2bc4-5318-948f-afe14a87bed2",
+      "operator_id": "22daf050-a5f1-5666-9d3d-712ef4c6487d",
+      "credential_type": "HYLIO_ONBOARDING",
+      "status": "verified",
+      "aircraft_model": "Hylio AG-272",
+      "payload_type": "liquid",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-ben-HYLIO_ONBOARDING-global-2"
+    },
+    {
+      "id": "5f8293fd-089a-5a7a-84da-ddbd3dad3697",
+      "operator_id": "22daf050-a5f1-5666-9d3d-712ef4c6487d",
+      "credential_type": "HARVEST_INTERNAL_QUALIFICATION",
+      "status": "verified",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-ben-HARVEST_INTERNAL_QUALIFICATION-global-3"
+    },
+    {
+      "id": "21f9574d-a60c-51c5-9a65-5d448d781aaf",
+      "operator_id": "1dabb76e-421a-583e-91da-8098f08f979f",
+      "credential_type": "FAA_PART_107",
+      "status": "verified",
+      "verified_at": "2026-04-15",
+      "expires_at": "2026-04-30",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-cara-FAA_PART_107-global-0"
+    },
+    {
+      "id": "b873f2ef-8de1-56f9-b1ab-c808fead24e9",
+      "operator_id": "1dabb76e-421a-583e-91da-8098f08f979f",
+      "credential_type": "FAA_PART_107_RECENCY",
+      "status": "verified",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-cara-FAA_PART_107_RECENCY-global-1"
+    },
+    {
+      "id": "ff3458a4-ba1b-538e-81f7-815d59b653b3",
+      "operator_id": "1dabb76e-421a-583e-91da-8098f08f979f",
+      "credential_type": "HYLIO_ONBOARDING",
+      "status": "verified",
+      "aircraft_model": "Hylio AG-230",
+      "payload_type": "liquid",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-cara-HYLIO_ONBOARDING-global-2"
+    },
+    {
+      "id": "d90c7d77-9f0a-5147-a6cd-70cd2bd075bd",
+      "operator_id": "1dabb76e-421a-583e-91da-8098f08f979f",
+      "credential_type": "HARVEST_INTERNAL_QUALIFICATION",
+      "status": "verified",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-cara-HARVEST_INTERNAL_QUALIFICATION-global-3"
+    },
+    {
+      "id": "ba855208-14e8-51df-864d-6a4ee1f02e0a",
+      "operator_id": "1dabb76e-421a-583e-91da-8098f08f979f",
+      "credential_type": "PESTICIDE_APPLICATOR_LICENSE",
+      "status": "verified",
+      "state": "Minnesota",
+      "category": "Ag aerial application",
+      "verified_at": "2026-04-15",
+      "expires_at": "2027-04-15",
+      "evidence_url": null,
+      "metadata": {
+        "source_fixture": "rdo_enterprise_demo",
+        "credential_tracked_only": true
+      },
+      "source_slug": "rdo-operator-cara-PESTICIDE_APPLICATOR_LICENSE-Minnesota-4"
+    }
+  ],
+  "aircraft": [
+    {
+      "id": "cd2d67d6-5c40-5337-ae33-e2f3dedabd8b",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "tail_number": "RDO-HY-01",
+      "model": "Hylio AG-272",
+      "status": "active",
+      "registration_status": "verified",
+      "remote_id_status": "verified",
+      "maintenance_blocked": false,
+      "readiness": {
+        "calibrationStatus": "current",
+        "batteryChecklistStatus": "complete",
+        "lastInspectionAt": "2026-05-03"
+      },
+      "source_slug": "rdo-aircraft-1"
+    },
+    {
+      "id": "a089eea2-3150-5f71-89b1-fd24629d77ac",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "tail_number": "RDO-HY-02",
+      "model": "Hylio AG-272",
+      "status": "active",
+      "registration_status": "verified",
+      "remote_id_status": "verified",
+      "maintenance_blocked": true,
+      "readiness": {
+        "calibrationStatus": "overdue",
+        "batteryChecklistStatus": "incomplete",
+        "lastInspectionAt": "2026-04-25"
+      },
+      "source_slug": "rdo-aircraft-2"
+    },
+    {
+      "id": "d2f66b0f-1038-57b5-9392-5474c5d5abb1",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "tail_number": "RDO-HY-03",
+      "model": "Hylio AG-230",
+      "status": "active",
+      "registration_status": "verified",
+      "remote_id_status": "verified",
+      "maintenance_blocked": false,
+      "readiness": {
+        "calibrationStatus": "current",
+        "batteryChecklistStatus": "complete",
+        "lastInspectionAt": "2026-05-04"
+      },
+      "source_slug": "rdo-aircraft-3"
+    }
+  ],
+  "applicationJobs": [
+    {
+      "id": "a2698802-7e43-5efd-8a6e-5744addd0a1a",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "spray_window_id": "23939fe7-9f44-584a-b274-fee467f3de02",
+      "field_id": "c5424ee0-ebf2-5392-87d7-546125eed5d6",
+      "assigned_operator_id": "f3512eaa-208e-55e7-ae9e-77cb5a198e51",
+      "aircraft_id": "cd2d67d6-5c40-5337-ae33-e2f3dedabd8b",
+      "title": "GF Potato 12 foliar application",
+      "status": "ready_to_dispatch",
+      "operation_type": "pesticide_application",
+      "payload_type": "liquid",
+      "state": "North Dakota",
+      "acres": 128,
+      "required_checklist_slugs": [
+        "preflight",
+        "drift-weather-review",
+        "chemical-mixing-loading"
+      ],
+      "completed_checklist_slugs": [
+        "preflight",
+        "drift-weather-review",
+        "chemical-mixing-loading"
+      ],
+      "documents_attached": true,
+      "weather_acknowledged": true,
+      "prior_records_overdue": false,
+      "readiness_snapshot": {
+        "ready": true,
+        "blockers": [],
+        "warnings": [],
+        "checked_at": "2026-05-05T12:00:00.000Z"
+      },
+      "source_slug": "rdo-job-001"
+    },
+    {
+      "id": "ad94332f-2fb1-5ae4-800c-a350793c1f94",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "spray_window_id": "91eb548e-fa9d-5841-baf3-b3430ac13933",
+      "field_id": "ba85afc6-866a-5b3b-b199-fc7707b34011",
+      "assigned_operator_id": "22daf050-a5f1-5666-9d3d-712ef4c6487d",
+      "aircraft_id": "a089eea2-3150-5f71-89b1-fd24629d77ac",
+      "title": "GF Potato 18 rescue pass",
+      "status": "blocked",
+      "operation_type": "pesticide_application",
+      "payload_type": "liquid",
+      "state": "North Dakota",
+      "acres": 96,
+      "required_checklist_slugs": [
+        "preflight",
+        "drift-weather-review",
+        "chemical-mixing-loading"
+      ],
+      "completed_checklist_slugs": [
+        "drift-weather-review"
+      ],
+      "documents_attached": false,
+      "weather_acknowledged": true,
+      "prior_records_overdue": false,
+      "readiness_snapshot": {
+        "ready": false,
+        "blockers": [
+          "Hylio Operator Foundations is 75% complete",
+          "Emergency Procedures Quiz has not been passed",
+          "Hylio practical evaluation is not fully signed by a Lead Operator or Chief Pilot",
+          "Pesticide applicator license for North Dakota is missing or not verified",
+          "Aircraft has an open maintenance blocker",
+          "Required SOP checklist pending: preflight, chemical-mixing-loading",
+          "Required job documents are not attached",
+          "Aircraft calibration is overdue",
+          "Battery inspection checklist is incomplete"
+        ],
+        "warnings": [],
+        "checked_at": "2026-05-05T12:00:00.000Z"
+      },
+      "source_slug": "rdo-job-002"
+    },
+    {
+      "id": "e012b5c0-79a1-599d-9dc6-b3a30fcd65db",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "spray_window_id": "dfff2187-e4ed-5ff0-9dd0-dfa628cee350",
+      "field_id": "7a56cd35-9426-5d59-aab5-a6a9e4e67bfe",
+      "assigned_operator_id": "1dabb76e-421a-583e-91da-8098f08f979f",
+      "aircraft_id": "d2f66b0f-1038-57b5-9392-5474c5d5abb1",
+      "title": "PR Potato 7 foliar application",
+      "status": "watching",
+      "operation_type": "pesticide_application",
+      "payload_type": "liquid",
+      "state": "Minnesota",
+      "acres": 112,
+      "required_checklist_slugs": [
+        "preflight",
+        "drift-weather-review",
+        "chemical-mixing-loading"
+      ],
+      "completed_checklist_slugs": [
+        "preflight"
+      ],
+      "documents_attached": true,
+      "weather_acknowledged": false,
+      "prior_records_overdue": false,
+      "readiness_snapshot": {
+        "ready": false,
+        "blockers": [
+          "FAA Part 107 credential is missing, pending, rejected, or expired",
+          "Required SOP checklist pending: drift-weather-review, chemical-mixing-loading",
+          "Weather/drift precheck has not been acknowledged"
+        ],
+        "warnings": [],
+        "checked_at": "2026-05-05T12:00:00.000Z"
+      },
+      "source_slug": "rdo-job-003"
+    }
+  ],
+  "applicationRecords": [
+    {
+      "id": "35ae6174-f55d-5831-8405-283cf73cafd4",
+      "application_job_id": null,
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "completed_at": "2026-05-02",
+      "acres_applied": 141,
+      "operator_id": null,
+      "aircraft_id": null,
+      "status": "closed",
+      "record_payload": {
+        "field": "GF Potato 4",
+        "operator": "Ada Miller",
+        "aircraft": "RDO-HY-01"
+      },
+      "attachments": [
+        "application log",
+        "weather acknowledgement",
+        "postflight checklist"
+      ],
+      "source_slug": "rdo-record-001"
+    },
+    {
+      "id": "fbfb9466-6e16-54a2-8ae3-616fc8f53a62",
+      "application_job_id": null,
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "completed_at": "2026-05-04",
+      "acres_applied": 87,
+      "operator_id": null,
+      "aircraft_id": null,
+      "status": "reviewed",
+      "record_payload": {
+        "field": "PR Potato 2",
+        "operator": "Cara Nguyen",
+        "aircraft": "RDO-HY-03"
+      },
+      "attachments": [
+        "application log",
+        "label reference",
+        "cleanout notes"
+      ],
+      "source_slug": "rdo-record-002"
+    }
+  ],
+  "maintenanceRecords": [
+    {
+      "id": "bd98dfcf-0fcf-598c-83d5-d767420b37b9",
+      "aircraft_id": "cd2d67d6-5c40-5337-ae33-e2f3dedabd8b",
+      "title": "50-hour inspection",
+      "status": "complete",
+      "due_at": "2026-05-18",
+      "notes": null,
+      "metadata": {
+        "source_slug": "maint-001",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "maint-001"
+    },
+    {
+      "id": "7b9cc6f4-e290-5911-a8f9-1969fcb2e5ae",
+      "aircraft_id": "a089eea2-3150-5f71-89b1-fd24629d77ac",
+      "title": "Spray calibration overdue",
+      "status": "blocking",
+      "due_at": "2026-05-04",
+      "notes": null,
+      "metadata": {
+        "source_slug": "maint-002",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "maint-002"
+    },
+    {
+      "id": "d703b866-87b8-5f21-bd4c-e49a259affa2",
+      "aircraft_id": "a089eea2-3150-5f71-89b1-fd24629d77ac",
+      "title": "Battery set B inspection",
+      "status": "open",
+      "due_at": "2026-05-05",
+      "notes": null,
+      "metadata": {
+        "source_slug": "maint-003",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "maint-003"
+    }
+  ],
+  "supportTickets": [
+    {
+      "id": "c02cb311-3606-5ac3-84e1-e4b5c2acfe9f",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "aircraft_id": null,
+      "title": "AG-272 pump calibration variance",
+      "status": "open",
+      "priority": "High",
+      "owner": "Harvest support",
+      "metadata": {
+        "source_slug": "ticket-1042",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "ticket-1042"
+    },
+    {
+      "id": "38e16b30-f75f-5a0d-8c60-d4db795f46f2",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "aircraft_id": null,
+      "title": "Official Hylio training material link review",
+      "status": "waiting_on_vendor",
+      "priority": "Normal",
+      "owner": "RDO training lead",
+      "metadata": {
+        "source_slug": "ticket-1043",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "ticket-1043"
+    },
+    {
+      "id": "f9338a65-15b7-5c3d-86a1-becdda6d3c49",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "aircraft_id": null,
+      "title": "Minnesota credential review for backup operator",
+      "status": "open",
+      "priority": "Normal",
+      "owner": "RDO compliance",
+      "metadata": {
+        "source_slug": "ticket-1044",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "ticket-1044"
+    }
+  ],
+  "performanceMetrics": [
+    {
+      "id": "a3356364-990e-5a0b-b8e7-9f4d78a1b85f",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "metric_key": "metric-acres",
+      "label": "Acres applied",
+      "metric_value": "228",
+      "period_label": "May 1-5",
+      "metadata": {
+        "source_slug": "metric-acres",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "metric-acres"
+    },
+    {
+      "id": "35a651da-1d07-5508-b879-616759957f3d",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "metric_key": "metric-readiness",
+      "label": "Ready jobs",
+      "metric_value": "1 of 3",
+      "period_label": "Next 7 days",
+      "metadata": {
+        "source_slug": "metric-readiness",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "metric-readiness"
+    },
+    {
+      "id": "045a20b1-9719-5bba-86ec-f7056f567132",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "metric_key": "metric-utilization",
+      "label": "Aircraft utilization",
+      "metric_value": "42%",
+      "period_label": "Launch month",
+      "metadata": {
+        "source_slug": "metric-utilization",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "metric-utilization"
+    },
+    {
+      "id": "563cb85d-063b-50df-a914-3f88620381ce",
+      "organization_id": "92498364-ac6e-51de-acd0-cfe1cd840aa9",
+      "metric_key": "metric-roi",
+      "label": "Estimated avoided outsource cost",
+      "metric_value": "$8,420",
+      "period_label": "Demo model",
+      "metadata": {
+        "source_slug": "metric-roi",
+        "source_fixture": "rdo_enterprise_demo"
+      },
+      "source_slug": "metric-roi"
+    }
+  ]
+}

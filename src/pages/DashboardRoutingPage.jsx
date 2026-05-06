@@ -266,6 +266,51 @@ const css = `
   font-size: 14px;
   color: var(--dop-text-muted);
 }
+.dop__skeleton {
+  padding: 24px;
+  display: grid;
+  gap: 12px;
+}
+.dop__skeleton-line,
+.dop__skeleton-block {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(163,217,119,0.13), rgba(255,255,255,0.04));
+  background-size: 220% 100%;
+  animation: dop-skeleton-pulse 1.4s ease-in-out infinite;
+}
+.dop__skeleton-line {
+  height: 12px;
+}
+.dop__skeleton-line--short {
+  width: min(180px, 48%);
+}
+.dop__skeleton-line--wide {
+  width: min(560px, 92%);
+}
+.dop__skeleton-row,
+.dop__skeleton-job {
+  border: 1px solid var(--dop-border);
+  background: rgba(255,255,255,0.025);
+}
+.dop__skeleton-row {
+  height: 56px;
+  border-radius: 10px;
+}
+.dop__skeleton-job {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 10px;
+}
+.dop__skeleton-job .dop__skeleton-block {
+  height: 34px;
+  width: min(220px, 72%);
+}
+@keyframes dop-skeleton-pulse {
+  0% { background-position: 0% 50%; }
+  100% { background-position: -220% 50%; }
+}
 .dop__jobs-grid {
   display: flex;
   flex-direction: column;
@@ -463,6 +508,41 @@ const css = `
   .dop__filter-field { min-width: unset; }
 }
 `;
+
+function LeadPipelineSkeleton() {
+  return (
+    <section className="dop__jobs" aria-live="polite" aria-label="Loading live lead data">
+      <div className="dop__jobs-header">
+        <div className="dop__jobs-header-left">
+          <span className="dop__jobs-eyebrow">Pipeline</span>
+          <h3 className="dop__jobs-title">Loading live lead data</h3>
+          <p className="dop__jobs-desc">Pulling growers, operators, jobs, and recent automation activity.</p>
+        </div>
+      </div>
+      <div className="dop__skeleton">
+        <span className="dop__skeleton-line dop__skeleton-line--short" />
+        <span className="dop__skeleton-line dop__skeleton-line--wide" />
+        {[0, 1, 2, 3, 4].map((item) => (
+          <span className="dop__skeleton-row" key={item} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function JobsSkeleton() {
+  return (
+    <div className="dop__skeleton" aria-label="Loading assignment-ready opportunities">
+      {[0, 1, 2].map((item) => (
+        <div className="dop__skeleton-job" key={item}>
+          <span className="dop__skeleton-line dop__skeleton-line--short" />
+          <span className="dop__skeleton-line dop__skeleton-line--wide" />
+          <span className="dop__skeleton-block" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function DashboardRoutingPage() {
   const [leads, setLeads] = useState([]);
@@ -806,7 +886,7 @@ function DashboardRoutingPage() {
         </section>
 
         {isLoading ? (
-          <div className="dop__jobs"><div className="dop__jobs-empty">Loading live lead data...</div></div>
+          <LeadPipelineSkeleton />
         ) : errorMessage ? (
           <div className="dop__jobs"><div className="dop__jobs-empty">Supabase error: {errorMessage}</div></div>
         ) : filteredLeads.length === 0 ? (
@@ -827,7 +907,9 @@ function DashboardRoutingPage() {
 
           {jobActionMessage && <div className="dop__jobs-message">{jobActionMessage}</div>}
 
-          {jobs.length === 0 ? (
+          {isLoading ? (
+            <JobsSkeleton />
+          ) : jobs.length === 0 ? (
             <div className="dop__jobs-empty">Create a job from any grower lead to start assignment planning.</div>
           ) : (
             <div className="dop__jobs-grid">

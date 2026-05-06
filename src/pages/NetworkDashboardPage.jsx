@@ -28,6 +28,8 @@ function NetworkDashboardPage() {
   const [dealers, setDealers] = useState([]);
   const [leads, setLeads] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [networkDrones, setNetworkDrones] = useState([]);
+  const [networkSchedule, setNetworkSchedule] = useState([]);
   const [sortKey, setSortKey] = useState("acres");
 
   useEffect(() => {
@@ -36,7 +38,11 @@ function NetworkDashboardPage() {
     async function loadData() {
       if (!networkId) return;
 
-      const { data: dealerRows } = await supabase.from("dealers").select("*").eq("network_id", networkId).order("name");
+      const [{ data: dealerRows }, { data: droneRows }, { data: scheduleRows }] = await Promise.all([
+        supabase.from("dealers").select("*").eq("network_id", networkId).order("name"),
+        supabase.from("fleet_drones").select("*").eq("network_id", networkId),
+        supabase.from("application_schedule").select("*").eq("network_id", networkId),
+      ]);
       const dealerIds = (dealerRows || []).map((dealer) => dealer.id);
 
       let leadRows = [];
@@ -55,6 +61,8 @@ function NetworkDashboardPage() {
         setDealers(dealerRows || []);
         setLeads(leadRows);
         setOrders(orderRows);
+        setNetworkDrones(droneRows || []);
+        setNetworkSchedule(scheduleRows || []);
       }
     }
 
@@ -81,6 +89,22 @@ function NetworkDashboardPage() {
   const totalAcres = dealerRows.reduce((sum, row) => sum + row.acres, 0);
   const totalRevenue = dealerRows.reduce((sum, row) => sum + row.revenue, 0);
   const averageTraining = dealerRows.length ? Math.round(dealerRows.reduce((sum, row) => sum + row.training, 0) / dealerRows.length) : 0;
+  const availableDrones = networkDrones.filter((drone) => drone.status === "available").length;
+  const maintenanceDrones = networkDrones.filter((drone) => drone.status === "maintenance" || drone.status === "grounded").length;
+  const applicationsThisWeek = networkSchedule.filter((item) => {
+    const opens = item.window_opens ? new Date(item.window_opens).getTime() : 0;
+    return opens >= Date.now() && opens <= Date.now() + 7 * 86400000;
+  }).length;
+  const acresScheduledThisWeek = networkSchedule.reduce((sum, item) => {
+    const opens = item.window_opens ? new Date(item.window_opens).getTime() : 0;
+    return opens >= Date.now() && opens <= Date.now() + 7 * 86400000
+      ? sum + Number(item.field_acres || 0)
+      : sum;
+  }, 0);
+  const completedApps = networkSchedule.filter((item) => item.status === "completed").length;
+  const seasonCompletionRate = networkSchedule.length ? Math.round((completedApps / networkSchedule.length) * 100) : 0;
+  const complianceReadyDealers = dealers.filter((dealer) => ["active", "qualified"].includes(dealer.training_status)).length;
+  const complianceReadyRate = dealers.length ? Math.round((complianceReadyDealers / dealers.length) * 100) : 0;
 
   function exportCsv() {
     const rows = ["Dealer,State,Leads,Orders,Revenue,Acres,Training"];
@@ -112,6 +136,13 @@ function NetworkDashboardPage() {
           <div className="network__kpi"><span>Pipeline value</span><strong>{formatCurrency(totalRevenue)}</strong></div>
           <div className="network__kpi"><span>Avg dealer revenue</span><strong>{formatCurrency(dealers.length ? totalRevenue / dealers.length : 0)}</strong></div>
           <div className="network__kpi"><span>Training</span><strong>{averageTraining}%</strong></div>
+          <div className="network__kpi"><span>Total drones</span><strong>{networkDrones.length}</strong></div>
+          <div className="network__kpi"><span>Available drones</span><strong>{availableDrones}</strong></div>
+          <div className="network__kpi"><span>Maintenance</span><strong>{maintenanceDrones}</strong></div>
+          <div className="network__kpi"><span>Apps this week</span><strong>{applicationsThisWeek}</strong></div>
+          <div className="network__kpi"><span>Acres this week</span><strong>{acresScheduledThisWeek.toLocaleString()}</strong></div>
+          <div className="network__kpi"><span>Season complete</span><strong>{seasonCompletionRate}%</strong></div>
+          <div className="network__kpi"><span>Compliance ready</span><strong>{complianceReadyRate}%</strong></div>
         </div>
 
         <article className="network__card">

@@ -21,6 +21,84 @@ const OPPORTUNITY_BOARD_COLUMNS = [
   { id: "closed_won", description: "Revenue captured" },
 ];
 
+const crmLoadingCss = `
+.crm-loading-state--skeleton {
+  display: grid;
+  gap: 1rem;
+}
+.crm-skeleton__header,
+.crm-skeleton__grid,
+.crm-skeleton__table {
+  display: grid;
+  gap: 0.8rem;
+}
+.crm-skeleton__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.crm-skeleton__metric,
+.crm-skeleton__row {
+  border-radius: 0.9rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.035);
+}
+.crm-skeleton__metric {
+  min-height: 6rem;
+  padding: 1rem;
+}
+.crm-skeleton__row {
+  min-height: 3.4rem;
+}
+.crm-skeleton__line {
+  height: 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(163,217,119,0.13), rgba(255,255,255,0.05));
+  background-size: 220% 100%;
+  animation: crm-skeleton-pulse 1.4s ease-in-out infinite;
+}
+.crm-skeleton__line--wide {
+  width: min(28rem, 85%);
+}
+.crm-skeleton__line--short {
+  width: 42%;
+}
+.crm-skeleton__metric .crm-skeleton__line + .crm-skeleton__line {
+  margin-top: 1rem;
+}
+@keyframes crm-skeleton-pulse {
+  0% { background-position: 0% 50%; }
+  100% { background-position: -220% 50%; }
+}
+@media (max-width: 760px) {
+  .crm-skeleton__grid {
+    grid-template-columns: 1fr;
+  }
+}
+`;
+
+function CrmLoadingSkeleton() {
+  return (
+    <section className="card crm-loading-state crm-loading-state--skeleton" aria-live="polite" aria-label="Loading CRM data">
+      <div className="crm-skeleton__header">
+        <span className="crm-skeleton__line crm-skeleton__line--short" />
+        <span className="crm-skeleton__line crm-skeleton__line--wide" />
+      </div>
+      <div className="crm-skeleton__grid">
+        {[0, 1, 2, 3].map((item) => (
+          <div className="crm-skeleton__metric" key={item}>
+            <span className="crm-skeleton__line crm-skeleton__line--short" />
+            <span className="crm-skeleton__line crm-skeleton__line--wide" />
+          </div>
+        ))}
+      </div>
+      <div className="crm-skeleton__table">
+        {[0, 1, 2, 3, 4].map((item) => (
+          <span className="crm-skeleton__row" key={item} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function getBadgeTone(value = "") {
   const normalized = String(value).toLowerCase();
 
@@ -1037,6 +1115,7 @@ function CrmPage() {
 
   return (
     <Shell compact>
+      <style>{crmLoadingCss}</style>
       <div className="crm-workspace">
         <CrmSidebar sections={crmSections} activeSection={activeSection} onSelect={setActiveSection} />
         <div className="crm-main">
@@ -1069,7 +1148,7 @@ function CrmPage() {
             onOwnerChange={setOwnerFilter}
           />
 
-          {isLoading ? <section className="card crm-loading-state">Loading CRM data...</section> : null}
+          {isLoading ? <CrmLoadingSkeleton /> : null}
           {errorMessage ? <section className="card crm-loading-state">Supabase error: {errorMessage}</section> : null}
           {actionMessage ? (
             <section className={`card crm-loading-state${actionMessage.tone === "error" ? " crm-loading-state--error" : ""}`}>

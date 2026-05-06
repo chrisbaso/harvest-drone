@@ -100,6 +100,13 @@ function SourcePage() {
       utm_source: tracking.utm_source,
       utm_campaign: tracking.utm_campaign,
     });
+
+    trackMetaEventOnce(`source-view:${tracking.landing_page_url}`, "ViewContent", {
+      content_name: "Harvest Drone SOURCE Acre Review",
+      content_category: "SOURCE lead funnel",
+      utm_source: tracking.utm_source || undefined,
+      utm_campaign: tracking.utm_campaign || undefined,
+    });
   }, [searchParams]);
 
   function scrollToQuiz() {
@@ -219,8 +226,8 @@ function SourcePage() {
           <SourceShell>
             <SourceSectionHeader
               eyebrow="Who this is for"
-              title="Built for practical growers, not software buyers"
-              description="This fit check is designed to help Harvest Drone identify acres that may warrant immediate human follow-up, educational follow-up, or a lower-priority nurture path."
+              title="Built for growers evaluating real acres"
+              description="This fit check helps identify where SOURCE may fit this season, whether a starter trial makes sense, and what follow-up would be most useful."
             />
             <div className="harvest-source__section-grid">
               {WHO_ITS_FOR.map((item) => (

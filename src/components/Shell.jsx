@@ -14,6 +14,8 @@ const PUBLIC_LANDING_ROUTES = new Set([
   "/terms",
   "/login",
   "/join",
+  "/enterprise",
+  "/roi-calculator",
 ]);
 
 function normalizePathname(pathname = "/") {
@@ -28,7 +30,7 @@ function isPublicLandingRoute(pathname) {
   const normalizedPath = normalizePathname(pathname);
 
   return [...PUBLIC_LANDING_ROUTES].some(
-    (route) => normalizedPath === route || normalizedPath.startsWith(`${route}/`),
+    (route) => normalizedPath === route || (route !== "/enterprise" && normalizedPath.startsWith(`${route}/`)),
   );
 }
 
@@ -46,27 +48,33 @@ function Shell({ children, compact = false }) {
           ["Admin", "/admin"],
           ["Agent", "/agent"],
           ["Training", "/training"],
+          ["Fleet", "/fleet"],
+          ["Scheduler", "/scheduler"],
+          ["Enterprise", "/enterprise/rdo/division"],
           ["Demo", "/demo"],
           ["How it works", "/how-it-works"],
         ]
       : role === "network_manager"
         ? [
-            ["Network Dashboard", "/network"],
-            ["Dealers", "/network"],
-            ["Reports", "/network"],
+            ["Network", "/network"],
+            ["Fleet", "/fleet"],
+            ["Scheduler", "/scheduler"],
+            ["Enterprise", "/enterprise/rdo/division"],
             ["Demo", "/demo"],
           ]
         : role === "dealer"
           ? [
-              ["My Dashboard", "/dealer"],
-              ["My Leads", "/dealer"],
-              ["My Training", "/training"],
+              ["Dashboard", "/dealer"],
+              ["Fleet", "/fleet"],
+              ["Scheduler", "/scheduler"],
+              ["Training", "/training"],
+              ["Enterprise", "/enterprise/rdo/division"],
               ["Demo", "/demo"],
             ]
           : role === "operator"
             ? [
-                ["My Training", "/training"],
-                ["My Assignments", "/jobs/1842/readiness"],
+                ["Training", "/training"],
+                ["Qualification", "/training/qualification"],
                 ["Demo", "/demo"],
               ]
             : [];

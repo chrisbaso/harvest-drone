@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getHarvestAdminData, downloadHarvestLeadsCsv } from "../lib/harvestApi";
 import { formatCrops, formatDateLabel } from "../../shared/harvestLeadEngine";
+import { buildRevenueCommandCenter } from "../../shared/revenueOps";
 import { usePageMeta } from "../lib/pageMeta";
 import Shell from "../components/Shell";
 import LeadTable from "../components/LeadTable";
@@ -110,30 +111,39 @@ function HarvestAdminPage() {
     });
   }, [filters, leadData.leads]);
 
+  const revenueCommandCenter = useMemo(
+    () => buildRevenueCommandCenter(filteredLeads),
+    [filteredLeads],
+  );
+
   const summary = useMemo(() => {
     const total = filteredLeads.length;
-    const hotLeads = filteredLeads.filter((lead) => lead.lead_tier === "Hot").length;
-    const warmLeads = filteredLeads.filter((lead) => lead.lead_tier === "Warm").length;
-    const nurtureLeads = filteredLeads.filter((lead) => lead.lead_tier === "Nurture").length;
-    const lowFitLeads = filteredLeads.filter((lead) => lead.lead_tier === "Low Fit").length;
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const leadsThisWeek = filteredLeads.filter((lead) => new Date(lead.created_at).getTime() >= weekAgo).length;
     const averageScore = total
       ? Math.round(filteredLeads.reduce((sum, lead) => sum + Number(lead.lead_score || 0), 0) / total)
       : 0;
-    const estimatedAcres = filteredLeads.reduce((sum, lead) => sum + Number(lead.estimated_acres || 0), 0);
+    const metrics = revenueCommandCenter.metrics;
 
     return [
-      { label: "Total leads", value: total },
-      { label: "Hot leads", value: hotLeads },
-      { label: "Warm leads", value: warmLeads },
-      { label: "Nurture leads", value: nurtureLeads },
-      { label: "Low-fit leads", value: lowFitLeads },
+      { label: "Qualified acres", value: metrics.qualifiedAcres.toLocaleString("en-US") },
+      { label: "Hot acres", value: metrics.hotAcres.toLocaleString("en-US") },
+      { label: "Proposal acres", value: metrics.proposalAcres.toLocaleString("en-US") },
+      { label: "Won acres", value: metrics.wonAcres.toLocaleString("en-US") },
+      {
+        label: "Pipeline value",
+        value: metrics.pipelineValue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }),
+      },
+      {
+        label: "Actual revenue",
+        value: metrics.actualRevenue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }),
+      },
+      { label: "Hot SLA risk", value: metrics.hotLeadsAtRisk },
+      { label: "Total leads", value: metrics.totalLeads },
       { label: "Leads this week", value: leadsThisWeek },
       { label: "Average score", value: averageScore },
-      { label: "Estimated acres represented", value: estimatedAcres.toLocaleString("en-US") },
     ];
-  }, [filteredLeads]);
+  }, [filteredLeads, revenueCommandCenter.metrics]);
 
   const states = useMemo(
     () => [...new Set((leadData.leads || []).map((lead) => lead.state).filter(Boolean))].sort(),
@@ -172,6 +182,11 @@ function HarvestAdminPage() {
       label: "Acres",
     },
     {
+      key: "estimated_acres",
+      label: "Est. acres",
+      render: (lead) => Number(lead.estimated_acres || 0).toLocaleString("en-US"),
+    },
+    {
       key: "crops",
       label: "Crops",
       render: (lead) => formatCrops(lead.crops),
@@ -197,6 +212,11 @@ function HarvestAdminPage() {
       label: "Status",
     },
     {
+      key: "revenue_status",
+      label: "Revenue",
+      render: (lead) => lead.revenue_status || "unconfirmed",
+    },
+    {
       key: "actions",
       label: "Lead detail",
       render: (lead) => (
@@ -215,8 +235,8 @@ function HarvestAdminPage() {
             <span className="eyebrow">Internal dashboard</span>
             <h1>Harvest Drone lead engine</h1>
             <p>
-              See who is worth calling first, why they matter, and what next step the SOURCE
-              funnel recommends.
+              Run the SOURCE pipeline by qualified acres, hot-lead response risk, dealer
+              attribution, and confirmed revenue.
             </p>
           </div>
           <div className="harvest-admin__header-actions">
@@ -240,6 +260,64 @@ function HarvestAdminPage() {
               <strong>{card.value}</strong>
             </article>
           ))}
+        </div>
+
+        <div className="harvest-admin__ops-grid">
+          <article className="card harvest-admin__ops-panel">
+            <div className="harvest-admin__ops-header">
+              <div>
+                <span className="eyebrow">Follow-up SLA</span>
+                <h2>Hot leads that need action</h2>
+              </div>
+              <strong>{revenueCommandCenter.hotLeadSla.length}</strong>
+            </div>
+            <div className="harvest-admin__ops-list">
+              {revenueCommandCenter.hotLeadSla.length ? (
+                revenueCommandCenter.hotLeadSla.slice(0, 5).map((lead) => (
+                  <div className="harvest-admin__ops-row" key={lead.id}>
+                    <div>
+                      <strong>{lead.displayName}</strong>
+                      <span>{`${lead.farmName} | ${lead.estimatedAcres.toLocaleString("en-US")} acres | ${lead.hoursOpen}h open`}</span>
+                    </div>
+                    <Link className="button button--secondary button--small" to={`/admin/leads/${lead.id}`}>
+                      Open
+                    </Link>
+                  </div>
+                ))
+              ) : (
+                <p className="table-subtle">No hot leads are past the 24-hour first-touch window.</p>
+              )}
+            </div>
+          </article>
+
+          <article className="card harvest-admin__ops-panel">
+            <div className="harvest-admin__ops-header">
+              <div>
+                <span className="eyebrow">Dealer attribution</span>
+                <h2>Channels creating qualified acres</h2>
+              </div>
+            </div>
+            <div className="harvest-admin__dealer-table">
+              <div className="harvest-admin__dealer-head">
+                <span>Dealer</span>
+                <span>Leads</span>
+                <span>Qualified acres</span>
+                <span>Won revenue</span>
+              </div>
+              {revenueCommandCenter.dealerLeaderboard.length ? (
+                revenueCommandCenter.dealerLeaderboard.slice(0, 6).map((dealer) => (
+                  <div className="harvest-admin__dealer-row" key={dealer.dealerSlug}>
+                    <strong>{dealer.label}</strong>
+                    <span>{`${dealer.leads} / ${dealer.hotLeads} hot`}</span>
+                    <span>{dealer.qualifiedAcres.toLocaleString("en-US")}</span>
+                    <span>{dealer.actualRevenue.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="table-subtle">No dealer-attributed leads match the current filters.</p>
+              )}
+            </div>
+          </article>
         </div>
 
         <div className="harvest-admin__filters card">

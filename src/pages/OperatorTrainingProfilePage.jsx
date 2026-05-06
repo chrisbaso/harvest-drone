@@ -11,19 +11,31 @@ import {
   practicalEvaluationTemplates,
   trainingCourses,
 } from "../../shared/trainingProgram";
+import { getApplicationJobReadiness, rdoEnterpriseDemo } from "../../shared/enterpriseDivision";
 import TrainingStyles from "../components/training/TrainingStyles";
 
 function OperatorTrainingProfilePage() {
   const { id } = useParams();
-  const operator = demoOperators.find((item) => item.id === id) || demoOperators[1];
-  const readiness = computeHylioJobReadiness({ operator, job: demoHylioJob });
+  const enterpriseOperator = rdoEnterpriseDemo.operators.find((item) => item.id === id);
+  const operator = enterpriseOperator || demoOperators.find((item) => item.id === id) || demoOperators[1];
+  const enterpriseJob = enterpriseOperator
+    ? rdoEnterpriseDemo.applicationJobs.find((job) => job.assignedOperatorId === operator.id) || rdoEnterpriseDemo.applicationJobs[0]
+    : null;
+  const readiness = enterpriseJob
+    ? getApplicationJobReadiness({
+        orgId: "rdo",
+        jobId: enterpriseJob.id,
+        operatorId: operator.id,
+        aircraftId: enterpriseJob.aircraftId,
+      })
+    : computeHylioJobReadiness({ operator, job: demoHylioJob });
 
   return (
     <Shell compact>
       <section className="section training-page">
         <TrainingStyles />
-        <Link className="back-link" to="/admin/training">
-          Back to admin training
+        <Link className="back-link" to={enterpriseOperator ? "/enterprise/rdo/operators" : "/admin/training"}>
+          {enterpriseOperator ? "Back to enterprise operators" : "Back to admin training"}
         </Link>
         <div className="training-header card">
           <span className="eyebrow">Operator profile</span>
@@ -33,7 +45,7 @@ function OperatorTrainingProfilePage() {
             <Link className="button button--secondary" to="/training/qualification">
               Open qualification module
             </Link>
-            <Link className="button button--secondary" to="/jobs/1842/readiness">
+            <Link className="button button--secondary" to={enterpriseJob ? `/jobs/${enterpriseJob.id}/readiness` : "/jobs/1842/readiness"}>
               View readiness gates
             </Link>
           </div>

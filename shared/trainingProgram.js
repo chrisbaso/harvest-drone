@@ -592,7 +592,7 @@ export const demoHylioJob = {
     maintenanceBlocked: false,
   },
   requiredChecklistSlugs: ["preflight", "drift-weather-review", "chemical-mixing-loading"],
-  completedChecklistSlugs: ["drift-weather-review"],
+  completedChecklistSlugs: ["preflight", "drift-weather-review", "chemical-mixing-loading"],
   documentsAttached: true,
   weatherAcknowledged: true,
   priorRecordsOverdue: false,
@@ -699,6 +699,74 @@ export function getCourseProgress(operator, course) {
   };
 }
 
+function normalizeArrayField(value, fallback = []) {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  if (typeof value === "string" && value.trim()) {
+    return value.split(",").map((item) => item.trim()).filter(Boolean);
+  }
+  return fallback;
+}
+
+function getNestedSlug(row, relationName, fallbackKey) {
+  const relation = row?.[relationName];
+  if (Array.isArray(relation)) {
+    return relation[0]?.slug || row?.[fallbackKey] || "";
+  }
+  return relation?.slug || row?.[fallbackKey] || "";
+}
+
+export function mapTrainingRowsToOperator({
+  profile,
+  operatorLead,
+  enrollments = [],
+  lessonProgress = [],
+  assessmentAttempts = [],
+  credentials = [],
+  practicalEvaluations = [],
+} = {}) {
+  const source = operatorLead || profile || {};
+  const firstLastName = [source.first_name, source.last_name].filter(Boolean).join(" ");
+  const name = source.name || source.full_name || firstLastName || profile?.full_name || profile?.email || "Operator";
+
+  return {
+    id: source.id || profile?.id || "operator",
+    name,
+    role: source.role || source.operator_type || profile?.role || "Operator",
+    state: source.state || source.state_territory || "Arkansas",
+    aircraftModels: normalizeArrayField(source.aircraft_models || source.aircraftModels, ["Hylio AG-272"]),
+    payloadTypes: normalizeArrayField(source.payload_types || source.payloadTypes, ["liquid"]),
+    enrollments: enrollments.map((row) => ({
+      courseId: getNestedSlug(row, "training_courses", "course_slug") || row.course_id,
+      status: row.status,
+      enrolledAt: row.created_at || row.enrolled_at,
+    })),
+    completedLessons: lessonProgress
+      .filter((row) => ["completed", "passed"].includes(row?.status) || row?.completed_at)
+      .map((row) => getNestedSlug(row, "training_lessons", "lesson_slug") || row?.lesson_id)
+      .filter(Boolean),
+    assessmentAttempts: assessmentAttempts.map((row) => ({
+      assessmentId: getNestedSlug(row, "training_assessments", "assessment_slug") || row.assessment_id,
+      score: Number(row.score || 0),
+      passed: Boolean(row.passed),
+      attemptedAt: row.created_at || row.attempted_at,
+    })),
+    credentials: credentials.map((row) => ({
+      type: row.credential_type || row.type,
+      status: row.verification_status || row.status || "pending_review",
+      state: row.state_territory || row.state,
+      category: row.category,
+      aircraftModel: row.aircraft_model,
+      payloadType: row.payload_type,
+      expiresAt: row.expiration_date || row.expires_at,
+    })),
+    practicalEvaluations: practicalEvaluations.map((row) => ({
+      templateId: row.template_slug || row.template_id,
+      status: row.status,
+      signedAt: row.signed_at || row.evaluated_at,
+    })),
+  };
+}
+
 export function getCredential(operator, type, criteria = {}, now = new Date()) {
   return (operator.credentials || []).find((credential) => {
     const typeMatch = credential.type === type;
@@ -712,6 +780,22 @@ export function getCredential(operator, type, criteria = {}, now = new Date()) {
 
 export function canSignPracticalEvaluation(roleOrLevel) {
   return ["Lead Operator", "Chief Pilot", "Admin", "Compliance Admin", QUALIFICATION_LEVELS.LEAD_OPERATOR, QUALIFICATION_LEVELS.CHIEF_PILOT_OR_ADMIN].includes(roleOrLevel);
+}
+
+export function canVerifyOperatorCredential({ actor, operator }) {
+  if (!actor || !operator || actor.id === operator.id) {
+    return false;
+  }
+
+  return ["Lead Operator", "Chief Pilot", "Admin", "Compliance Admin", QUALIFICATION_LEVELS.LEAD_OPERATOR, QUALIFICATION_LEVELS.CHIEF_PILOT_OR_ADMIN].includes(actor.role || actor.level);
+}
+
+export function canSignPracticalForOperator({ actor, operator }) {
+  if (!actor || !operator || actor.id === operator.id) {
+    return false;
+  }
+
+  return canSignPracticalEvaluation(actor.role || actor.level);
 }
 
 export function hasAllPracticalSignoffs(operator) {
@@ -818,11 +902,11 @@ export function computeHylioJobReadiness({ operator, job = demoHylioJob, now = n
 
   const incompleteChecklists = (job.requiredChecklistSlugs || []).filter((slug) => !(job.completedChecklistSlugs || []).includes(slug));
   if (incompleteChecklists.length) {
-    warnings.push(`Required SOP checklist pending: ${incompleteChecklists.join(", ")}`);
+    blockers.push(`Required SOP checklist pending: ${incompleteChecklists.join(", ")}`);
   }
 
   if (!job.documentsAttached) {
-    warnings.push("Required job documents are not attached");
+    blockers.push("Required job documents are not attached");
   }
 
   if (!job.weatherAcknowledged) {
@@ -965,7 +1049,6 @@ export function getQualificationGateChecks({ operator, job = demoHylioJob, now =
       group: "Assignment",
       label: "Required job documents attached",
       passed: Boolean(job.documentsAttached),
-      warning: true,
       evidence: job.documentsAttached ? "Documents attached" : "Documents missing",
       action: "Attach label, field plan, customer notes, and application records",
     }),
@@ -974,7 +1057,6 @@ export function getQualificationGateChecks({ operator, job = demoHylioJob, now =
       group: "Assignment",
       label: "Required SOP checklists completed",
       passed: incompleteChecklists.length === 0,
-      warning: true,
       evidence: incompleteChecklists.length ? incompleteChecklists.join(", ") : "All required checklists complete",
       action: "Complete required SOP checklists before launch",
     }),

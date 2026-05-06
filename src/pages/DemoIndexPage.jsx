@@ -134,15 +134,25 @@ const publicRoutes = [
 
 const dealerRoutes = [
   {
-    title: "RDO SOURCE Funnel",
-    path: "/d/rdo-marshall-mn",
+    title: "Demo Territory SOURCE Funnel",
+    path: "/d/demo-territory",
     description: "Dealer-attributed SOURCE funnel. This intentionally renders the SOURCE page.",
   },
   {
-    title: "RDO Grower Funnel",
-    path: "/d/rdo-marshall-mn/growers",
+    title: "Demo Territory Grower Funnel",
+    path: "/d/demo-territory/growers",
     description: "Dealer-attributed grower funnel. This intentionally renders the Grower page.",
   },
+];
+
+const enterpriseRoutes = [
+  { title: "Enterprise Landing", path: "/enterprise", description: "Public page for enterprise prospects. Send this link to RDO." },
+  { title: "ROI Calculator", path: "/roi-calculator", description: "Interactive own-vs-hire economics tool." },
+  { title: "Fleet Management", path: "/fleet", description: "Drone fleet tracking: serial, hours, maintenance, pilots." },
+  { title: "Application Scheduler", path: "/scheduler", description: "Dispatch board for spray operations." },
+  { title: "Training Program", path: "/training", description: "11-lesson pilot certification course." },
+  { title: "Qualification Review", path: "/training/qualification", description: "Pilot readiness gate." },
+  { title: "Credential Vault", path: "/compliance/credentials", description: "Compliance credential tracking with expiry alerts." },
 ];
 
 const internalRoutes = [
@@ -192,6 +202,11 @@ const internalRoutes = [
     description: "Assignment readiness check for a demo job.",
   },
   {
+    title: "Enterprise Drone Division",
+    path: "/enterprise/rdo/division",
+    description: "RDO drone division command center, blueprint, spray calendar, readiness gates, records, support, and ROI.",
+  },
+  {
     title: "Dealer Dashboard",
     path: "/dealer",
     description: "Dealer-scoped leads, orders, training, and URL tools.",
@@ -227,7 +242,7 @@ function DemoIndexPage() {
           <span className="eyebrow">Demo navigation</span>
           <h1>Every Harvest OS demo route in one place.</h1>
           <p>
-            Public pages are funnels. Dealer URLs are intentionally attributed funnels. Internal
+            Public pages are funnels. Demo territory URLs are intentionally attributed funnels. Internal
             dashboards require the logged-in role shown in the app navigation.
           </p>
           <div className="demo-index__note">
@@ -247,11 +262,21 @@ function DemoIndexPage() {
         </article>
 
         <article className="demo-index__section">
-          <span className="eyebrow">Dealer attribution</span>
-          <h2>Dealer-branded funnel URLs</h2>
+          <span className="eyebrow">Demo attribution</span>
+          <h2>Generic attributed funnel URLs</h2>
           <div className="demo-index__grid">
             {dealerRoutes.map((route) => (
               <RouteCard key={route.path} route={route} tone="Dealer URL" />
+            ))}
+          </div>
+        </article>
+
+        <article className="demo-index__section">
+          <span className="eyebrow">Enterprise — RDO drone division</span>
+          <h2>Fleet, scheduling, and operations management</h2>
+          <div className="demo-index__grid demo-index__grid--three">
+            {enterpriseRoutes.map((route) => (
+              <RouteCard key={route.path} route={route} tone="Enterprise" />
             ))}
           </div>
         </article>
