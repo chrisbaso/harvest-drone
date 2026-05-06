@@ -145,6 +145,16 @@ const dealerRoutes = [
   },
 ];
 
+const enterpriseRoutes = [
+  { title: "Enterprise Landing", path: "/enterprise", description: "Public page for enterprise prospects. Send this link to RDO." },
+  { title: "ROI Calculator", path: "/roi-calculator", description: "Interactive own-vs-hire economics tool." },
+  { title: "Fleet Management", path: "/fleet", description: "Drone fleet tracking: serial, hours, maintenance, pilots." },
+  { title: "Application Scheduler", path: "/scheduler", description: "Dispatch board for spray operations." },
+  { title: "Training Program", path: "/training", description: "11-lesson pilot certification course." },
+  { title: "Qualification Review", path: "/training/qualification", description: "Pilot readiness gate." },
+  { title: "Credential Vault", path: "/compliance/credentials", description: "Compliance credential tracking with expiry alerts." },
+];
+
 const internalRoutes = [
   {
     title: "Admin Dashboard",
@@ -257,6 +267,16 @@ function DemoIndexPage() {
           <div className="demo-index__grid">
             {dealerRoutes.map((route) => (
               <RouteCard key={route.path} route={route} tone="Dealer URL" />
+            ))}
+          </div>
+        </article>
+
+        <article className="demo-index__section">
+          <span className="eyebrow">Enterprise — RDO drone division</span>
+          <h2>Fleet, scheduling, and operations management</h2>
+          <div className="demo-index__grid demo-index__grid--three">
+            {enterpriseRoutes.map((route) => (
+              <RouteCard key={route.path} route={route} tone="Enterprise" />
             ))}
           </div>
         </article>

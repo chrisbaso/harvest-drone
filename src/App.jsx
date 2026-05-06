@@ -35,6 +35,9 @@ const NetworkDashboardPage = lazy(() => import("./pages/NetworkDashboardPage"));
 const DealerOnboardingPage = lazy(() => import("./pages/DealerOnboardingPage"));
 const DemoIndexPage = lazy(() => import("./pages/DemoIndexPage"));
 const EnterprisePage = lazy(() => import("./pages/EnterprisePage"));
+const FleetManagementPage = lazy(() => import("./pages/FleetManagementPage"));
+const SchedulerPage = lazy(() => import("./pages/SchedulerPage"));
+const RoiCalculatorPage = lazy(() => import("./pages/RoiCalculatorPage"));
 
 function MetaPixelManager() {
   const location = useLocation();
@@ -74,7 +77,8 @@ function App() {
         <Route path="/d/:dealerSlug" element={<SourcePage />} />
         <Route path="/d/:dealerSlug/growers" element={<GrowerPage />} />
         <Route path="/demo" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer", "operator"]}><DemoIndexPage /></ProtectedRoute>} />
-        <Route path="/enterprise" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="home" /></ProtectedRoute>} />
+        <Route path="/enterprise" element={<EnterprisePage view="landing" />} />
+        <Route path="/roi-calculator" element={<RoiCalculatorPage />} />
         <Route path="/enterprise/:orgId/division" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="division" /></ProtectedRoute>} />
         <Route path="/enterprise/:orgId/blueprint" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="blueprint" /></ProtectedRoute>} />
         <Route path="/enterprise/:orgId/spray-calendar" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="spray-calendar" /></ProtectedRoute>} />
@@ -93,6 +97,8 @@ function App() {
         <Route path="/admin/training" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTrainingPage /></ProtectedRoute>} />
         <Route path="/network" element={<ProtectedRoute allowedRoles={["network_manager", "admin"]}><NetworkDashboardPage /></ProtectedRoute>} />
         <Route path="/dealer" element={<ProtectedRoute allowedRoles={["dealer", "admin"]}><DealerDashboardPage /></ProtectedRoute>} />
+        <Route path="/fleet" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><FleetManagementPage /></ProtectedRoute>} />
+        <Route path="/scheduler" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><SchedulerPage /></ProtectedRoute>} />
         <Route path="/training" element={<ProtectedRoute allowedRoles={["admin", "dealer", "operator"]}><TrainingDashboardPage /></ProtectedRoute>} />
         <Route path="/training/courses/:slug" element={<ProtectedRoute><TrainingCoursePage /></ProtectedRoute>} />
         <Route path="/training/lessons/:id" element={<ProtectedRoute><TrainingLessonPage /></ProtectedRoute>} />

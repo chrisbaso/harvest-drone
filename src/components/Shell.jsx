@@ -14,6 +14,8 @@ const PUBLIC_LANDING_ROUTES = new Set([
   "/terms",
   "/login",
   "/join",
+  "/enterprise",
+  "/roi-calculator",
 ]);
 
 function normalizePathname(pathname = "/") {
@@ -28,7 +30,7 @@ function isPublicLandingRoute(pathname) {
   const normalizedPath = normalizePathname(pathname);
 
   return [...PUBLIC_LANDING_ROUTES].some(
-    (route) => normalizedPath === route || normalizedPath.startsWith(`${route}/`),
+    (route) => normalizedPath === route || (route !== "/enterprise" && normalizedPath.startsWith(`${route}/`)),
   );
 }
 
@@ -46,7 +48,9 @@ function Shell({ children, compact = false }) {
           ["Admin", "/admin"],
           ["Agent", "/agent"],
           ["Training", "/training"],
-          ["Enterprise", "/enterprise"],
+          ["Fleet", "/fleet"],
+          ["Scheduler", "/scheduler"],
+          ["Enterprise", "/enterprise/rdo/division"],
           ["Demo", "/demo"],
           ["How it works", "/how-it-works"],
         ]
@@ -55,7 +59,9 @@ function Shell({ children, compact = false }) {
             ["Network Dashboard", "/network"],
             ["Dealers", "/network"],
             ["Reports", "/network"],
-            ["Enterprise", "/enterprise"],
+            ["Fleet", "/fleet"],
+            ["Scheduler", "/scheduler"],
+            ["Enterprise", "/enterprise/rdo/division"],
             ["Demo", "/demo"],
           ]
         : role === "dealer"
@@ -63,7 +69,9 @@ function Shell({ children, compact = false }) {
               ["My Dashboard", "/dealer"],
               ["My Leads", "/dealer"],
               ["My Training", "/training"],
-              ["Enterprise", "/enterprise"],
+              ["Fleet", "/fleet"],
+              ["Scheduler", "/scheduler"],
+              ["Enterprise", "/enterprise/rdo/division"],
               ["Demo", "/demo"],
             ]
           : role === "operator"

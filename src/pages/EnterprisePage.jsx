@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, NavLink, Navigate, useParams } from "react-router-dom";
+import { Link, NavLink, useParams } from "react-router-dom";
 import Shell from "../components/Shell";
 import EnterpriseStyles from "../components/enterprise/EnterpriseStyles";
 import {
@@ -673,6 +673,178 @@ function PerformanceView({ demo }) {
   );
 }
 
+const landingCss = `
+.enterprise-landing{--bg:#0C0F0A;--surface:#151A12;--card:#1A2015;--border:rgba(255,255,255,0.06);--text:#E8E6E1;--text-muted:#727966;--accent:#A3D977;font-family:'Instrument Sans',system-ui,sans-serif;color:var(--text);display:grid;gap:18px}
+.enterprise-landing h1,.enterprise-landing h2,.enterprise-landing h3{font-family:'DM Serif Display',Georgia,serif;font-weight:400;line-height:1.04;margin:0;color:#fff;letter-spacing:0}
+.enterprise-landing p{margin:0;color:var(--text-muted)}
+.el-hero,.el-band,.el-card,.el-preview,.el-contact,.el-footer{border:1px solid var(--border);border-radius:8px;background:var(--surface)}
+.el-hero{position:relative;overflow:hidden;min-height:calc(100vh - 150px);display:grid;align-items:center;padding:28px;background:linear-gradient(135deg,rgba(12,15,10,.98),rgba(21,26,18,.94))}
+.el-hero h1{font-size:clamp(3rem,9vw,6.8rem);max-width:10ch}
+.el-hero p{max-width:760px;font-size:1.05rem;color:#c9d2c4}
+.el-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.el-section{display:grid;gap:14px;padding:18px 0}
+.el-section__head{display:grid;gap:8px;max-width:760px}
+.el-grid{display:grid;gap:12px}
+.el-card{padding:18px;background:var(--card)}
+.el-card h3{font-size:1.45rem}
+.el-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:8px;background:rgba(163,217,119,.12);border:1px solid rgba(163,217,119,.22);color:var(--accent);font-weight:900}
+.el-roi{display:grid;gap:16px;align-items:center}
+.el-roi-number{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(2.8rem,8vw,5.2rem);line-height:.95;color:var(--accent)}
+.el-preview{padding:16px;background:linear-gradient(180deg,rgba(26,32,21,.96),rgba(12,15,10,.98));display:grid;gap:12px}
+.el-preview__chrome{display:flex;gap:6px}
+.el-preview__chrome span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.24)}
+.el-preview__grid{display:grid;gap:9px}
+.el-preview__row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.045);border:1px solid var(--border)}
+.el-preview__bar{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.el-preview__bar span{display:block;height:100%;width:var(--fill);background:var(--accent)}
+.el-system{display:grid;gap:12px}
+.el-contact{padding:20px;display:grid;gap:16px}
+.el-form{display:grid;gap:12px}
+.el-form-grid{display:grid;gap:12px}
+.el-note{color:#f2efcf}
+.el-footer{padding:16px;display:flex;flex-wrap:wrap;gap:10px}
+.el-footer span{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--border);font-size:13px;color:#dce6d7}
+@media(min-width:800px){.el-hero{padding:44px}.el-grid--three{grid-template-columns:repeat(3,1fr)}.el-grid--six{grid-template-columns:repeat(3,1fr)}.el-roi{grid-template-columns:1fr 1fr}.el-system{grid-template-columns:repeat(2,1fr)}.el-form-grid{grid-template-columns:repeat(2,1fr)}}
+`;
+
+function PublicEnterpriseLanding() {
+  const [form, setForm] = useState({ contactName: "", email: "", company: "", phone: "", message: "" });
+  const [status, setStatus] = useState("");
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setStatus("Sending...");
+    const response = await fetch("/api/enterprise-inquiry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      setStatus(result?.error || "Unable to send right now. Jake is at 612-258-0582.");
+      return;
+    }
+    setStatus("Thanks. Jake will follow up shortly.");
+    setForm({ contactName: "", email: "", company: "", phone: "", message: "" });
+  }
+
+  return (
+    <Shell compact>
+      <style>{landingCss}</style>
+      <section className="enterprise-landing">
+        <header className="el-hero">
+          <div>
+            <span className="eyebrow">Enterprise drone operations</span>
+            <h1>Build a drone division inside your operation.</h1>
+            <p>Equipment procurement, pilot training, compliance management, operational software, and maintenance support - everything you need to own precision application at scale.</p>
+            <div className="el-actions">
+              <Link className="button button--primary button--small" to="/roi-calculator">See the economics</Link>
+              <a className="button button--secondary button--small" href="#enterprise-contact">Contact us</a>
+            </div>
+          </div>
+        </header>
+
+        <section className="el-section">
+          <div className="el-section__head">
+            <span className="eyebrow">The problem</span>
+            <h2>Applicator dependency gets expensive when timing matters.</h2>
+          </div>
+          <div className="el-grid el-grid--three">
+            {[
+              ["Rising applicator costs", "Third-party spraying gets more expensive every season."],
+              ["Missed spray windows", "You compete for limited applicator availability during critical timing."],
+              ["Labor and control", "You cannot control quality, timing, or consistency when you hire it out."],
+            ].map(([title, copy]) => <article className="el-card" key={title}><h3>{title}</h3><p>{copy}</p></article>)}
+          </div>
+        </section>
+
+        <section className="el-section">
+          <div className="el-section__head">
+            <span className="eyebrow">Six pillars</span>
+            <h2>Harvest Drone provides the operating layer, not just the aircraft.</h2>
+          </div>
+          <div className="el-grid el-grid--six">
+            {[
+              ["Fleet procurement", "Hylio AG drones, American-made and sized for your operation."],
+              ["Training and certification", "11-lesson program, Part 107/137, pesticide licensing, and field checklists."],
+              ["Operational software", "Scheduling, dispatch, fleet tracking, and compliance documentation."],
+              ["Maintenance and support", "Ongoing repair, parts, and field service support."],
+              ["Input distribution", "SOURCE, BLUEPRINT, and EarthOptics integration."],
+              ["Regulatory compliance", "2027-ready equipment, credential tracking, and audit trail."],
+            ].map(([title, copy], index) => <article className="el-card" key={title}><span className="el-icon">{index + 1}</span><h3>{title}</h3><p>{copy}</p></article>)}
+          </div>
+        </section>
+
+        <section className="el-section el-roi">
+          <div className="el-section__head">
+            <span className="eyebrow">ROI</span>
+            <h2>The math works.</h2>
+            <p>At 5,000 acres and 10 applications per season, a three-drone division can turn recurring hire-out spend into owned operational capacity.</p>
+            <Link className="button button--primary button--small" to="/roi-calculator">Run your own numbers</Link>
+          </div>
+          <aside className="el-preview">
+            <div className="el-preview__chrome"><span /><span /><span /></div>
+            <span className="el-roi-number">$414,000</span>
+            <p>Projected annual savings after equipment purchase with the default calculator model.</p>
+            <div className="el-preview__row"><span>Own cost per acre</span><strong>$3.72</strong></div>
+            <div className="el-preview__row"><span>Hire cost per acre</span><strong>$12.00</strong></div>
+          </aside>
+        </section>
+
+        <section className="el-section">
+          <div className="el-section__head">
+            <span className="eyebrow">The system</span>
+            <h2>Every flight documented. Every pilot certified. Every drone tracked.</h2>
+          </div>
+          <div className="el-system">
+            {[
+              ["Fleet dashboard", "Alpha | available | 22.5 of 50 service hours", "45%"],
+              ["Scheduler", "North 40 | Fungicide | Application 7 of 12", "58%"],
+              ["Training system", "Pilot readiness | 11 lessons | credential vault", "82%"],
+              ["Compliance record", "Application logs | weather | checklist evidence", "100%"],
+            ].map(([title, copy, fill]) => (
+              <article className="el-preview" key={title}>
+                <div className="el-preview__chrome"><span /><span /><span /></div>
+                <h3>{title}</h3>
+                <div className="el-preview__row"><span>{copy}</span><strong>{fill}</strong></div>
+                <div className="el-preview__bar"><span style={{ "--fill": fill }} /></div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="el-contact" id="enterprise-contact">
+          <div className="el-section__head">
+            <span className="eyebrow">Start with one location. One season.</span>
+            <h2>Pick the operation where timing is hardest.</h2>
+            <p>We will size the fleet, train the team, install the software, and run it for one season. Jake is also reachable at 612-258-0582 or jake@harvestdrone.com.</p>
+          </div>
+          <form className="el-form" onSubmit={handleSubmit}>
+            <div className="el-form-grid">
+              <label className="field"><span>Name</span><input value={form.contactName} onChange={(event) => setForm((current) => ({ ...current, contactName: event.target.value }))} required /></label>
+              <label className="field"><span>Email</span><input type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} required /></label>
+              <label className="field"><span>Company</span><input value={form.company} onChange={(event) => setForm((current) => ({ ...current, company: event.target.value }))} /></label>
+              <label className="field"><span>Phone</span><input value={form.phone} onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))} /></label>
+            </div>
+            <label className="field"><span>Message</span><textarea rows="5" value={form.message} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))} placeholder="Tell us about acreage, crops, timing constraints, and current applicator spend." /></label>
+            <div className="inline-actions">
+              <button className="button button--primary button--small" type="submit">Send inquiry</button>
+              {status ? <span className="el-note">{status}</span> : null}
+            </div>
+          </form>
+        </section>
+
+        <footer className="el-footer">
+          <span>American-made equipment (Hylio)</span>
+          <span>2027-compliant from day one</span>
+          <span>Full training and compliance infrastructure</span>
+          <span>Operational software included</span>
+        </footer>
+      </section>
+    </Shell>
+  );
+}
+
 function EnterpriseView({ view, demo, summary, actions }) {
   switch (view) {
     case "division":
@@ -728,8 +900,8 @@ function EnterprisePage({ view = "division" }) {
     resetWorkspace: () => setDemo(resetEnterpriseWorkspace(orgId)),
   }), [orgId]);
 
-  if (view === "home") {
-    return <Navigate to="/enterprise/rdo/division" replace />;
+  if (view === "landing" || view === "home") {
+    return <PublicEnterpriseLanding />;
   }
 
   return (
