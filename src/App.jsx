@@ -113,6 +113,7 @@ function App() {
           <Route path="/enterprise" element={<EnterprisePage view="landing" />} />
           <Route path="/enterprise/rdo" element={<Navigate to="/enterprise/rdo/division" replace />} />
           <Route path="/enterprise/rdo/division" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer", "enterprise_demo"]}><EnterprisePage view="division" /></ProtectedRoute>} />
+          <Route path="/enterprise/rdo/training" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer", "enterprise_demo"]}><EnterprisePage view="training" /></ProtectedRoute>} />
           <Route path="/enterprise/rdo/blueprint" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer", "enterprise_demo"]}><EnterprisePage view="blueprint" /></ProtectedRoute>} />
           <Route path="/enterprise/rdo/spray-calendar" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer", "enterprise_demo"]}><EnterprisePage view="spray-calendar" /></ProtectedRoute>} />
           <Route path="/enterprise/rdo/operators" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer", "enterprise_demo"]}><EnterprisePage view="operators" /></ProtectedRoute>} />
@@ -124,6 +125,7 @@ function App() {
           <Route path="/roi-calculator" element={<RoiCalculatorPage />} />
           <Route path="/hss-partner-pricing" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><HssPartnerPricingPage /></ProtectedRoute>} />
           <Route path="/enterprise/:orgId/division" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="division" /></ProtectedRoute>} />
+          <Route path="/enterprise/:orgId/training" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="training" /></ProtectedRoute>} />
           <Route path="/enterprise/:orgId/blueprint" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="blueprint" /></ProtectedRoute>} />
           <Route path="/enterprise/:orgId/spray-calendar" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="spray-calendar" /></ProtectedRoute>} />
           <Route path="/enterprise/:orgId/operators" element={<ProtectedRoute allowedRoles={["admin", "network_manager", "dealer"]}><EnterprisePage view="operators" /></ProtectedRoute>} />

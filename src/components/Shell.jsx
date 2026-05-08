@@ -45,44 +45,36 @@ function Shell({ children, compact = false }) {
   const navItems =
     role === "admin"
       ? [
-          ["Dashboard", "/dashboard"],
+          ["HD Dashboard", "/dashboard"],
           ["CRM", "/crm"],
+          ["Daily Ops", "/admin/daily-ops"],
+          ["HD Agent", "/agent"],
+          ["HD Academy", "/training"],
           ["Admin", "/admin"],
-          ["Ops", "/admin/daily-ops"],
-          ["Agent", "/agent"],
-          ["Academy", "/training"],
-          ["Fleet", "/fleet"],
-          ["Scheduler", "/scheduler"],
-          ["Enterprise", "/enterprise/rdo/division"],
-          ["HSS Pricing", "/hss-partner-pricing"],
-          ["Demo", "/demo"],
-          ["How it works", "/how-it-works"],
+          ["RDO Demo", "/enterprise/rdo/division"],
         ]
       : role === "network_manager"
         ? [
-            ["Network", "/network"],
-            ["Fleet", "/fleet"],
-            ["Scheduler", "/scheduler"],
-            ["Enterprise", "/enterprise/rdo/division"],
-            ["HSS Pricing", "/hss-partner-pricing"],
-            ["Demo", "/demo"],
+            ["HD Network", "/network"],
+            ["HD Fleet", "/fleet"],
+            ["HD Scheduler", "/scheduler"],
+            ["RDO Demo", "/enterprise/rdo/division"],
           ]
         : role === "dealer"
           ? [
-              ["Dashboard", "/dealer"],
-              ["Fleet", "/fleet"],
-              ["Scheduler", "/scheduler"],
-              ["Academy", "/training"],
-              ["Enterprise", "/enterprise/rdo/division"],
-              ["HSS Pricing", "/hss-partner-pricing"],
-              ["Demo", "/demo"],
+              ["HD Dashboard", "/dealer"],
+              ["HD Fleet", "/fleet"],
+              ["HD Scheduler", "/scheduler"],
+              ["HD Academy", "/training"],
+              ["RDO Demo", "/enterprise/rdo/division"],
             ]
           : role === "operator"
             ? [
-                ["Academy", "/training"],
+                ["HD Academy", "/training"],
                 ["Qualification", "/training/qualification"],
-                ["Demo", "/demo"],
               ]
+            : role === ENTERPRISE_DEMO_ROLE
+              ? [["RDO Demo", ENTERPRISE_DEMO_HOME]]
             : [];
 
   return (
