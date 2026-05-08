@@ -1,12 +1,12 @@
-import { buildIntegrationStatusCards } from "../../shared/integrationStack.js";
-import { getSupabaseServerClient } from "../_lib/serverSupabase.js";
+import { buildIntegrationStatusCards } from "../../../shared/integrationStack.js";
+import { getSupabaseServerClient } from "../../_lib/serverSupabase.js";
 import {
   getIntegrationAdminSnapshot,
   logIntegrationEvent,
-} from "../_lib/integrationEvents.js";
-import { jobberGraphqlRequest } from "../_lib/jobber.js";
-import { sendSlackAlert } from "../_lib/slack.js";
-import { sendSmsMessage } from "../_lib/twilio.js";
+} from "../../_lib/integrationEvents.js";
+import { jobberGraphqlRequest } from "../../_lib/jobber.js";
+import { sendSlackAlert } from "../../_lib/slack.js";
+import { sendSmsMessage } from "../../_lib/twilio.js";
 
 function isDevelopmentEnvironment() {
   return process.env.NODE_ENV !== "production" && process.env.VERCEL_ENV !== "production";

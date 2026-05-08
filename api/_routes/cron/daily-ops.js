@@ -1,5 +1,5 @@
-import { generateDailyOpsBrief, isWeekdayInTimezone } from "../_lib/dailyOpsAgent.js";
-import { getSupabaseServerClient } from "../_lib/serverSupabase.js";
+import { generateDailyOpsBrief, isWeekdayInTimezone } from "../../_lib/dailyOpsAgent.js";
+import { getSupabaseServerClient } from "../../_lib/serverSupabase.js";
 
 function unauthorized(res) {
   return res.status(401).json({ error: "Unauthorized" });

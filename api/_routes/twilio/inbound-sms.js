@@ -1,5 +1,5 @@
-import { getSupabaseServerClient } from "../_lib/serverSupabase.js";
-import { handleInboundSms } from "../_lib/twilio.js";
+import { getSupabaseServerClient } from "../../_lib/serverSupabase.js";
+import { handleInboundSms } from "../../_lib/twilio.js";
 
 function twimlResponse(message = "") {
   return `<?xml version="1.0" encoding="UTF-8"?><Response>${message ? `<Message>${message}</Message>` : ""}</Response>`;

@@ -1,5 +1,5 @@
-import { getSupabaseServerClient } from "../_lib/serverSupabase.js";
-import { handleJobberWebhook } from "../_lib/jobber.js";
+import { getSupabaseServerClient } from "../../_lib/serverSupabase.js";
+import { handleJobberWebhook } from "../../_lib/jobber.js";
 
 function getRawBody(req) {
   if (typeof req.rawBody === "string") {

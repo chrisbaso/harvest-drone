@@ -2,7 +2,7 @@ import {
   getHarvestLeadDetail,
   isHarvestLeadStorageConfigured,
   updateHarvestLead,
-} from "../_lib/harvestLeads.js";
+} from "../../_lib/harvestLeads.js";
 
 export default async function handler(req, res) {
   const leadId = req.query?.id;

@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { signInDemoAccess as requestDemoAccess } from "../lib/demoAccessApi";
 import { supabase } from "../lib/supabase";
 
 const AuthContext = createContext(null);
 const DEMO_SESSION_STORAGE_KEY = "harvest_drone_demo_session";
+const SHARED_DEMO_SESSION_STORAGE_KEY = "harvest_drone_shared_demo_session";
 const DEMO_USER_ID = "00000000-0000-4000-8000-000000000001";
 const DEMO_NETWORK_ID = "11111111-1111-4111-8111-111111111111";
 const DEMO_DEALER_ID = "22222222-2222-4222-8222-222222222222";
@@ -54,6 +56,17 @@ function loadDemoSession() {
     : null;
 }
 
+function loadSharedDemoSession() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(SHARED_DEMO_SESSION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 function saveDemoSession() {
   if (isLocalDemoAuthAvailable && typeof window !== "undefined") {
     window.localStorage.setItem(DEMO_SESSION_STORAGE_KEY, "true");
@@ -63,6 +76,7 @@ function saveDemoSession() {
 function clearDemoSession() {
   if (typeof window !== "undefined") {
     window.localStorage.removeItem(DEMO_SESSION_STORAGE_KEY);
+    window.sessionStorage.removeItem(SHARED_DEMO_SESSION_STORAGE_KEY);
   }
 }
 
@@ -99,7 +113,7 @@ export function AuthProvider({ children }) {
       if (session?.user) {
         await loadProfile(session.user.id);
       } else {
-        const demoSession = loadDemoSession();
+        const demoSession = loadSharedDemoSession() || loadDemoSession();
         setUser(demoSession?.user ?? null);
         setProfile(demoSession?.profile ?? null);
         setIsLoading(false);
@@ -115,7 +129,7 @@ export function AuthProvider({ children }) {
         clearDemoSession();
         await loadProfile(session.user.id);
       } else {
-        const demoSession = loadDemoSession();
+        const demoSession = loadSharedDemoSession() || loadDemoSession();
         setUser(demoSession?.user ?? null);
         setProfile(demoSession?.profile ?? null);
         setIsLoading(false);
@@ -144,6 +158,21 @@ export function AuthProvider({ children }) {
     setUser(demoSession.user);
     setProfile(demoSession.profile);
     setIsLoading(false);
+  }
+
+  async function signInSharedDemo({ email, password }) {
+    clearDemoSession();
+    const demoSession = await requestDemoAccess({ email, password });
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(SHARED_DEMO_SESSION_STORAGE_KEY, JSON.stringify(demoSession));
+    }
+
+    setUser(demoSession.user);
+    setProfile(demoSession.profile);
+    setIsLoading(false);
+
+    return demoSession;
   }
 
   async function signUp({ email, password }) {
@@ -177,6 +206,7 @@ export function AuthProvider({ children }) {
       canUseLocalDemoAuth: isLocalDemoAuthAvailable,
       signIn,
       signInDemo,
+      signInSharedDemo,
       signUp,
       signOut,
     };

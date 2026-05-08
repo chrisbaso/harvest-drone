@@ -5,8 +5,8 @@ import {
   getGoogleUserInfo,
   GOOGLE_WORKSPACE_SCOPES,
   upsertGoogleIntegrationAccount,
-} from "../_lib/googleWorkspace.js";
-import { getSupabaseServerClient } from "../_lib/serverSupabase.js";
+} from "../../_lib/googleWorkspace.js";
+import { getSupabaseServerClient } from "../../_lib/serverSupabase.js";
 
 function getAppBaseUrl(req) {
   return (

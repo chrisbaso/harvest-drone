@@ -1,5 +1,5 @@
-import { listOpsLoops, updateOpsLoopStatus } from "../_lib/dailyOpsAgent.js";
-import { getSupabaseServerClient } from "../_lib/serverSupabase.js";
+import { listOpsLoops, updateOpsLoopStatus } from "../../_lib/dailyOpsAgent.js";
+import { getSupabaseServerClient } from "../../_lib/serverSupabase.js";
 
 export default async function handler(req, res) {
   if (!["GET", "PATCH", "POST"].includes(req.method)) {

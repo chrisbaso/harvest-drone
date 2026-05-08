@@ -1,5 +1,5 @@
-import { generateDailyOpsBrief, getLatestDailyOpsBrief } from "../_lib/dailyOpsAgent.js";
-import { getSupabaseServerClient } from "../_lib/serverSupabase.js";
+import { generateDailyOpsBrief, getLatestDailyOpsBrief } from "../../_lib/dailyOpsAgent.js";
+import { getSupabaseServerClient } from "../../_lib/serverSupabase.js";
 
 export default async function handler(req, res) {
   if (!["GET", "POST"].includes(req.method)) {

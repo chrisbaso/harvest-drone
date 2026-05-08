@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useParams } from "react-router-dom";
 import Shell from "../components/Shell";
 import EnterpriseStyles from "../components/enterprise/EnterpriseStyles";
+import { useAuth } from "../context/AuthContext";
 import {
   enterpriseDemoMetadata,
   enterpriseRoutes,
@@ -28,6 +29,7 @@ import {
   resetEnterpriseWorkspace,
   saveEnterpriseWorkspace,
 } from "../lib/enterpriseLocalStore";
+import { isEnterpriseDemoProfile } from "../../shared/accessControl";
 
 function titleCaseStatus(status = "") {
   return status.replaceAll("_", " ");
@@ -76,7 +78,9 @@ function EnterpriseHero({ demo, summary }) {
         <p>
           Build and operate an internal Hylio application division for potato operations:
           equipment, operators, SOPs, credentials, support, application records, and performance
-          reporting in one readiness workflow.
+          reporting in one readiness workflow. The HYL-300 Atlas is the flagship model
+          for large-acre operations with swarming support, backed by the HYL-150 Ares
+          for smaller jobs and training paths.
         </p>
         <div className="enterprise-actions">
           <Link className="button button--primary button--small" to="/enterprise/rdo/readiness">
@@ -221,12 +225,14 @@ function SprayCalendarView({ demo }) {
 }
 
 function OperatorsView({ demo, actions }) {
+  const { profile } = useAuth();
+  const isEnterpriseDemo = isEnterpriseDemoProfile(profile);
   const [form, setForm] = useState({
     name: "",
     role: "Operator trainee",
     state: "North Dakota",
     base: "Grand Forks Valley Unit",
-    aircraftModels: "Hylio AG-272",
+    aircraftModels: "HYL-300 Atlas",
     payloadTypes: "liquid",
   });
 
@@ -310,9 +316,11 @@ function OperatorsView({ demo, actions }) {
               ) : null}
               <div className="enterprise-chip-row">
                 <Status value={readiness.ready ? "ready" : "blocked"} />
-                <Link className="button button--secondary button--small" to={`/operators/${operator.id}/training`}>
-                  Training profile
-                </Link>
+                {isEnterpriseDemo ? null : (
+                  <Link className="button button--secondary button--small" to={`/operators/${operator.id}/training`}>
+                    Training profile
+                  </Link>
+                )}
               </div>
             </article>
           );
@@ -325,7 +333,7 @@ function OperatorsView({ demo, actions }) {
 function FleetView({ demo, actions }) {
   const [form, setForm] = useState({
     tailNumber: "",
-    model: "Hylio AG-272",
+    model: "HYL-300 Atlas",
     maintenanceBlocked: "false",
     calibrationStatus: "current",
     batteryChecklistStatus: "complete",
@@ -353,8 +361,8 @@ function FleetView({ demo, actions }) {
         <label className="field">
           <span>Model</span>
           <select value={form.model} onChange={(event) => setForm((current) => ({ ...current, model: event.target.value }))}>
-            <option>Hylio AG-272</option>
-            <option>Hylio AG-230</option>
+            <option>HYL-300 Atlas</option>
+            <option>HYL-150 Ares</option>
           </select>
         </label>
         <label className="field">
@@ -420,7 +428,7 @@ function ReadinessView({ demo, actions }) {
     if (!newJob.title.trim()) return;
     actions.addApplicationJob({
       ...newJob,
-      aircraftModel: demo.aircraft.find((aircraft) => aircraft.id === newJob.aircraftId)?.model || "Hylio AG-272",
+      aircraftModel: demo.aircraft.find((aircraft) => aircraft.id === newJob.aircraftId)?.model || "HYL-300 Atlas",
       payloadType: "liquid",
       operationType: "pesticide_application",
       documentsAttached: newJob.documentsAttached === "true",
@@ -765,7 +773,7 @@ function PublicEnterpriseLanding() {
           </div>
           <div className="el-grid el-grid--six">
             {[
-              ["Fleet procurement", "Hylio AG drones, American-made and sized for your operation."],
+              ["Fleet procurement", "HYL-300 Atlas flagship swarms and HYL-150 Ares aircraft, American-made and sized for your operation."],
               ["Training and certification", "11-lesson program, Part 107/137, pesticide licensing, and field checklists."],
               ["Operational software", "Scheduling, dispatch, fleet tracking, and compliance documentation."],
               ["Maintenance and support", "Ongoing repair, parts, and field service support."],

@@ -1,5 +1,5 @@
-import { listIntegrationEvents } from "../_lib/integrationEvents.js";
-import { getSupabaseServerClient } from "../_lib/serverSupabase.js";
+import { listIntegrationEvents } from "../../_lib/integrationEvents.js";
+import { getSupabaseServerClient } from "../../_lib/serverSupabase.js";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {

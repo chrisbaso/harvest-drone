@@ -1,5 +1,5 @@
-import { getSupabaseServerClient } from "../_lib/serverSupabase.js";
-import { syncJobberClients, syncJobberJobs } from "../_lib/jobber.js";
+import { getSupabaseServerClient } from "../../_lib/serverSupabase.js";
+import { syncJobberClients, syncJobberJobs } from "../../_lib/jobber.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {

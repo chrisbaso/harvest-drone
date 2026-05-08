@@ -1,4 +1,4 @@
-import { createEnterpriseWorkspace } from "../../shared/enterpriseWorkspace";
+import { createEnterpriseWorkspace, migrateEnterpriseDroneModelNames } from "../../shared/enterpriseWorkspace";
 
 const ENTERPRISE_WORKSPACE_PREFIX = "harvestEnterprise.workspace.";
 
@@ -19,7 +19,7 @@ export function loadEnterpriseWorkspace(orgId = "rdo") {
 
   try {
     const raw = storage.getItem(storageKey(orgId));
-    return raw ? JSON.parse(raw) : createEnterpriseWorkspace(orgId);
+    return raw ? migrateEnterpriseDroneModelNames(JSON.parse(raw)) : createEnterpriseWorkspace(orgId);
   } catch {
     return createEnterpriseWorkspace(orgId);
   }

@@ -126,6 +126,7 @@ function TrainingDashboardPage() {
   const operator = liveOperator ?? DEMO_OPERATOR;
   const readiness = useMemo(() => computeHylioJobReadiness({ operator, job: demoHylioJob }), [operator]);
   const expiring = useMemo(() => getExpiringCredentials(operator), [operator]);
+  const featuredCourses = trainingCourses.slice(0, 3);
 
   return (
     <Shell compact>
@@ -143,11 +144,11 @@ function TrainingDashboardPage() {
               <Link className="button button--primary" to="/training/courses/hylio-operator-foundations">
                 Continue training
               </Link>
+              <Link className="button button--secondary" to="/training/courses/potato-application-specialist">
+                Potato specialist
+              </Link>
               <Link className="button button--secondary" to="/training/qualification">
                 Open qualification module
-              </Link>
-              <Link className="button button--secondary" to="/jobs/1842/readiness">
-                View job readiness
               </Link>
             </div>
           </div>
@@ -171,52 +172,108 @@ function TrainingDashboardPage() {
           </article>
         ) : null}
 
-        <div className="training-grid">
-          {trainingCourses.map((course) => {
-            const progress = getCourseProgress(operator, course);
-            return (
-              <article className="training-card card" key={course.slug}>
-                <span className="training-card__meta">{course.audience}</span>
-                <h2>{course.title}</h2>
-                <p>{course.description}</p>
-                <div className="training-progress">
-                  <span style={{ width: `${progress.percentage}%` }} />
-                </div>
-                <div className="training-card__footer">
-                  <strong>{progress.percentage}% complete</strong>
-                  <Link className="button button--secondary button--small" to={`/training/courses/${course.slug}`}>
-                    Open
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
+        <div className="training-tabs" aria-label="Training sections">
+          <Link className="training-tab is-active" to="/training">Classroom</Link>
+          <Link className="training-tab" to="/training/qualification">Qualification</Link>
+          <Link className="training-tab" to="/compliance/credentials">Credentials</Link>
+          <Link className="training-tab" to="/jobs/1842/readiness">Job readiness</Link>
         </div>
 
-        <div className="training-grid training-grid--two">
-          <article className="training-card card">
-            <h2>Readiness blockers</h2>
-            {readiness.blockers.length ? (
-              <ul className="training-list">
-                {readiness.blockers.slice(0, 5).map((blocker) => (
-                  <li key={blocker}>{blocker}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No assignment blockers for {demoHylioJob.title}.</p>
-            )}
-          </article>
-          <article className="training-card card">
-            <h2>Credentials</h2>
-            <p>
-              {expiring.length
-                ? `${expiring.length} credential(s) expire in the next 45 days.`
-                : "No credentials expire in the next 45 days for this demo operator."}
-            </p>
-            <Link className="button button--secondary button--small" to="/compliance/credentials">
-              Open credential vault
-            </Link>
-          </article>
+        <div className="training-classroom">
+          <main className="training-classroom__main">
+            <div className="training-section-title">
+              <div>
+                <span className="eyebrow">Courses</span>
+                <h2>Operator classroom</h2>
+              </div>
+              <span className="training-chip">{trainingCourses.length} courses</span>
+            </div>
+
+            <div className="training-grid">
+              {featuredCourses.map((course, index) => {
+                const progress = getCourseProgress(operator, course);
+                return (
+                  <article className="training-card training-course-card card" key={course.slug}>
+                    <div className="training-course-card__icon">{String(index + 1).padStart(2, "0")}</div>
+                    <div className="training-course-card__body">
+                      <span className="training-card__meta">{course.audience}</span>
+                      <h2>{course.title}</h2>
+                      <p>{course.description}</p>
+                      <div className="training-progress">
+                        <span style={{ width: `${progress.percentage}%` }} />
+                      </div>
+                      <div className="training-card__footer">
+                        <strong>{progress.percentage}% complete</strong>
+                        <Link className="button button--secondary button--small" to={`/training/courses/${course.slug}`}>
+                          Open
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            <article className="training-card card">
+              <div className="training-section-title">
+                <h2>All learning paths</h2>
+                <span className="training-chip">Sequenced</span>
+              </div>
+              <div className="training-rail-list">
+                {trainingCourses.map((course) => {
+                  const progress = getCourseProgress(operator, course);
+                  return (
+                    <div className="training-lesson-row" key={`${course.slug}-row`}>
+                      <div>
+                        <strong>{course.title}</strong>
+                        <span>{progress.completed} of {progress.total} required lessons complete | {course.estimatedDurationMinutes} min</span>
+                      </div>
+                      <Link className="button button--secondary button--small" to={`/training/courses/${course.slug}`}>
+                        View
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          </main>
+
+          <aside className="training-classroom__rail">
+            <article className="training-card card">
+              <span className="training-card__meta">Current operator</span>
+              <h2>{operator.name}</h2>
+              <div className="training-rail-list">
+                <div className="training-rail-item">
+                  <span>Qualification level</span>
+                  <strong>{readiness.level.replaceAll("_", " ")}</strong>
+                </div>
+                <div className="training-rail-item">
+                  <span>Assignment status</span>
+                  <strong>{readiness.ready ? "Ready" : `${readiness.blockers.length} blockers`}</strong>
+                </div>
+                <div className="training-rail-item">
+                  <span>Credential watch</span>
+                  <strong>{expiring.length ? `${expiring.length} expiring soon` : "Current"}</strong>
+                </div>
+              </div>
+            </article>
+
+            <article className="training-card card">
+              <h2>Readiness blockers</h2>
+              {readiness.blockers.length ? (
+                <ul className="training-list">
+                  {readiness.blockers.slice(0, 5).map((blocker) => (
+                    <li key={blocker}>{blocker}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No assignment blockers for {demoHylioJob.title}.</p>
+              )}
+              <Link className="button button--secondary button--small" to="/training/qualification">
+                Review gates
+              </Link>
+            </article>
+          </aside>
         </div>
       </section>
     </Shell>

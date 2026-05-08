@@ -8,6 +8,7 @@ import {
   addSupportTicket,
   completeApplicationJobEvidence,
   markAircraftReady,
+  migrateEnterpriseDroneModelNames,
   markOperatorPracticalsComplete,
   markOperatorTrainingComplete,
   createEnterpriseWorkspace,
@@ -33,7 +34,7 @@ run("creates an editable RDO workspace without mutating the fixture", () => {
     role: "Operator trainee",
     state: "North Dakota",
     base: "Grand Forks Valley Unit",
-    aircraftModels: ["Hylio AG-272"],
+    aircraftModels: ["HYL-300 Atlas"],
     payloadTypes: ["liquid"],
   });
 
@@ -45,7 +46,7 @@ run("adds pilot aircraft and marks maintenance-blocked aircraft unavailable", ()
   const workspace = createEnterpriseWorkspace("rdo");
   const updated = addAircraft(workspace, {
     tailNumber: "RDO-HY-04",
-    model: "Hylio AG-272",
+    model: "HYL-300 Atlas",
     status: "active",
     maintenanceBlocked: true,
     calibrationStatus: "current",
@@ -57,13 +58,58 @@ run("adds pilot aircraft and marks maintenance-blocked aircraft unavailable", ()
   assert.equal(aircraft.readiness.calibrationStatus, "current");
 });
 
+run("migrates saved workspaces from legacy AG model names to Ares and Atlas", () => {
+  const base = createEnterpriseWorkspace("rdo");
+  const legacyWorkspace = {
+    ...base,
+    organization: {
+      ...base.organization,
+      division: {
+        ...base.organization.division,
+        flagshipAircraftModel: "Hylio AG-272",
+      },
+    },
+    operators: [
+      {
+        id: "legacy-operator",
+        aircraftModels: ["Hylio AG-272", "Hylio AG-230"],
+        credentials: [
+          { type: "HYLIO_ONBOARDING", aircraftModel: "Hylio AG-272" },
+          { type: "HYLIO_ONBOARDING", aircraftModel: "Hylio AG-230" },
+        ],
+      },
+    ],
+    aircraft: [
+      { id: "legacy-aircraft-1", model: "Hylio AG-272" },
+      { id: "legacy-aircraft-2", model: "Hylio AG-230" },
+    ],
+    applicationJobs: [
+      { id: "legacy-job-1", aircraftModel: "Hylio AG-272" },
+      { id: "legacy-job-2", aircraftModel: "Hylio AG-230" },
+    ],
+    supportTickets: [
+      { id: "legacy-ticket", title: "AG-272 pump calibration variance" },
+    ],
+  };
+
+  const migrated = migrateEnterpriseDroneModelNames(legacyWorkspace);
+
+  assert.deepEqual(migrated.operators[0].aircraftModels, ["HYL-300 Atlas", "HYL-150 Ares"]);
+  assert.equal(migrated.operators[0].credentials[0].aircraftModel, "HYL-300 Atlas");
+  assert.equal(migrated.operators[0].credentials[1].aircraftModel, "HYL-150 Ares");
+  assert.deepEqual(migrated.aircraft.map((aircraft) => aircraft.model), ["HYL-300 Atlas", "HYL-150 Ares"]);
+  assert.deepEqual(migrated.applicationJobs.map((job) => job.aircraftModel), ["HYL-300 Atlas", "HYL-150 Ares"]);
+  assert.equal(migrated.organization.division.flagshipAircraftModel, "HYL-300 Atlas");
+  assert.match(migrated.supportTickets[0].title, /HYL-300 Atlas/);
+});
+
 run("adds application jobs with computed readiness blockers", () => {
   let workspace = createEnterpriseWorkspace("rdo");
   workspace = addApplicationJob(workspace, {
     title: "Pilot blocked job",
     fieldId: "field-gf-18",
     state: "North Dakota",
-    aircraftModel: "Hylio AG-272",
+    aircraftModel: "HYL-300 Atlas",
     aircraftId: "rdo-aircraft-2",
     assignedOperatorId: "rdo-operator-ben",
     payloadType: "liquid",
@@ -115,7 +161,7 @@ run("summarizes pilot-added workspace records", () => {
   });
   workspace = addAircraft(workspace, {
     tailNumber: "RDO-HY-05",
-    model: "Hylio AG-230",
+    model: "HYL-150 Ares",
     status: "active",
     maintenanceBlocked: false,
   });

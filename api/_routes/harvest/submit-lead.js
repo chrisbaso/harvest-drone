@@ -1,4 +1,4 @@
-import { insertHarvestLead, isHarvestLeadStorageConfigured } from "../_lib/harvestLeads.js";
+import { insertHarvestLead, isHarvestLeadStorageConfigured } from "../../_lib/harvestLeads.js";
 
 function badRequest(res, message) {
   return res.status(400).json({ error: message });

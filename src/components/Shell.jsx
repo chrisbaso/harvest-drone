@@ -1,5 +1,6 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { ENTERPRISE_DEMO_HOME, ENTERPRISE_DEMO_ROLE } from "../../shared/accessControl";
 
 const PUBLIC_LANDING_ROUTES = new Set([
   "/growers",
@@ -39,6 +40,7 @@ function Shell({ children, compact = false }) {
   const { profile, isAuthenticated, signOut } = useAuth();
   const isPublic = isPublicLandingRoute(location.pathname);
   const role = profile?.role;
+  const homeHref = role === ENTERPRISE_DEMO_ROLE ? ENTERPRISE_DEMO_HOME : "/";
 
   const navItems =
     role === "admin"
@@ -48,10 +50,11 @@ function Shell({ children, compact = false }) {
           ["Admin", "/admin"],
           ["Ops", "/admin/daily-ops"],
           ["Agent", "/agent"],
-          ["Training", "/training"],
+          ["Academy", "/training"],
           ["Fleet", "/fleet"],
           ["Scheduler", "/scheduler"],
           ["Enterprise", "/enterprise/rdo/division"],
+          ["HSS Pricing", "/hss-partner-pricing"],
           ["Demo", "/demo"],
           ["How it works", "/how-it-works"],
         ]
@@ -61,6 +64,7 @@ function Shell({ children, compact = false }) {
             ["Fleet", "/fleet"],
             ["Scheduler", "/scheduler"],
             ["Enterprise", "/enterprise/rdo/division"],
+            ["HSS Pricing", "/hss-partner-pricing"],
             ["Demo", "/demo"],
           ]
         : role === "dealer"
@@ -68,13 +72,14 @@ function Shell({ children, compact = false }) {
               ["Dashboard", "/dealer"],
               ["Fleet", "/fleet"],
               ["Scheduler", "/scheduler"],
-              ["Training", "/training"],
+              ["Academy", "/training"],
               ["Enterprise", "/enterprise/rdo/division"],
+              ["HSS Pricing", "/hss-partner-pricing"],
               ["Demo", "/demo"],
             ]
           : role === "operator"
             ? [
-                ["Training", "/training"],
+                ["Academy", "/training"],
                 ["Qualification", "/training/qualification"],
                 ["Demo", "/demo"],
               ]
@@ -83,7 +88,7 @@ function Shell({ children, compact = false }) {
   return (
     <div className="site-shell">
       <header className="topbar">
-        <Link className="brandmark" to="/">
+        <Link className="brandmark" to={homeHref}>
           <span className="brandmark__badge">HD</span>
           <span>
             Harvest Drone

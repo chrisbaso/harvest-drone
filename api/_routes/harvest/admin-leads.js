@@ -1,4 +1,4 @@
-import { isHarvestLeadStorageConfigured, listHarvestLeads } from "../_lib/harvestLeads.js";
+import { isHarvestLeadStorageConfigured, listHarvestLeads } from "../../_lib/harvestLeads.js";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
