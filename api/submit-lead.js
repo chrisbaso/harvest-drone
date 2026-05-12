@@ -62,6 +62,78 @@ function buildOpportunityPayload(growerLead, routingDecision) {
   };
 }
 
+function resolveEnrollmentLeadType(type) {
+  if (type === "hylio") return "hylio";
+  if (type === "grower" || type === "operator") return type;
+  return null;
+}
+
+function buildEnrollmentPayload({ type, lead, formData }) {
+  const leadType = resolveEnrollmentLeadType(type);
+
+  if (!leadType || !lead?.id || !lead?.email) {
+    return null;
+  }
+
+  return {
+    lead_type: leadType,
+    lead_id: lead.id,
+    email: lead.email,
+    first_name: lead.first_name || formData.firstName || formData.name || "",
+    last_name: lead.last_name || formData.lastName || "",
+    state: lead.state || formData.state || "",
+    county: lead.county || formData.county || formData.countyOrTown || "",
+    acres:
+      lead.acres ||
+      lead.acreage_access ||
+      lead.acreage_capacity ||
+      lead.acres_capacity_per_week ||
+      formData.acres ||
+      formData.acreageAccess ||
+      formData.weeklyCapacity ||
+      "",
+    phone: lead.mobile || formData.mobile || formData.phone || "",
+  };
+}
+
+async function enrollLeadInMailchimp({ type, lead, formData }) {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const payload = buildEnrollmentPayload({ type, lead, formData });
+
+  if (!payload) {
+    return { success: false, status: "skipped", reason: "Lead type is not eligible for Mailchimp enrollment." };
+  }
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return { success: false, status: "skipped", reason: "Supabase service credentials are not configured." };
+  }
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/enroll-lead`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const result = await response.json().catch(() => null);
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.error || "Mailchimp enrollment failed.");
+  }
+
+  return {
+    success: true,
+    status: "enrolled",
+    mailchimp: result.results?.mailchimp ?? null,
+    tracking: result.results?.tracking ?? null,
+    notification: result.results?.notification ?? null,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -179,6 +251,28 @@ export default async function handler(req, res) {
 
     if (error) {
       throw new Error(error.message);
+    }
+
+    let mailchimpEnrollmentResult = {
+      success: false,
+      status: "skipped",
+      reason: "Mailchimp enrollment not attempted.",
+    };
+
+    try {
+      mailchimpEnrollmentResult = await enrollLeadInMailchimp({
+        type,
+        lead: data,
+        formData,
+      });
+    } catch (enrollmentError) {
+      mailchimpEnrollmentResult = {
+        success: false,
+        status: "failed",
+        error:
+          enrollmentError.message ||
+          "Lead was saved, but Mailchimp enrollment failed.",
+      };
     }
 
     if (type === "grower" && routingDecision?.shouldCreateOpportunity) {
@@ -355,10 +449,25 @@ export default async function handler(req, res) {
         leadType: activityLeadType,
         leadId: data.id,
         activityType: "automation_enrolled",
+        status: mailchimpEnrollmentResult.success
+          ? "completed"
+          : mailchimpEnrollmentResult.status === "skipped"
+            ? "skipped"
+            : "failed",
         metadata: {
           sequence_state: sequenceUpdate.sequence_state,
-          delivery_provider:
-            emailResult.internalAlertStatus === "sent" ? "resend" : "manual_follow_up",
+          delivery_provider: mailchimpEnrollmentResult.success
+            ? "mailchimp"
+            : "manual_follow_up",
+          mailchimp_status: mailchimpEnrollmentResult.status,
+          mailchimp_error:
+            mailchimpEnrollmentResult.error ||
+            mailchimpEnrollmentResult.reason ||
+            null,
+          mailchimp_tracking_existing:
+            mailchimpEnrollmentResult.tracking?.existing ?? null,
+          mailchimp_notification_error:
+            mailchimpEnrollmentResult.notification?.error ?? null,
         },
       }),
       ...(smsResult
@@ -399,6 +508,7 @@ export default async function handler(req, res) {
         delivery_provider:
           emailResult.internalAlertStatus === "sent" ? "resend" : "not_configured",
       },
+      mailchimpEnrollment: mailchimpEnrollmentResult,
       sms: smsResult,
     });
   } catch (error) {

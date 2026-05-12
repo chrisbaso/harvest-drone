@@ -76,7 +76,27 @@ async function insertTrackingEnrollment(payload: LeadPayload) {
     return { enrolled: false, reason: "No active drip sequence found." };
   }
 
-  const { error } = await supabase.from("drip_enrollments").insert({
+  const { data: existingEnrollment, error: existingError } = await supabase
+    .from("drip_enrollments")
+    .select("id, status, sequence_id")
+    .eq("lead_type", payload.lead_type)
+    .eq("lead_id", payload.lead_id)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+
+  if (existingEnrollment) {
+    return {
+      enrolled: true,
+      existing: true,
+      enrollment_id: existingEnrollment.id,
+      sequence_id: existingEnrollment.sequence_id || sequenceId,
+    };
+  }
+
+  const { data, error } = await supabase.from("drip_enrollments").insert({
     sequence_id: sequenceId,
     lead_type: payload.lead_type,
     lead_id: payload.lead_id,
@@ -85,13 +105,13 @@ async function insertTrackingEnrollment(payload: LeadPayload) {
     current_step: 0,
     status: "active",
     next_send_at: null,
-  });
+  }).select("id").single();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return { enrolled: true, sequence_id: sequenceId };
+  return { enrolled: true, enrollment_id: data?.id, sequence_id: sequenceId };
 }
 
 function buildNotification(payload: LeadPayload) {
@@ -190,6 +210,18 @@ serve(async (req) => {
       tags: getLeadTags(payload.lead_type),
     });
 
+    if (!(results.mailchimp as { success?: boolean }).success) {
+      return jsonResponse(
+        {
+          error:
+            (results.mailchimp as { error?: string }).error ||
+            "Mailchimp contact upsert or tagging failed.",
+          results,
+        },
+        502,
+      );
+    }
+
     results.suppression = await removeTag(payload.email, "farm-day-warm");
 
     try {
@@ -209,7 +241,14 @@ serve(async (req) => {
       results.pausedEnrollment = error ? { paused: false, error: error.message } : { paused: true };
     }
 
-    results.notification = await sendAdminNotification(payload);
+    try {
+      results.notification = await sendAdminNotification(payload);
+    } catch (error) {
+      results.notification = {
+        sent: false,
+        error: error instanceof Error ? error.message : "Internal notification failed.",
+      };
+    }
 
     return jsonResponse({ success: true, results });
   } catch (error) {

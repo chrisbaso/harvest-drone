@@ -73,7 +73,7 @@ const proofPoints = [
   },
   {
     quote:
-      "One ounce replacing 25 pounds of N sounded too good. But the math works when you run it against the actual fertilizer line items.",
+      "One ounce replacing 25 lbs of N sounded too good. But the math works when you run it against the actual fertilizer line items.",
     meta: "Corn and soybean grower, 800 acres",
     stat: { value: "150%", label: "reported net retention" },
   },
@@ -88,23 +88,23 @@ const proofPoints = [
 const faqs = [
   {
     q: "What exactly is SOURCE?",
-    a: "SOURCE is a synthetic soil activator from Sound Agriculture with an extremely low use rate: one ounce replaces 25 pounds of nitrogen. It helps activate soil microbes to deliver nitrogen and phosphorus to crops, reducing dependence on anhydrous, urea, and UAN.",
+    a: "SOURCE is a synthetic soil activator from Sound Agriculture with an extremely low use rate: one ounce replaces 25 lbs of N. It activates soil microbes to deliver nitrogen and phosphorus to crops, reducing dependence on anhydrous, urea, and UAN.",
   },
   {
     q: "How much does it cost?",
-    a: "SOURCE is $15/acre. BLUEPRINT is $11/acre. The SOURCE + BLUEPRINT bundle is $25/acre, and Harvest Drone can quote application if you want the product applied by drone.",
+    a: "SOURCE is $15/acre. BLUEPRINT is $11/acre. The SOURCE + BLUEPRINT bundle is $25/acre, and Harvest Drone application is $23/acre.",
   },
   {
     q: "What fertilizer line items can it reduce?",
-    a: "SOURCE is used to reduce part of an anhydrous ammonia, urea, or UAN program. BLUEPRINT is used to help address phosphorus availability and reduce pressure on DAP or MAP spend. Your acre plan compares the product cost against the dollars you are considering cutting or reallocating.",
+    a: "SOURCE is used to reduce part of an anhydrous ammonia, urea, or UAN program. BLUEPRINT solubilizes bound phosphorus and reduces DAP and MAP spend. Your acre plan compares the product cost against the dollars you are cutting or reallocating.",
   },
   {
     q: "Do I have to put it on every acre?",
-    a: "No. The recommended path is a practical trial: choose a portion of your acres, leave check strips, and compare at harvest. The point is to let your own field data decide whether it earns more acres next season.",
+    a: "No. Start with a practical trial: choose a portion of your acres, leave check strips, and compare at harvest. Your field data decides how many acres it earns next season.",
   },
   {
     q: "What happens after I submit the form?",
-    a: "Jake reviews the acres, location, and product fit, then follows up with a short cost breakdown. If it looks like a fit, you can choose product only, SOURCE plus BLUEPRINT, or a drone-applied plan.",
+    a: "Jake reviews the acres and location, then follows up with a short cost breakdown. You can choose product only, SOURCE plus BLUEPRINT, or a drone-applied plan.",
   },
   {
     q: "What about drone application?",
@@ -271,7 +271,7 @@ function GrowerPage() {
   usePageMeta({
     title: "Get a SOURCE Acre Plan | Harvest Drone",
     description:
-      "See what SOURCE could cost on your acres and what nitrogen dollars it may help reduce.",
+      "See what SOURCE costs on your acres and what you'd save on synthetic nitrogen.",
   });
 
   useEffect(() => {
@@ -309,7 +309,7 @@ function GrowerPage() {
       notes: [
         `Requested free SOURCE acre plan from ${funnelName}.`,
         `Calculator SOURCE cost: $${sourceCost.toLocaleString()}.`,
-        `Calculator potential net savings: $${estimatedSavings.toLocaleString()}.`,
+        `Calculator net savings: $${estimatedSavings.toLocaleString()}.`,
       ].join("\n"),
       dealerSlug: dealerSlug || undefined,
       utm_source: getParam(searchParams, "utm_source"),
@@ -353,13 +353,12 @@ function GrowerPage() {
             <h1>
               One ounce replaces
               <br />
-              <em>25 pounds of nitrogen.</em>
+              <em>25 lbs of N.</em>
             </h1>
             <p className="gp2__hero-sub">
-              SOURCE is a synthetic soil activator at $15/acre. Growers use it to reduce
-              anhydrous, urea, and UAN spend while protecting yield potential. Get a quick
-              acre plan that shows product cost, target savings, and whether a trial makes sense
-              on your fields.
+              SOURCE is a synthetic soil activator at $15/acre. Growers are cutting $25-45/acre
+              off their anhydrous and urea spend - and seeing 3-4 bushel yield lifts on corn.
+              We have product in stock in Minnesota.
             </p>
             <div className="gp2__hero-actions">
               <button type="button" className="gp2__hero-btn gp2__hero-btn--primary" onClick={scrollToForm}>
@@ -394,8 +393,8 @@ function GrowerPage() {
                 <div className="gp2__form-badge">Free - 30 seconds</div>
                 <h2 className="gp2__form-title">Get your acre plan</h2>
                 <p className="gp2__form-sub">
-                  We will show what SOURCE would cost on your fields and what nitrogen
-                  dollars it may help reduce.
+                  We'll show you what SOURCE costs on your fields and what you'd save on
+                  synthetic nitrogen.
                 </p>
                 <form onSubmit={handleSubmit}>
                   <div className="gp2__form-fields">
@@ -473,7 +472,7 @@ function GrowerPage() {
                     {isSubmitting ? "Reviewing your acres..." : "Get my acre plan"}
                   </button>
                   <p className="gp2__form-footer">
-                    No commitment. Includes cost breakdown and trial recommendation.
+                    No commitment. Includes product cost, nitrogen savings, and application options.
                   </p>
                 </form>
               </>
@@ -566,7 +565,7 @@ function GrowerPage() {
               </div>
               <div className="gp2__calc-result">
                 <span className="gp2__calc-result-value">${estimatedSavings.toLocaleString()}</span>
-                <span className="gp2__calc-result-label">Potential net savings before yield impact</span>
+                <span className="gp2__calc-result-label">Net savings before yield impact</span>
               </div>
             </div>
           </div>
@@ -609,7 +608,7 @@ function GrowerPage() {
                 $15<small>/acre</small>
               </span>
               <span className="gp2__product-desc">
-                Synthetic activator. 1 oz replaces 25 pounds of N. Built for anhydrous,
+                Synthetic activator. 1 oz replaces 25 lbs of N. Built for anhydrous,
                 urea, and UAN reduction plans.
               </span>
             </div>
@@ -621,7 +620,7 @@ function GrowerPage() {
                 $11<small>/acre</small>
               </span>
               <span className="gp2__product-desc">
-                Helps improve phosphorus availability and reduce pressure on DAP or MAP spend.
+                Solubilizes bound phosphorus. Reduces DAP and MAP spend.
               </span>
             </div>
             <div className="gp2__product gp2__product--highlight">
@@ -640,7 +639,7 @@ function GrowerPage() {
                 Drone apply
               </span>
               <span className="gp2__product-price">
-                Quote<small>/acre</small>
+                $23<small>/acre</small>
               </span>
               <span className="gp2__product-desc">
                 Optional Harvest Drone application for wet fields, tall canopy, and tight timing windows.
@@ -715,9 +714,9 @@ function GrowerPage() {
           <div className="gp2__bottom-card">
             <h2>Your nitrogen bill went up. Your yield does not have to go down.</h2>
             <p>
-              Tell us about your fields. We will show you what SOURCE costs on your acres,
-              what nitrogen dollars it may help reduce, and how to test it without betting
-              the whole farm.
+              Tell us about your fields. We'll show you what SOURCE costs on your acres,
+              what you'd save on synthetic nitrogen, and how to test it without betting the
+              whole farm.
             </p>
             <button type="button" className="gp2__bottom-btn" onClick={scrollToForm}>
               Get my acre plan
