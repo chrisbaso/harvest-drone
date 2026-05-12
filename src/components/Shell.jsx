@@ -40,42 +40,23 @@ function Shell({ children, compact = false }) {
   const { profile, isAuthenticated, signOut } = useAuth();
   const isPublic = isPublicLandingRoute(location.pathname);
   const role = profile?.role;
-  const homeHref = role === ENTERPRISE_DEMO_ROLE ? ENTERPRISE_DEMO_HOME : "/";
+  const internalHomeHref = role === "operator" ? "/operator/jobs" : "/ops";
+  const homeHref = role === ENTERPRISE_DEMO_ROLE ? ENTERPRISE_DEMO_HOME : isAuthenticated ? internalHomeHref : "/";
 
   const navItems =
-    role === "admin"
-      ? [
-          ["HD Dashboard", "/dashboard"],
-          ["CRM", "/crm"],
-          ["Daily Ops", "/admin/daily-ops"],
-          ["HD Agent", "/agent"],
-          ["HD Academy", "/training"],
-          ["Admin", "/admin"],
-          ["RDO Demo", "/enterprise/rdo/division"],
-        ]
-      : role === "network_manager"
+    role === ENTERPRISE_DEMO_ROLE
+      ? [["RDO Demo", ENTERPRISE_DEMO_HOME]]
+      : role === "operator"
         ? [
-            ["HD Network", "/network"],
-            ["HD Fleet", "/fleet"],
-            ["HD Scheduler", "/scheduler"],
-            ["RDO Demo", "/enterprise/rdo/division"],
+            ["My Jobs", "/operator/jobs"],
+            ["Academy", "/training"],
           ]
-        : role === "dealer"
+        : ["admin", "network_manager", "dealer"].includes(role)
           ? [
-              ["HD Dashboard", "/dealer"],
-              ["HD Fleet", "/fleet"],
-              ["HD Scheduler", "/scheduler"],
-              ["HD Academy", "/training"],
-              ["RDO Demo", "/enterprise/rdo/division"],
+              ["Ops", "/ops"],
+              ["Academy", "/training"],
             ]
-          : role === "operator"
-            ? [
-                ["HD Academy", "/training"],
-                ["Qualification", "/training/qualification"],
-              ]
-            : role === ENTERPRISE_DEMO_ROLE
-              ? [["RDO Demo", ENTERPRISE_DEMO_HOME]]
-            : [];
+          : [];
 
   return (
     <div className="site-shell">
@@ -84,7 +65,7 @@ function Shell({ children, compact = false }) {
           <span className="brandmark__badge">HD</span>
           <span>
             Harvest Drone
-            <small>Revenue-first aerial operations</small>
+            <small>Field operations and training</small>
           </span>
         </Link>
 

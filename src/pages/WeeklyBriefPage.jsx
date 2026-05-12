@@ -76,8 +76,8 @@ function WeeklyBriefPage() {
             </p>
           </div>
           <div className="harvest-admin__header-actions">
-            <Link className="button button--secondary" to="/admin/daily-ops">
-              Daily Ops
+            <Link className="button button--secondary" to="/ops">
+              Operations
             </Link>
             <Link className="button button--secondary" to="/admin/open-loops">
               Open loops

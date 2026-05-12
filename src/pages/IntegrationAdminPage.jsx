@@ -190,8 +190,8 @@ function IntegrationAdminPage() {
             <Link className="button button--secondary" to="/admin/integration-events">
               Event Log
             </Link>
-            <Link className="button button--secondary" to="/admin/daily-ops">
-              Daily Ops
+            <Link className="button button--secondary" to="/ops">
+              Operations
             </Link>
             <span className="harvest-admin__mode-pill">{snapshot.mode}</span>
           </div>

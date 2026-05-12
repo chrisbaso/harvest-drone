@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   FOLLOW_UP_STAGE_OPTIONS,
   LEAD_STATUS_OPTIONS,
@@ -10,8 +10,10 @@ import {
   getPreferredOfferPath,
 } from "../../shared/harvestLeadEngine";
 import { getHarvestLeadDetail, updateHarvestLead } from "../lib/harvestApi";
+import { createOpsJobFromLead, loadFieldOpsState } from "../lib/fieldOpsApi";
 import { usePageMeta } from "../lib/pageMeta";
 import Shell from "../components/Shell";
+import { useAuth } from "../context/AuthContext";
 import "../styles/harvest-admin.css";
 
 function DetailList({ items }) {
@@ -29,10 +31,13 @@ function DetailList({ items }) {
 
 function HarvestLeadDetailPage() {
   const { leadId } = useParams();
+  const navigate = useNavigate();
+  const { profile } = useAuth();
   const [detail, setDetail] = useState({ lead: null, events: [], mode: "server" });
   const [formState, setFormState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const [message, setMessage] = useState("");
 
   usePageMeta({
@@ -105,6 +110,21 @@ function HarvestLeadDetailPage() {
       setMessage(error.message || "Unable to update lead.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleCreateOpsJob() {
+    setIsConverting(true);
+    setMessage("");
+
+    try {
+      const opsState = await loadFieldOpsState(profile);
+      const result = await createOpsJobFromLead(lead, { state: opsState, profile });
+      navigate(`/ops/jobs/${result.row.id}`);
+    } catch (error) {
+      setMessage(error.message || "Unable to create ops job from this lead.");
+    } finally {
+      setIsConverting(false);
     }
   }
 
@@ -193,9 +213,14 @@ function HarvestLeadDetailPage() {
             <h1>{`${lead.first_name || ""} ${lead.last_name || ""}`.trim() || lead.email}</h1>
             <p>{`${lead.farm_name || "Farm not provided"} | ${lead.lead_tier} | Score ${lead.lead_score}`}</p>
           </div>
-          <span className="harvest-admin__mode-pill">
-            {detail.mode === "local" ? "Local mock mode" : "Supabase mode"}
-          </span>
+          <div className="harvest-admin__header-actions">
+            <button className="button button--primary" type="button" onClick={handleCreateOpsJob} disabled={isConverting}>
+              {isConverting ? "Creating Ops Job..." : "Create Ops Job"}
+            </button>
+            <span className="harvest-admin__mode-pill">
+              {detail.mode === "local" ? "Local mock mode" : "Supabase mode"}
+            </span>
+          </div>
         </div>
 
         <div className="harvest-admin__detail-grid">

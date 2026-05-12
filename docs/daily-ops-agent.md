@@ -24,7 +24,8 @@ Email and SMS items can include `draft_response` text in the admin UI. The text 
 
 ## Admin Routes
 
-- `/admin/daily-ops`: Generates and displays the current Daily Ops Brief.
+- `/ops/daily-agent`: Generates and displays the current Daily Ops Brief inside the Ops workspace.
+- `/admin/daily-ops`: Redirects to `/ops/daily-agent` for older bookmarks.
 - `/admin/open-loops`: Shows open or assigned loops and supports assign, resolve, and ignore actions.
 - `/admin/integrations/google`: Connects Google Workspace with Gmail and Calendar read-only scopes.
 

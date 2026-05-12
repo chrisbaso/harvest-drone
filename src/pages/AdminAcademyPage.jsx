@@ -3,6 +3,7 @@ import Shell from "../components/Shell";
 import {
   ACADEMY_CATEGORIES,
   academySeedModules,
+  getAcademyModuleQuizIssues,
   getAcademyResources,
 } from "../../shared/academy";
 
@@ -174,6 +175,43 @@ const css = `
     color: var(--admin-ink);
   }
 
+  .academy-admin__button:disabled,
+  .academy-admin__button-secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .academy-admin__issues {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.75rem;
+    border: 1px solid #f4b740;
+    border-radius: 8px;
+    background: #fff7df;
+  }
+
+  .academy-admin__issues--ok {
+    border-color: #b7e3c6;
+    background: #edf8f0;
+  }
+
+  .academy-admin__issue {
+    color: #7a4b00;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .academy-admin__issues--ok .academy-admin__issue {
+    color: var(--admin-green);
+  }
+
+  .academy-admin__option-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
   .academy-admin__resource {
     display: grid;
     gap: 0.25rem;
@@ -202,6 +240,7 @@ function createDraftModule(index) {
     assignedRoles: ["operator", "dealer", "admin"],
     certificationRequired: false,
     sortOrder: index,
+    moduleQuizPassingScorePct: 80,
     lessons: [
       {
         id: `academy-draft-lesson-${Date.now()}`,
@@ -213,14 +252,29 @@ function createDraftModule(index) {
     ],
     resources: [],
     completionChecklist: ["Review lesson", "Attach SOP or field guide"],
+    moduleQuiz: [
+      {
+        question: "What must the operator demonstrate to pass this module?",
+        options: ["The required operating standard for this module.", "Only that the page was opened.", "Only that a video exists."],
+        correctIndex: 0,
+      },
+    ],
   };
 }
 
 function AdminAcademyPage() {
-  const [modules, setModules] = useState(() => academySeedModules.map((module) => ({ ...module, lessons: [...module.lessons], resources: [...module.resources] })));
+  const [modules, setModules] = useState(() =>
+    academySeedModules.map((module) => ({
+      ...module,
+      lessons: [...module.lessons],
+      resources: [...module.resources],
+      moduleQuiz: (module.moduleQuiz || []).map((question) => ({ ...question, options: [...question.options] })),
+    })),
+  );
   const [selectedId, setSelectedId] = useState(modules[0]?.id);
   const selectedModule = modules.find((module) => module.id === selectedId) || modules[0];
   const resources = useMemo(() => getAcademyResources(modules), [modules]);
+  const selectedQuizIssues = useMemo(() => getAcademyModuleQuizIssues(selectedModule), [selectedModule]);
 
   function updateSelected(patch) {
     setModules((current) => current.map((module) => (module.id === selectedModule.id ? { ...module, ...patch } : module)));
@@ -260,6 +314,70 @@ function AdminAcademyPage() {
     updateSelected({
       lessons: selectedModule.lessons.map((lesson) => (lesson.id === lessonId ? { ...lesson, ...patch } : lesson)),
     });
+  }
+
+  function addQuizQuestion() {
+    const question = {
+      question: "New module quiz question",
+      options: ["Correct answer", "Distractor answer", "Distractor answer"],
+      correctIndex: 0,
+    };
+    updateSelected({ moduleQuiz: [...(selectedModule.moduleQuiz || []), question] });
+  }
+
+  function removeQuizQuestion(questionIndex) {
+    if ((selectedModule.moduleQuiz || []).length <= 1) return;
+    updateSelected({ moduleQuiz: (selectedModule.moduleQuiz || []).filter((_, index) => index !== questionIndex) });
+  }
+
+  function updateQuizQuestion(questionIndex, patch) {
+    updateSelected({
+      moduleQuiz: (selectedModule.moduleQuiz || []).map((question, index) => (index === questionIndex ? { ...question, ...patch } : question)),
+    });
+  }
+
+  function updateQuizOption(questionIndex, optionIndex, value) {
+    updateSelected({
+      moduleQuiz: (selectedModule.moduleQuiz || []).map((question, index) => {
+        if (index !== questionIndex) return question;
+        const options = [...question.options];
+        options[optionIndex] = value;
+        return { ...question, options };
+      }),
+    });
+  }
+
+  function addQuizOption(questionIndex) {
+    updateSelected({
+      moduleQuiz: (selectedModule.moduleQuiz || []).map((question, index) => (
+        index === questionIndex ? { ...question, options: [...question.options, "New option"] } : question
+      )),
+    });
+  }
+
+  function removeQuizOption(questionIndex, optionIndex) {
+    updateSelected({
+      moduleQuiz: (selectedModule.moduleQuiz || []).map((question, index) => {
+        if (index !== questionIndex || question.options.length <= 2) return question;
+        const options = question.options.filter((_, currentIndex) => currentIndex !== optionIndex);
+        const correctIndex = question.correctIndex === optionIndex
+          ? 0
+          : question.correctIndex > optionIndex
+            ? question.correctIndex - 1
+            : question.correctIndex;
+        return {
+          ...question,
+          options,
+          correctIndex: Math.min(correctIndex, options.length - 1),
+        };
+      }),
+    });
+  }
+
+  function updatePassingScore(value) {
+    const numericValue = Number(value);
+    const clampedValue = Number.isFinite(numericValue) ? Math.min(100, Math.max(1, Math.round(numericValue))) : 80;
+    updateSelected({ moduleQuizPassingScorePct: clampedValue });
   }
 
   return (
@@ -344,6 +462,17 @@ function AdminAcademyPage() {
                   onChange={(event) => updateSelected({ estimatedMinutes: Number(event.target.value) })}
                 />
               </div>
+              <div className="academy-admin__field">
+                <label htmlFor="module-quiz-score">Module quiz passing score</label>
+                <input
+                  id="module-quiz-score"
+                  max="100"
+                  min="1"
+                  type="number"
+                  value={selectedModule?.moduleQuizPassingScorePct || 80}
+                  onChange={(event) => updatePassingScore(event.target.value)}
+                />
+              </div>
             </div>
 
             <div className="academy-admin__section-head">
@@ -369,6 +498,83 @@ function AdminAcademyPage() {
                     <input id={`${lesson.id}-video`} value={lesson.videoUrl || ""} onChange={(event) => updateLesson(lesson.id, { videoUrl: event.target.value })} />
                   </div>
                   <small>{lesson.contentPath ? `Linked content file: ${lesson.contentPath}` : "Written content is stored with this lesson."}</small>
+                </article>
+              ))}
+            </div>
+
+            <div className="academy-admin__section-head">
+              <div>
+                <h2>Module Quiz</h2>
+                <p>Pilots must pass this quiz before the module is complete.</p>
+              </div>
+              <button className="academy-admin__button-secondary" type="button" onClick={addQuizQuestion}>Add Question</button>
+            </div>
+            <div className={`academy-admin__issues ${selectedQuizIssues.length === 0 ? "academy-admin__issues--ok" : ""}`}>
+              {selectedQuizIssues.length === 0 ? (
+                <div className="academy-admin__issue">Quiz gate is valid and can be used for certification evidence.</div>
+              ) : (
+                selectedQuizIssues.map((issue) => (
+                  <div className="academy-admin__issue" key={issue}>{issue}</div>
+                ))
+              )}
+            </div>
+            <div className="academy-admin__list">
+              {(selectedModule?.moduleQuiz || []).map((question, questionIndex) => (
+                <article className="academy-admin__list-item" key={`${selectedModule.id}-quiz-${questionIndex}`}>
+                  <div className="academy-admin__row">
+                    <strong>Question {questionIndex + 1}</strong>
+                    <button
+                      className="academy-admin__button-secondary"
+                      disabled={(selectedModule.moduleQuiz || []).length <= 1}
+                      type="button"
+                      onClick={() => removeQuizQuestion(questionIndex)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="academy-admin__field">
+                    <label htmlFor={`${selectedModule.id}-quiz-${questionIndex}`}>Question</label>
+                    <input
+                      id={`${selectedModule.id}-quiz-${questionIndex}`}
+                      value={question.question}
+                      onChange={(event) => updateQuizQuestion(questionIndex, { question: event.target.value })}
+                    />
+                  </div>
+                  {question.options.map((option, optionIndex) => (
+                    <div className="academy-admin__field" key={`${selectedModule.id}-quiz-${questionIndex}-option-${optionIndex}`}>
+                      <label htmlFor={`${selectedModule.id}-quiz-${questionIndex}-option-${optionIndex}`}>
+                        {optionIndex === question.correctIndex ? "Correct answer" : `Option ${optionIndex + 1}`}
+                      </label>
+                      <div className="academy-admin__option-row">
+                        <input
+                          id={`${selectedModule.id}-quiz-${questionIndex}-option-${optionIndex}`}
+                          value={option}
+                          onChange={(event) => updateQuizOption(questionIndex, optionIndex, event.target.value)}
+                        />
+                        <button
+                          className="academy-admin__button-secondary"
+                          disabled={question.options.length <= 2}
+                          type="button"
+                          onClick={() => removeQuizOption(questionIndex, optionIndex)}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <button className="academy-admin__button-secondary" type="button" onClick={() => addQuizOption(questionIndex)}>Add Option</button>
+                  <div className="academy-admin__field">
+                    <label htmlFor={`${selectedModule.id}-quiz-${questionIndex}-correct`}>Correct option</label>
+                    <select
+                      id={`${selectedModule.id}-quiz-${questionIndex}-correct`}
+                      value={question.correctIndex}
+                      onChange={(event) => updateQuizQuestion(questionIndex, { correctIndex: Number(event.target.value) })}
+                    >
+                      {question.options.map((_, optionIndex) => (
+                        <option key={optionIndex} value={optionIndex}>Option {optionIndex + 1}</option>
+                      ))}
+                    </select>
+                  </div>
                 </article>
               ))}
             </div>

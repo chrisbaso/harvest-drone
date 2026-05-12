@@ -76,8 +76,8 @@ function OpenLoopsPage() {
             <button className="button button--secondary" type="button" onClick={loadLoops} disabled={isLoading}>
               {isLoading ? "Refreshing..." : "Refresh"}
             </button>
-            <Link className="button button--secondary" to="/admin/daily-ops">
-              Daily brief
+            <Link className="button button--secondary" to="/ops">
+              Operations
             </Link>
           </div>
         </div>

@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Harvest Drone Academy Briefing</title>
+    <style>
+      :root {
+        --bg: #0c0f0a;
+        --surface: #151a12;
+        --panel: #1a2015;
+        --line: rgba(255, 255, 255, 0.08);
+        --text: #e8e6e1;
+        --muted: #8a907d;
+        --green: #a3d977;
+        --amber: #fbbf24;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Instrument Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .briefing {
+        width: 100%;
+        height: 100%;
+        padding: clamp(24px, 5vw, 72px);
+        display: grid;
+        grid-template-columns: 1fr minmax(260px, 0.72fr);
+        gap: clamp(22px, 5vw, 76px);
+        align-items: center;
+        background:
+          radial-gradient(circle at 74% 18%, rgba(163, 217, 119, 0.14), rgba(12, 15, 10, 0) 32%),
+          linear-gradient(180deg, #151a12 0%, #0c0f0a 66%);
+      }
+
+      .copy {
+        display: grid;
+        gap: clamp(14px, 2.4vw, 28px);
+        min-width: 0;
+      }
+
+      .label {
+        color: var(--green);
+        font-size: clamp(11px, 1.35vw, 18px);
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: "DM Serif Display", Georgia, serif;
+        font-size: clamp(44px, 7.4vw, 106px);
+        line-height: 0.96;
+        font-weight: 400;
+        max-width: 12ch;
+      }
+
+      .outcome {
+        max-width: 52rem;
+        margin: 0;
+        color: rgba(232, 230, 225, 0.78);
+        font-size: clamp(17px, 2vw, 27px);
+        line-height: 1.45;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 12px;
+      }
+
+      .beat {
+        display: grid;
+        grid-template-columns: 44px 1fr;
+        gap: 14px;
+        align-items: center;
+        padding: 14px 16px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: rgba(21, 26, 18, 0.84);
+      }
+
+      .number {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        background: var(--green);
+        color: var(--bg);
+        font-weight: 950;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .beat strong {
+        display: block;
+        font-size: clamp(14px, 1.4vw, 21px);
+      }
+
+      .beat span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: clamp(12px, 1.1vw, 16px);
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(26, 32, 21, 0.9);
+        overflow: hidden;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.34);
+      }
+
+      .panel-head {
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .panel-head strong {
+        font-family: "DM Serif Display", Georgia, serif;
+        font-size: clamp(23px, 2.6vw, 36px);
+        font-weight: 400;
+      }
+
+      .pill {
+        border: 1px solid rgba(251, 191, 36, 0.24);
+        border-radius: 999px;
+        padding: 7px 10px;
+        background: rgba(251, 191, 36, 0.08);
+        color: var(--amber);
+        font-size: clamp(11px, 1vw, 14px);
+        font-weight: 900;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .panel-body {
+        display: grid;
+        gap: 10px;
+        padding: 18px 20px 20px;
+      }
+
+      .gate {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        min-height: 42px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: rgba(12, 15, 10, 0.42);
+        color: rgba(232, 230, 225, 0.84);
+        font-size: clamp(12px, 1.1vw, 16px);
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--green);
+        box-shadow: 0 0 0 6px rgba(163, 217, 119, 0.08);
+        flex: 0 0 auto;
+      }
+
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(26px);
+          filter: blur(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+          filter: blur(0);
+        }
+      }
+
+      @keyframes panelIn {
+        from {
+          opacity: 0;
+          transform: translateX(34px) scale(0.98);
+          filter: blur(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0) scale(1);
+          filter: blur(0);
+        }
+      }
+
+      .label {
+        animation: fadeUp 0.65s 0.12s both cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      h1 {
+        animation: fadeUp 0.78s 0.28s both cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .outcome {
+        animation: fadeUp 0.72s 0.54s both cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .beat:nth-child(1) {
+        animation: fadeUp 0.55s 0.86s both cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .beat:nth-child(2) {
+        animation: fadeUp 0.55s 1.06s both cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .beat:nth-child(3) {
+        animation: fadeUp 0.55s 1.26s both cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .panel {
+        animation: panelIn 0.82s 0.62s both cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @media (max-width: 760px) {
+        .briefing {
+          grid-template-columns: 1fr;
+          align-content: center;
+          overflow-y: auto;
+        }
+
+        h1 {
+          max-width: 13ch;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="briefing">
+      <section class="copy">
+        <div class="label" id="category">Academy briefing</div>
+        <h1 id="title">Lesson briefing</h1>
+        <p class="outcome" id="outcome">Review the briefing, read the written material, and pass verification before completing the lesson.</p>
+        <div class="timeline" id="beats"></div>
+      </section>
+      <aside class="panel">
+        <div class="panel-head">
+          <strong>Completion gate</strong>
+          <span class="pill" id="minutes">Training</span>
+        </div>
+        <div class="panel-body">
+          <div class="gate"><span class="dot"></span><span>Watch this briefing.</span></div>
+          <div class="gate"><span class="dot"></span><span>Read the linked lesson content.</span></div>
+          <div class="gate"><span class="dot"></span><span>Pass the verification prompt in the Academy.</span></div>
+        </div>
+      </aside>
+    </main>
+    <script>
+      const lessonVideos = {
+        "academy-start-here-2": {
+          category: "Certification path",
+          title: "Your certification path",
+          minutes: "10",
+          outcome: "Move from Not Started to In Progress, Ready for Field Review, and Certified with evidence.",
+          beats: [
+            "In Progress::Lessons are active, but the pilot is not field-ready.",
+            "Field Review::Required training is done and a reviewer must observe the pilot.",
+            "Certified::Training and field review are complete, subject to live mission gates.",
+          ],
+        },
+        "academy-operator-foundations-1": {
+          category: "Operator foundations",
+          title: "Harvest Drone operating model",
+          minutes: "18",
+          outcome: "Understand that training is an operating control and the pilot has stop-work responsibility.",
+          beats: [
+            "Training gate::Operators complete assigned modules before field work.",
+            "Stop-work authority::Unsafe or unclear conditions stop the job.",
+            "Audit trail::Decisions are documented in the platform for review.",
+          ],
+        },
+        "academy-operator-foundations-2": {
+          category: "Operator foundations",
+          title: "Compliance foundations",
+          minutes: "40",
+          outcome: "Recognize aviation, pesticide, insurance, and evidence requirements before assignment.",
+          beats: [
+            "Credentials::Part 107 and pesticide licenses must be current when required.",
+            "Aircraft evidence::Registration, Remote ID, and maintenance status matter.",
+            "Supervisor review::Credential proof must be visible before field work.",
+          ],
+        },
+        "academy-operator-foundations-3": {
+          category: "Operator foundations",
+          title: "Aircraft and GroundLink overview",
+          minutes: "34",
+          outcome: "Understand aircraft handling expectations and why official Hylio references stay linked.",
+          beats: [
+            "Aircraft state::The drone must be in a known safe condition.",
+            "GroundLink plan::Mission setup must match the field and product.",
+            "Evidence boundary::Harvest tracks readiness while Hylio remains the hardware authority.",
+          ],
+        },
+        "academy-drone-safety-1": {
+          category: "Drone safety",
+          title: "Commercial drone operating rules",
+          minutes: "16",
+          outcome: "Identify the commercial drone rules checked before agricultural UAS work.",
+          beats: [
+            "Part 107::Commercial UAS work requires a current remote pilot certificate.",
+            "Aircraft compliance::Registration and Remote ID status must be known.",
+            "Site safety::Airspace, people, obstacles, and emergency areas are reviewed.",
+          ],
+        },
+        "academy-drone-safety-2": {
+          category: "Drone safety",
+          title: "Pre-flight checklist discipline",
+          minutes: "18",
+          outcome: "Use the pre-flight checklist as a mission-specific launch control.",
+          beats: [
+            "Specific mission::A checklist must match this aircraft, field, payload, and day.",
+            "Failure handling::Failed items are corrected, logged, or escalated.",
+            "Launch block::No complete pre-flight checklist means no launch.",
+          ],
+        },
+        "academy-drone-safety-3": {
+          category: "Drone safety",
+          title: "Emergency stop-work criteria",
+          minutes: "21",
+          outcome: "Know when to pause, land, isolate the area, and escalate.",
+          beats: [
+            "Stop triggers::People, weather, aircraft uncertainty, and product constraints can stop work.",
+            "First response::Protect people, land safely, secure product, notify leadership.",
+            "Recordkeeping::Logs, photos, weather, and notes become incident evidence.",
+          ],
+        },
+        "academy-field-ops-1": {
+          category: "Field operations",
+          title: "Field mapping and boundaries",
+          minutes: "14",
+          outcome: "Build field maps that show where the drone should work and where it must not work.",
+          beats: [
+            "Boundary::Confirm acres, edges, and no-spray areas.",
+            "Hazards::Mark obstacles, utilities, roads, water, people, and livestock.",
+            "Buffers::Program sensitive areas and label-required setbacks.",
+          ],
+        },
+        "academy-field-ops-2": {
+          category: "Field operations",
+          title: "Weather and drift review",
+          minutes: "18",
+          outcome: "Evaluate weather and drift before and during application.",
+          beats: [
+            "Weather values::Record wind, gusts, temperature, humidity, and precipitation.",
+            "Sensitive direction::Wind direction can make an acceptable speed unsafe.",
+            "Pause rule::Changing conditions can stop the mission mid-field.",
+          ],
+        },
+        "academy-field-ops-3": {
+          category: "Field operations",
+          title: "Application closeout",
+          minutes: "16",
+          outcome: "Complete mission closeout with flight, weather, product, anomaly, and inspection evidence.",
+          beats: [
+            "Flight log::Record acres, duration, product, rate, and timing.",
+            "Anomalies::Skipped areas, runout, mechanical issues, and complaints are logged.",
+            "Post-flight::Inspect the aircraft before it returns to available status.",
+          ],
+        },
+        "academy-source-1": {
+          category: "SOURCE education",
+          title: "SOURCE mode of action",
+          minutes: "15",
+          outcome: "Explain SOURCE field fit without making unsupported agronomy claims.",
+          beats: [
+            "Product role::Understand field fit and application timing.",
+            "Claim discipline::Route technical agronomy questions to specialists.",
+            "Workflow link::Education connects to acre review and application planning.",
+          ],
+        },
+        "academy-source-2": {
+          category: "SOURCE education",
+          title: "Sample and acre review workflow",
+          minutes: "13",
+          outcome: "Understand how acre reviews become clear next actions before field work.",
+          beats: [
+            "Inputs::Grower, acres, crop, timing, owner, and follow-up are captured.",
+            "Routing::The request becomes educate, quote, schedule, apply, or follow up.",
+            "Clarity::Ambiguous requests should not become missions.",
+          ],
+        },
+        "academy-enterprise-1": {
+          category: "Enterprise playbooks",
+          title: "Enterprise drone division operating model",
+          minutes: "20",
+          outcome: "Describe the operating lanes needed for an enterprise drone division.",
+          beats: [
+            "Fleet readiness::Aircraft status, maintenance, and insurance are visible.",
+            "Pilot readiness::Training and credentials are tied to operators.",
+            "Leadership view::Blocked work, exceptions, and records are reportable.",
+          ],
+        },
+        "academy-enterprise-2": {
+          category: "Enterprise playbooks",
+          title: "RDO pilot rollout checklist",
+          minutes: "18",
+          outcome: "Run an enterprise pilot rollout in controlled stages.",
+          beats: [
+            "Before launch::Confirm pilots, aircraft, fields, product windows, and records.",
+            "Pilot phase::Start small with daily review and logged blockers.",
+            "Scale rule::Expand only after the workflow is repeatable.",
+          ],
+        },
+        "academy-sop-1": {
+          category: "SOP library",
+          title: "Core SOP review",
+          minutes: "20",
+          outcome: "Know which SOP controls each phase of field operations.",
+          beats: [
+            "Before launch::Pre-flight, weather, chemical, and battery SOPs apply.",
+            "During work::Drift, emergency, and communication standards apply.",
+            "After landing::Post-flight, maintenance, and compliance closeout apply.",
+          ],
+        },
+        "academy-certification-1": {
+          category: "Certification",
+          title: "Certification readiness review",
+          minutes: "18",
+          outcome: "Understand what evidence is required before certification and mission readiness.",
+          beats: [
+            "Training evidence::Required lessons and checks must be complete.",
+            "Credential evidence::Licenses and approvals must be current.",
+            "Mission gates::Certification does not bypass aircraft, weather, or checklist gates.",
+          ],
+        },
+      };
+
+      const params = new URLSearchParams(window.location.search);
+      const read = (key, fallback) => params.get(key) || fallback;
+      const configured = lessonVideos[params.get("lesson")] || {};
+      const title = read("title", configured.title || "Lesson briefing");
+      const category = read("category", configured.category || "Academy briefing");
+      const outcome = read("outcome", configured.outcome || "Review the briefing, read the written material, and pass verification before completing the lesson.");
+      const minutes = read("minutes", configured.minutes || "Training");
+      const beats = (params.has("beats") ? params.get("beats").split("|") : configured.beats || ["Watch the briefing.", "Read the operating standard.", "Pass verification."]).slice(0, 3);
+
+      document.title = `${title} - Harvest Drone Academy`;
+      document.getElementById("category").textContent = category;
+      document.getElementById("title").textContent = title;
+      document.getElementById("outcome").textContent = outcome;
+      document.getElementById("minutes").textContent = `${minutes} min`;
+      const beatsElement = document.getElementById("beats");
+      beats.forEach((beat, index) => {
+        const [headline, detail] = beat.split("::");
+        const row = document.createElement("div");
+        const number = document.createElement("div");
+        const copy = document.createElement("div");
+        const title = document.createElement("strong");
+        const body = document.createElement("span");
+
+        row.className = "beat";
+        number.className = "number";
+        number.textContent = String(index + 1);
+        title.textContent = headline || "Training step";
+        body.textContent = detail || "Record evidence before moving on.";
+        copy.append(title, body);
+        row.append(number, copy);
+        beatsElement.append(row);
+      });
+    </script>
+  </body>
+</html>

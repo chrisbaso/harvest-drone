@@ -39,7 +39,7 @@ Rotate `GOOGLE_TOKEN_ENCRYPTION_KEY` carefully. Existing stored tokens cannot be
 4. Visit `/admin/integrations/google`.
 5. Click `Connect Google`.
 6. Approve the read-only Gmail and Calendar scopes.
-7. Return to `/admin/daily-ops` and regenerate the brief.
+7. Return to `/ops/daily-agent` and regenerate the brief.
 
 ## Later Enterprise Option
 

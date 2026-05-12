@@ -155,19 +155,19 @@ const enterpriseRoutes = [
 
 const internalRoutes = [
   {
-    title: "HD Admin Dashboard",
-    path: "/admin",
-    description: "Harvest Drone internal lead engine.",
+    title: "Operations Command Center",
+    path: "/ops",
+    description: "Unified workspace for leads, clients, jobs, scheduling, operators, and billing handoff.",
   },
   {
-    title: "CRM",
-    path: "/crm",
-    description: "CRM workspace for leads, accounts, activities, and automations.",
+    title: "Lead Queue",
+    path: "/ops/leads",
+    description: "SOURCE and grower demand intake with one-click conversion into field ops jobs.",
   },
   {
-    title: "HD Daily Ops",
-    path: "/admin/daily-ops",
-    description: "Internal operating brief, open loops, and follow-up priorities.",
+    title: "Schedule",
+    path: "/ops/schedule",
+    description: "Daily launch board, weather windows, operator assignment, and unscheduled work.",
   },
   {
     title: "HD Agent",
@@ -200,14 +200,14 @@ const internalRoutes = [
     description: "Assignment readiness check for a demo job.",
   },
   {
-    title: "Dealer Dashboard",
-    path: "/dealer",
-    description: "Dealer-scoped leads, orders, training, and URL tools.",
+    title: "Clients",
+    path: "/ops/clients",
+    description: "Grower records, farms, fields, Jobber references, and serviced acres.",
   },
   {
-    title: "Network Dashboard",
-    path: "/network",
-    description: "Network manager rollup and dealer leaderboard.",
+    title: "Jobs",
+    path: "/ops/jobs",
+    description: "Pipeline board and list view for all drone service work.",
   },
 ];
 

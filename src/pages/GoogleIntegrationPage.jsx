@@ -56,8 +56,8 @@ function GoogleIntegrationPage() {
             <a className="button button--secondary" href="/api/admin/google-oauth?action=start">
               Connect Google
             </a>
-            <Link className="button button--secondary" to="/admin/daily-ops">
-              Daily brief
+            <Link className="button button--secondary" to="/ops">
+              Operations
             </Link>
             <Link className="button button--secondary" to="/admin/integrations">
               Integrations
