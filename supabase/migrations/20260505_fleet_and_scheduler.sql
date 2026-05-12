@@ -4,7 +4,7 @@ create extension if not exists pgcrypto;
 create table if not exists public.fleet_drones (
   id uuid primary key default gen_random_uuid(),
   serial_number text not null,
-  model text default 'Hylio AG-272',
+  model text default 'HYL-300 Atlas',
   nickname text,
   dealer_id uuid references public.dealers(id) on delete set null,
   network_id uuid references public.dealer_networks(id) on delete set null,
@@ -295,10 +295,10 @@ begin
 
   insert into public.fleet_drones (serial_number, model, nickname, dealer_id, network_id, assigned_pilot_name, status, location_description, total_flight_hours, hours_since_maintenance, maintenance_due_hours, last_maintenance_date, purchase_date, purchase_price, faa_registration)
   values
-  ('HY-AG272-0041', 'Hylio AG-272', 'Alpha', demo_dealer_id, demo_network_id, 'Jody Bjornson', 'available', 'Marshall, MN - Main Shop', 127.5, 22.5, 50, '2026-03-15', '2025-11-01', 46000, 'FA3XXHD041'),
-  ('HY-AG272-0042', 'Hylio AG-272', 'Bravo', demo_dealer_id, demo_network_id, 'Jody Bjornson', 'available', 'Marshall, MN - Main Shop', 98.3, 48.3, 50, '2026-02-20', '2025-11-01', 46000, 'FA3XXHD042'),
-  ('HY-AG272-0043', 'Hylio AG-272', 'Charlie', demo_dealer_id, demo_network_id, null, 'maintenance', 'HD Shop - Waconia', 156.7, 6.7, 50, '2026-04-01', '2025-06-15', 46000, 'FA3XXHD043'),
-  ('HY-AG272-0044', 'Hylio AG-272', 'Delta', demo_dealer_id, demo_network_id, null, 'available', 'Marshall, MN - Training', 45.2, 45.2, 50, '2026-01-10', '2026-01-05', 46000, 'FA3XXHD044')
+  ('HY-AG272-0041', 'HYL-300 Atlas', 'Alpha', demo_dealer_id, demo_network_id, 'Jody Bjornson', 'available', 'Marshall, MN - Main Shop', 127.5, 22.5, 50, '2026-03-15', '2025-11-01', 46000, 'FA3XXHD041'),
+  ('HY-AG272-0042', 'HYL-300 Atlas', 'Bravo', demo_dealer_id, demo_network_id, 'Jody Bjornson', 'available', 'Marshall, MN - Main Shop', 98.3, 48.3, 50, '2026-02-20', '2025-11-01', 46000, 'FA3XXHD042'),
+  ('HY-AG272-0043', 'HYL-300 Atlas', 'Charlie', demo_dealer_id, demo_network_id, null, 'maintenance', 'HD Shop - Waconia', 156.7, 6.7, 50, '2026-04-01', '2025-06-15', 46000, 'FA3XXHD043'),
+  ('HY-AG272-0044', 'HYL-300 Atlas', 'Delta', demo_dealer_id, demo_network_id, null, 'available', 'Marshall, MN - Training', 45.2, 45.2, 50, '2026-01-10', '2026-01-05', 46000, 'FA3XXHD044')
   on conflict (serial_number) do update set
     dealer_id = excluded.dealer_id,
     network_id = excluded.network_id,

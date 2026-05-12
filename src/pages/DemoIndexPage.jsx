@@ -146,48 +146,46 @@ const dealerRoutes = [
 ];
 
 const enterpriseRoutes = [
-  { title: "Enterprise Landing", path: "/enterprise", description: "Public page for enterprise prospects. Send this link to RDO." },
-  { title: "ROI Calculator", path: "/roi-calculator", description: "Interactive own-vs-hire economics tool." },
-  { title: "Fleet Management", path: "/fleet", description: "Drone fleet tracking: serial, hours, maintenance, pilots." },
-  { title: "Application Scheduler", path: "/scheduler", description: "Dispatch board for spray operations." },
-  { title: "Training Program", path: "/training", description: "11-lesson pilot certification course." },
-  { title: "Qualification Review", path: "/training/qualification", description: "Pilot readiness gate." },
-  { title: "Credential Vault", path: "/compliance/credentials", description: "Compliance credential tracking with expiry alerts." },
+  {
+    title: "RDO Demo Command Center",
+    path: "/enterprise/rdo/division",
+    description: "One RDO demo workspace with Overview, Training, Operations, Readiness, and Records tabs.",
+  },
 ];
 
 const internalRoutes = [
   {
-    title: "Admin Dashboard",
-    path: "/admin",
-    description: "Harvest Drone internal lead engine.",
+    title: "Operations Command Center",
+    path: "/ops",
+    description: "Unified workspace for leads, clients, jobs, scheduling, operators, and billing handoff.",
   },
   {
-    title: "CRM",
-    path: "/crm",
-    description: "CRM workspace for leads, accounts, activities, and automations.",
+    title: "Lead Queue",
+    path: "/ops/leads",
+    description: "SOURCE and grower demand intake with one-click conversion into field ops jobs.",
   },
   {
-    title: "Routing Dashboard",
-    path: "/dashboard",
-    description: "Demand routing and operator assignment overview.",
+    title: "Schedule",
+    path: "/ops/schedule",
+    description: "Daily launch board, weather windows, operator assignment, and unscheduled work.",
   },
   {
-    title: "Agent",
+    title: "HD Agent",
     path: "/agent",
     description: "Internal AI agent workspace.",
   },
   {
-    title: "Training",
+    title: "HD Academy",
     path: "/training",
-    description: "Operator training dashboard.",
+    description: "Modern operator training, SOP, resource, and certification hub.",
   },
   {
-    title: "Qualification Review",
-    path: "/training/qualification",
-    description: "Operator qualification gate and review module.",
+    title: "Admin Academy",
+    path: "/admin/academy",
+    description: "Create, edit, and reorder Academy modules and lessons.",
   },
   {
-    title: "Admin Training",
+    title: "Admin Training Matrix",
     path: "/admin/training",
     description: "Admin qualification matrix.",
   },
@@ -202,19 +200,14 @@ const internalRoutes = [
     description: "Assignment readiness check for a demo job.",
   },
   {
-    title: "Enterprise Drone Division",
-    path: "/enterprise/rdo/division",
-    description: "RDO drone division command center, blueprint, spray calendar, readiness gates, records, support, and ROI.",
+    title: "Clients",
+    path: "/ops/clients",
+    description: "Grower records, farms, fields, Jobber references, and serviced acres.",
   },
   {
-    title: "Dealer Dashboard",
-    path: "/dealer",
-    description: "Dealer-scoped leads, orders, training, and URL tools.",
-  },
-  {
-    title: "Network Dashboard",
-    path: "/network",
-    description: "Network manager rollup and dealer leaderboard.",
+    title: "Jobs",
+    path: "/ops/jobs",
+    description: "Pipeline board and list view for all drone service work.",
   },
 ];
 
@@ -240,10 +233,10 @@ function DemoIndexPage() {
       <section className="section demo-index">
         <div className="demo-index__hero">
           <span className="eyebrow">Demo navigation</span>
-          <h1>Every Harvest OS demo route in one place.</h1>
+          <h1>Demo routes, cleaned up.</h1>
           <p>
-            Public pages are funnels. Demo territory URLs are intentionally attributed funnels. Internal
-            dashboards require the logged-in role shown in the app navigation.
+            RDO has one demo command center. Harvest Drone internal tools stay separate so the demo story
+            does not get mixed with HD operations.
           </p>
           <div className="demo-index__note">
             If a page sends you to login, that is the protected-route gate working. After login,
@@ -272,11 +265,11 @@ function DemoIndexPage() {
         </article>
 
         <article className="demo-index__section">
-          <span className="eyebrow">Enterprise — RDO drone division</span>
-          <h2>Fleet, scheduling, and operations management</h2>
-          <div className="demo-index__grid demo-index__grid--three">
+          <span className="eyebrow">RDO Demo</span>
+          <h2>One external demo workspace</h2>
+          <div className="demo-index__grid">
             {enterpriseRoutes.map((route) => (
-              <RouteCard key={route.path} route={route} tone="Enterprise" />
+              <RouteCard key={route.path} route={route} tone="RDO" />
             ))}
           </div>
         </article>

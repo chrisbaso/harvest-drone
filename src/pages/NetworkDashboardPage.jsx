@@ -15,6 +15,8 @@ const css = `
 .network__kpi strong{display:block;margin-top:8px;font-size:1.5rem}
 .network__wrap{overflow-x:auto}.network table{width:100%;border-collapse:collapse;min-width:760px}
 .network__toolbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:12px}
+.network__compliance-list{display:grid;gap:10px}
+.network__compliance-item{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.035);padding:12px}
 @media(min-width:840px){.network__grid{grid-template-columns:repeat(5,1fr)}}
 `;
 
@@ -30,6 +32,7 @@ function NetworkDashboardPage() {
   const [orders, setOrders] = useState([]);
   const [networkDrones, setNetworkDrones] = useState([]);
   const [networkSchedule, setNetworkSchedule] = useState([]);
+  const [complianceRecords, setComplianceRecords] = useState([]);
   const [sortKey, setSortKey] = useState("acres");
 
   useEffect(() => {
@@ -38,10 +41,11 @@ function NetworkDashboardPage() {
     async function loadData() {
       if (!networkId) return;
 
-      const [{ data: dealerRows }, { data: droneRows }, { data: scheduleRows }] = await Promise.all([
+      const [{ data: dealerRows }, { data: droneRows }, { data: scheduleRows }, { data: complianceRows }] = await Promise.all([
         supabase.from("dealers").select("*").eq("network_id", networkId).order("name"),
         supabase.from("fleet_drones").select("*").eq("network_id", networkId),
         supabase.from("application_schedule").select("*").eq("network_id", networkId),
+        supabase.from("compliance_records").select("*").eq("network_id", networkId).order("mission_completed", { ascending: false }),
       ]);
       const dealerIds = (dealerRows || []).map((dealer) => dealer.id);
 
@@ -63,6 +67,7 @@ function NetworkDashboardPage() {
         setOrders(orderRows);
         setNetworkDrones(droneRows || []);
         setNetworkSchedule(scheduleRows || []);
+        setComplianceRecords(complianceRows || []);
       }
     }
 
@@ -105,6 +110,11 @@ function NetworkDashboardPage() {
   const seasonCompletionRate = networkSchedule.length ? Math.round((completedApps / networkSchedule.length) * 100) : 0;
   const complianceReadyDealers = dealers.filter((dealer) => ["active", "qualified"].includes(dealer.training_status)).length;
   const complianceReadyRate = dealers.length ? Math.round((complianceReadyDealers / dealers.length) * 100) : 0;
+  const gatesPassedRecords = complianceRecords.filter((record) => record.all_gates_passed && !record.override_used).length;
+  const gatesPassedRate = complianceRecords.length ? Math.round((gatesPassedRecords / complianceRecords.length) * 100) : 100;
+  const overrideRecords = complianceRecords.filter((record) => record.override_used).length;
+  const maintenanceSoon = networkDrones.filter((drone) => Number(drone.maintenance_due_hours || 50) - Number(drone.hours_since_maintenance || 0) <= 5);
+  const expiringCredentialPilots = [...new Set(networkSchedule.filter((item) => item.assigned_pilot_name).map((item) => item.assigned_pilot_name))].slice(0, 3);
 
   function exportCsv() {
     const rows = ["Dealer,State,Leads,Orders,Revenue,Acres,Training"];
@@ -144,6 +154,25 @@ function NetworkDashboardPage() {
           <div className="network__kpi"><span>Season complete</span><strong>{seasonCompletionRate}%</strong></div>
           <div className="network__kpi"><span>Compliance ready</span><strong>{complianceReadyRate}%</strong></div>
         </div>
+
+        <article className="network__card">
+          <div className="network__toolbar">
+            <h2>Compliance</h2>
+            <a className="button button--secondary button--small" href="/compliance/records">View records</a>
+          </div>
+          <div className="network__grid">
+            <div className="network__kpi"><span>Mission records</span><strong>{complianceRecords.length}</strong></div>
+            <div className="network__kpi"><span>All gates passed</span><strong>{gatesPassedRate}%</strong></div>
+            <div className="network__kpi"><span>Overrides used</span><strong>{overrideRecords}</strong></div>
+            <div className="network__kpi"><span>Credentials expiring</span><strong>{expiringCredentialPilots.length}</strong></div>
+            <div className="network__kpi"><span>Aircraft near service</span><strong>{maintenanceSoon.length}</strong></div>
+          </div>
+          <div className="network__compliance-list">
+            {overrideRecords ? <div className="network__compliance-item"><span>Override review</span><strong>{overrideRecords} mission(s) need management review</strong></div> : null}
+            {expiringCredentialPilots.map((pilot) => <div className="network__compliance-item" key={pilot}><span>Pilot credential watch</span><strong>{pilot}</strong></div>)}
+            {maintenanceSoon.map((drone) => <div className="network__compliance-item" key={drone.id}><span>Maintenance threshold</span><strong>{drone.nickname || drone.serial_number}</strong></div>)}
+          </div>
+        </article>
 
         <article className="network__card">
           <div className="network__toolbar">

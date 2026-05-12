@@ -1,5 +1,6 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { ENTERPRISE_DEMO_HOME, ENTERPRISE_DEMO_ROLE } from "../../shared/accessControl";
 
 const PUBLIC_LANDING_ROUTES = new Set([
   "/growers",
@@ -39,54 +40,32 @@ function Shell({ children, compact = false }) {
   const { profile, isAuthenticated, signOut } = useAuth();
   const isPublic = isPublicLandingRoute(location.pathname);
   const role = profile?.role;
+  const internalHomeHref = role === "operator" ? "/operator/jobs" : "/ops";
+  const homeHref = role === ENTERPRISE_DEMO_ROLE ? ENTERPRISE_DEMO_HOME : isAuthenticated ? internalHomeHref : "/";
 
   const navItems =
-    role === "admin"
-      ? [
-          ["Dashboard", "/dashboard"],
-          ["CRM", "/crm"],
-          ["Admin", "/admin"],
-          ["Agent", "/agent"],
-          ["Training", "/training"],
-          ["Fleet", "/fleet"],
-          ["Scheduler", "/scheduler"],
-          ["Enterprise", "/enterprise/rdo/division"],
-          ["Demo", "/demo"],
-          ["How it works", "/how-it-works"],
-        ]
-      : role === "network_manager"
+    role === ENTERPRISE_DEMO_ROLE
+      ? [["RDO Demo", ENTERPRISE_DEMO_HOME]]
+      : role === "operator"
         ? [
-            ["Network", "/network"],
-            ["Fleet", "/fleet"],
-            ["Scheduler", "/scheduler"],
-            ["Enterprise", "/enterprise/rdo/division"],
-            ["Demo", "/demo"],
+            ["My Jobs", "/operator/jobs"],
+            ["Academy", "/training"],
           ]
-        : role === "dealer"
+        : ["admin", "network_manager", "dealer"].includes(role)
           ? [
-              ["Dashboard", "/dealer"],
-              ["Fleet", "/fleet"],
-              ["Scheduler", "/scheduler"],
-              ["Training", "/training"],
-              ["Enterprise", "/enterprise/rdo/division"],
-              ["Demo", "/demo"],
+              ["Ops", "/ops"],
+              ["Academy", "/training"],
             ]
-          : role === "operator"
-            ? [
-                ["Training", "/training"],
-                ["Qualification", "/training/qualification"],
-                ["Demo", "/demo"],
-              ]
-            : [];
+          : [];
 
   return (
     <div className="site-shell">
       <header className="topbar">
-        <Link className="brandmark" to="/">
+        <Link className="brandmark" to={homeHref}>
           <span className="brandmark__badge">HD</span>
           <span>
             Harvest Drone
-            <small>Revenue-first aerial operations</small>
+            <small>Field operations and training</small>
           </span>
         </Link>
 

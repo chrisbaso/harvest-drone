@@ -35,6 +35,27 @@ run("tracks required course progress", () => {
   assert.equal(progress.percentage, 17);
 });
 
+run("includes potato application specialist training with six lessons and quizzes", () => {
+  const course = trainingCourses.find((item) => item.slug === "potato-application-specialist");
+  const lessons = course?.modules.flatMap((module) => module.lessons) || [];
+
+  assert.equal(course?.title, "Potato Application Specialist");
+  assert.deepEqual(course.requiredForJobTypes, ["potato-spraying"]);
+  assert.equal(lessons.length, 6);
+  assert.ok(lessons.every((lesson) => lesson.quiz?.length >= 1));
+});
+
+run("links Hylio drone training lessons to folder content files", () => {
+  const hylioCourse = trainingCourses.find((item) => item.slug === "hylio-operator-foundations");
+  const hylioLessons = hylioCourse.modules.flatMap((module) => module.lessons);
+  const linkedLessons = hylioLessons.filter((lesson) => lesson.contentPath);
+
+  assert.ok(linkedLessons.length >= 10);
+  assert.equal(hylioLessons.find((lesson) => lesson.id === "hylio-foundations-operating-model").contentPath, "content/training/hylio/00-orientation.mdx");
+  assert.equal(hylioLessons.find((lesson) => lesson.id === "hylio-foundations-agrosol").contentPath, "content/training/hylio/03-agrosol-mission-planning.mdx");
+  assert.equal(hylioLessons.find((lesson) => lesson.id === "hylio-foundations-emergency-procedures").contentPath, "content/training/hylio/06-manual-control-emergency-procedures.mdx");
+});
+
 run("scores assessments and marks passing attempts", () => {
   const assessment = findAssessment("compliance-foundations");
   const result = scoreAssessment(assessment, {
@@ -164,7 +185,7 @@ run("maps Supabase training rows into the operator readiness shape", () => {
       first_name: "Real",
       last_name: "Operator",
       state: "Arkansas",
-      aircraft_models: ["Hylio AG-272"],
+      aircraft_models: ["HYL-300 Atlas"],
       payload_types: ["liquid"],
     },
     enrollments: [

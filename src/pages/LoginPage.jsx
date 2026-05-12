@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import Shell from "../components/Shell";
 import { useAuth } from "../context/AuthContext";
+import { getDemoAccessConfig } from "../lib/demoAccessApi";
+import { getLoginRedirectPath, redirectForRole } from "../../shared/accessControl";
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Instrument+Sans:wght@400;500;600;700&display=swap');
@@ -19,26 +21,52 @@ const css = `
 .login__divider::before,.login__divider::after{content:"";height:1px;flex:1;background:var(--border)}
 .login__demo{display:grid;gap:8px}
 .login__demo p{margin:0;color:var(--text-muted);font-size:13px}
+.login__hint{margin:0;color:var(--accent);font-size:13px}
 `;
-
-function redirectForRole(role) {
-  if (role === "admin") return "/admin";
-  if (role === "network_manager") return "/network";
-  if (role === "dealer") return "/dealer";
-  if (role === "operator") return "/training";
-  return "/training";
-}
 
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, isLoading, signIn, signInDemo, canUseLocalDemoAuth } = useAuth();
+  const { user, profile, isLoading, signIn, signInDemo, signInSharedDemo, canUseLocalDemoAuth } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [demoForm, setDemoForm] = useState({ email: "", password: "" });
+  const [demoAccessConfig, setDemoAccessConfig] = useState({ enabled: false, email: "", label: "Enterprise demo access" });
   const [errorMessage, setErrorMessage] = useState("");
+  const [demoErrorMessage, setDemoErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDemoSubmitting, setIsDemoSubmitting] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDemoAccessConfig() {
+      try {
+        const config = await getDemoAccessConfig();
+        if (!isMounted) return;
+        setDemoAccessConfig(config);
+        setDemoForm((current) => ({ ...current, email: config.email || current.email }));
+      } catch (_error) {
+        if (isMounted && canUseLocalDemoAuth) {
+          setDemoAccessConfig({
+            enabled: true,
+            email: "rdo-demo@harvestdrone.local",
+            label: "Local shared enterprise demo",
+            localFallback: true,
+          });
+          setDemoForm((current) => ({ ...current, email: "rdo-demo@harvestdrone.local" }));
+        }
+      }
+    }
+
+    loadDemoAccessConfig();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [canUseLocalDemoAuth]);
 
   if (!isLoading && user && profile) {
-    return <Navigate to={location.state?.from || redirectForRole(profile.role)} replace />;
+    return <Navigate to={getLoginRedirectPath(profile, location.state?.from)} replace />;
   }
 
   async function handleSubmit(event) {
@@ -67,6 +95,22 @@ function LoginPage() {
     }
   }
 
+  async function handleSharedDemoSubmit(event) {
+    event.preventDefault();
+    setIsDemoSubmitting(true);
+    setDemoErrorMessage("");
+    setErrorMessage("");
+
+    try {
+      await signInSharedDemo(demoForm);
+      navigate("/enterprise/rdo/division", { replace: true });
+    } catch (error) {
+      setDemoErrorMessage(error.message || "Unable to open enterprise demo.");
+    } finally {
+      setIsDemoSubmitting(false);
+    }
+  }
+
   return (
     <Shell compact>
       <style>{css}</style>
@@ -74,6 +118,39 @@ function LoginPage() {
         <div className="login__card">
           <h1>Dealer portal login</h1>
           <p>Sign in to see your leads, dealer dashboard, training, and network performance.</p>
+
+          {demoAccessConfig.enabled ? (
+            <div className="login__demo">
+              <div className="login__divider">{demoAccessConfig.label || "Enterprise demo access"}</div>
+              <form className="login__form" onSubmit={handleSharedDemoSubmit}>
+                <label className="login__field">
+                  <span>Demo email</span>
+                  <input
+                    type="email"
+                    value={demoForm.email}
+                    onChange={(event) => setDemoForm((current) => ({ ...current, email: event.target.value }))}
+                    required
+                  />
+                </label>
+                <label className="login__field">
+                  <span>Demo password</span>
+                  <input
+                    type="password"
+                    value={demoForm.password}
+                    onChange={(event) => setDemoForm((current) => ({ ...current, password: event.target.value }))}
+                    required
+                  />
+                </label>
+                {demoErrorMessage ? <p className="login__error">{demoErrorMessage}</p> : null}
+                {demoAccessConfig.localFallback ? <p className="login__hint">Local password: harvest-demo</p> : null}
+                <button className="button button--primary" type="submit" disabled={isDemoSubmitting}>
+                  {isDemoSubmitting ? "Opening demo..." : "Open enterprise demo"}
+                </button>
+              </form>
+            </div>
+          ) : null}
+
+          <div className="login__divider">Team login</div>
           <form className="login__form" onSubmit={handleSubmit}>
             <label className="login__field">
               <span>Email</span>

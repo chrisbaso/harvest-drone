@@ -337,7 +337,7 @@ function LeadDetailPage() {
       <section className="section">
         <div className="detail-header">
           <div>
-            <Link className="back-link" to="/dashboard">
+            <Link className="back-link" to="/ops/leads">
               Back to dashboard
             </Link>
             <SectionHeading

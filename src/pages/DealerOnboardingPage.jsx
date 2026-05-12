@@ -147,7 +147,7 @@ function DealerOnboardingPage() {
           {step === 3 ? (
             <div>
               <p>{message}</p>
-              <button className="button button--primary" type="button" onClick={() => navigate("/dealer")}>Open dealer dashboard</button>
+              <button className="button button--primary" type="button" onClick={() => navigate("/ops")}>Open operations</button>
             </div>
           ) : null}
 

@@ -34,6 +34,17 @@ run("summarizes enterprise drone division readiness", () => {
   assert.ok(summary.openSupportTickets > 0);
 });
 
+run("uses current Hylio Ares and Atlas model names with Atlas as flagship", () => {
+  const models = new Set(rdoEnterpriseDemo.aircraft.map((aircraft) => aircraft.model));
+  const jobModels = new Set(rdoEnterpriseDemo.applicationJobs.map((job) => job.aircraftModel));
+
+  assert.deepEqual([...models].sort(), ["HYL-150 Ares", "HYL-300 Atlas"]);
+  assert.equal(rdoEnterpriseDemo.organization.division.flagshipAircraftModel, "HYL-300 Atlas");
+  assert.match(rdoEnterpriseDemo.organization.division.flagshipPositioning, /large size/i);
+  assert.match(rdoEnterpriseDemo.organization.division.flagshipPositioning, /swarming/i);
+  assert.equal(jobModels.has("HYL-300 Atlas"), true);
+});
+
 run("blocks unsafe RDO job assignment with clear reasons", () => {
   const readiness = getApplicationJobReadiness({
     orgId: "rdo",

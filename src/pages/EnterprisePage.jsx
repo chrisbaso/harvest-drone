@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useParams } from "react-router-dom";
 import Shell from "../components/Shell";
 import EnterpriseStyles from "../components/enterprise/EnterpriseStyles";
+import { useAuth } from "../context/AuthContext";
 import {
   enterpriseDemoMetadata,
-  enterpriseRoutes,
   getEnterpriseDemoPath,
   getSprayWindowReadiness,
 } from "../../shared/enterpriseDivision";
@@ -28,6 +28,15 @@ import {
   resetEnterpriseWorkspace,
   saveEnterpriseWorkspace,
 } from "../lib/enterpriseLocalStore";
+import { isEnterpriseDemoProfile } from "../../shared/accessControl";
+
+const rdoDemoNav = [
+  { label: "Overview", view: "division", path: "/enterprise/rdo/division" },
+  { label: "Training", view: "training", path: "/enterprise/rdo/training" },
+  { label: "Operations", view: "spray-calendar", path: "/enterprise/rdo/spray-calendar" },
+  { label: "Readiness", view: "readiness", path: "/enterprise/rdo/readiness" },
+  { label: "Records", view: "application-records", path: "/enterprise/rdo/application-records" },
+];
 
 function titleCaseStatus(status = "") {
   return status.replaceAll("_", " ");
@@ -54,9 +63,9 @@ function KpiCard({ label, value, detail }) {
 function EnterpriseNav({ orgId, view }) {
   return (
     <nav className="enterprise-nav" aria-label="Enterprise division navigation">
-      {enterpriseRoutes.map((route) => (
+      {rdoDemoNav.map((route) => (
         <NavLink
-          className={route.path.endsWith(`/${view}`) ? "is-active" : undefined}
+          className={route.view === view ? "is-active" : undefined}
           key={route.path}
           to={route.path.replace("/rdo/", `/${orgId}/`)}
         >
@@ -76,14 +85,16 @@ function EnterpriseHero({ demo, summary }) {
         <p>
           Build and operate an internal Hylio application division for potato operations:
           equipment, operators, SOPs, credentials, support, application records, and performance
-          reporting in one readiness workflow.
+          reporting in one readiness workflow. The HYL-300 Atlas is the flagship model
+          for large-acre operations with swarming support, backed by the HYL-150 Ares
+          for smaller jobs and training paths.
         </p>
         <div className="enterprise-actions">
-          <Link className="button button--primary button--small" to="/enterprise/rdo/readiness">
-            Open readiness gate
+          <Link className="button button--primary button--small" to="/enterprise/rdo/training">
+            Open RDO training
           </Link>
-          <Link className="button button--secondary button--small" to="/enterprise/rdo/spray-calendar">
-            View spray calendar
+          <Link className="button button--secondary button--small" to="/enterprise/rdo/readiness">
+            Check readiness
           </Link>
         </div>
         <p className="enterprise-demo-note">{enterpriseDemoMetadata.disclaimer}</p>
@@ -221,12 +232,14 @@ function SprayCalendarView({ demo }) {
 }
 
 function OperatorsView({ demo, actions }) {
+  const { profile } = useAuth();
+  const isEnterpriseDemo = isEnterpriseDemoProfile(profile);
   const [form, setForm] = useState({
     name: "",
     role: "Operator trainee",
     state: "North Dakota",
     base: "Grand Forks Valley Unit",
-    aircraftModels: "Hylio AG-272",
+    aircraftModels: "HYL-300 Atlas",
     payloadTypes: "liquid",
   });
 
@@ -310,9 +323,11 @@ function OperatorsView({ demo, actions }) {
               ) : null}
               <div className="enterprise-chip-row">
                 <Status value={readiness.ready ? "ready" : "blocked"} />
-                <Link className="button button--secondary button--small" to={`/operators/${operator.id}/training`}>
-                  Training profile
-                </Link>
+                {isEnterpriseDemo ? null : (
+                  <Link className="button button--secondary button--small" to={`/operators/${operator.id}/training`}>
+                    Training profile
+                  </Link>
+                )}
               </div>
             </article>
           );
@@ -322,10 +337,87 @@ function OperatorsView({ demo, actions }) {
   );
 }
 
+function RdoTrainingView({ demo }) {
+  const foundations = trainingCourses.find((course) => course.slug === "hylio-operator-foundations");
+  const potato = trainingCourses.find((course) => course.slug === "potato-application-specialist");
+  const practical = trainingCourses.find((course) => course.slug === "hylio-practical-qualification");
+
+  const trainingCards = [foundations, potato, practical].filter(Boolean);
+
+  return (
+    <div className="enterprise-stack">
+      <section className="enterprise-panel card">
+        <div className="enterprise-panel__header">
+          <span className="eyebrow">RDO Demo Training</span>
+          <h2>Operator onboarding, potato application, and field review in one demo lane</h2>
+          <p>
+            This is the RDO-facing training story: assigned operator modules, crop-specific potato lessons,
+            SOP review, practical signoff, and certification readiness before any field launch.
+          </p>
+        </div>
+        <div className="enterprise-grid--three">
+          {trainingCards.map((course) => {
+            const lessonCount = course.modules.reduce((total, module) => total + module.lessons.length, 0);
+            return (
+              <article className="enterprise-card" key={course.slug}>
+                <span className="enterprise-card__label">{course.status}</span>
+                <h3>{course.title}</h3>
+                <p>{course.description}</p>
+                <div className="enterprise-chip-row">
+                  <span className="enterprise-status enterprise-status--ready">{lessonCount} lessons</span>
+                  <span className="enterprise-status enterprise-status--watching">{course.estimatedDurationMinutes} min</span>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="enterprise-panel card">
+        <div className="enterprise-panel__header">
+          <span className="eyebrow">RDO operator training status</span>
+          <h2>Who is ready for field review?</h2>
+        </div>
+        <div className="enterprise-table-wrap">
+          <table className="enterprise-table">
+            <thead>
+              <tr>
+                <th>Operator</th>
+                <th>Foundations</th>
+                <th>Credentials</th>
+                <th>Practical</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {demo.operators.map((operator) => {
+                const progress = foundations ? getCourseProgress(operator, foundations) : { percentage: 0 };
+                const credentialsReady = operator.credentials?.length || 0;
+                const practicalReady = operator.practicalEvaluations?.every((evaluation) => evaluation.status === "passed");
+                const ready = progress.percentage === 100 && credentialsReady > 0 && practicalReady;
+
+                return (
+                  <tr key={operator.id}>
+                    <td>{operator.name}</td>
+                    <td>{progress.percentage}%</td>
+                    <td>{credentialsReady} records</td>
+                    <td>{practicalReady ? "Passed" : "Pending"}</td>
+                    <td><Status value={ready ? "ready" : "blocked"} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function FleetView({ demo, actions }) {
   const [form, setForm] = useState({
     tailNumber: "",
-    model: "Hylio AG-272",
+    model: "HYL-300 Atlas",
     maintenanceBlocked: "false",
     calibrationStatus: "current",
     batteryChecklistStatus: "complete",
@@ -353,8 +445,8 @@ function FleetView({ demo, actions }) {
         <label className="field">
           <span>Model</span>
           <select value={form.model} onChange={(event) => setForm((current) => ({ ...current, model: event.target.value }))}>
-            <option>Hylio AG-272</option>
-            <option>Hylio AG-230</option>
+            <option>HYL-300 Atlas</option>
+            <option>HYL-150 Ares</option>
           </select>
         </label>
         <label className="field">
@@ -420,7 +512,7 @@ function ReadinessView({ demo, actions }) {
     if (!newJob.title.trim()) return;
     actions.addApplicationJob({
       ...newJob,
-      aircraftModel: demo.aircraft.find((aircraft) => aircraft.id === newJob.aircraftId)?.model || "Hylio AG-272",
+      aircraftModel: demo.aircraft.find((aircraft) => aircraft.id === newJob.aircraftId)?.model || "HYL-300 Atlas",
       payloadType: "liquid",
       operationType: "pesticide_application",
       documentsAttached: newJob.documentsAttached === "true",
@@ -765,7 +857,7 @@ function PublicEnterpriseLanding() {
           </div>
           <div className="el-grid el-grid--six">
             {[
-              ["Fleet procurement", "Hylio AG drones, American-made and sized for your operation."],
+              ["Fleet procurement", "HYL-300 Atlas flagship swarms and HYL-150 Ares aircraft, American-made and sized for your operation."],
               ["Training and certification", "11-lesson program, Part 107/137, pesticide licensing, and field checklists."],
               ["Operational software", "Scheduling, dispatch, fleet tracking, and compliance documentation."],
               ["Maintenance and support", "Ongoing repair, parts, and field service support."],
@@ -849,6 +941,8 @@ function EnterpriseView({ view, demo, summary, actions }) {
   switch (view) {
     case "division":
       return <DashboardView demo={demo} summary={summary} onResetWorkspace={actions.resetWorkspace} />;
+    case "training":
+      return <RdoTrainingView demo={demo} />;
     case "blueprint":
       return <BlueprintView demo={demo} />;
     case "spray-calendar":

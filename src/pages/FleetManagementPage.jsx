@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { evaluateFlightReadiness } from "../../shared/flightReadiness";
+import FlightReadinessPanel from "../components/FlightReadinessPanel";
 import Shell from "../components/Shell";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -7,7 +9,7 @@ const DEMO_DRONES = [
   {
     id: "demo-alpha",
     serial_number: "HY-AG272-0041",
-    model: "Hylio AG-272",
+    model: "HYL-300 Atlas",
     nickname: "Alpha",
     assigned_pilot_name: "Jody Bjornson",
     status: "available",
@@ -21,7 +23,7 @@ const DEMO_DRONES = [
   {
     id: "demo-bravo",
     serial_number: "HY-AG272-0042",
-    model: "Hylio AG-272",
+    model: "HYL-300 Atlas",
     nickname: "Bravo",
     assigned_pilot_name: "Jody Bjornson",
     status: "available",
@@ -35,7 +37,7 @@ const DEMO_DRONES = [
   {
     id: "demo-charlie",
     serial_number: "HY-AG272-0043",
-    model: "Hylio AG-272",
+    model: "HYL-300 Atlas",
     nickname: "Charlie",
     assigned_pilot_name: null,
     status: "maintenance",
@@ -49,7 +51,7 @@ const DEMO_DRONES = [
   {
     id: "demo-delta",
     serial_number: "HY-AG272-0044",
-    model: "Hylio AG-272",
+    model: "HYL-300 Atlas",
     nickname: "Delta",
     assigned_pilot_name: null,
     status: "available",
@@ -67,6 +69,17 @@ const DEMO_MAINTENANCE = [
   { id: "m2", drone_id: "demo-bravo", maintenance_type: "scheduled", description: "50-hour inspection: full teardown and reassembly", performed_by: "Jody Bjornson", hours_at_service: 50, cost: 450, completed_at: "2026-02-20T12:00:00Z" },
   { id: "m3", drone_id: "demo-charlie", maintenance_type: "repair", description: "Pump seal replacement - spray nozzle 3 leaking under pressure", performed_by: "Jody Bjornson", hours_at_service: 150, cost: 180, completed_at: "2026-04-01T12:00:00Z" },
 ];
+
+const DEMO_PILOTS = [
+  { id: "pilot-jody", name: "Jody Bjornson", part107Number: "RP-107-4412", part107ExpiryDate: "2027-04-30", pesticideLicenseNumber: "MN-POTATO-118", pesticideLicenseExpiryDate: "2027-03-31", trainingComplete: true, trainingProgressPct: 100, insuranceExpiryDate: "2027-01-31" },
+  { id: "pilot-ada", name: "Ada Miller", part107Number: "RP-107-9921", part107ExpiryDate: "2026-05-25", pesticideLicenseNumber: "MN-POTATO-202", pesticideLicenseExpiryDate: "2027-02-15", trainingComplete: true, trainingProgressPct: 100, insuranceExpiryDate: "2026-12-31" },
+];
+
+const DEMO_SCHEDULE = [
+  { id: "s3", field_name: "West Quarter", field_location: "Redwood County, MN", field_acres: 160, crop_type: "Potatoes", product_to_apply: "Fungicide - Mancozeb", application_number: 8, total_applications: 12, window_opens: new Date(Date.now() - 86400000).toISOString(), window_closes: new Date(Date.now() + 86400000 * 2).toISOString(), status: "assigned", assigned_pilot_name: "Jody Bjornson", assigned_drone_id: "demo-alpha", assigned_drone_serial: "HY-AG272-0041" },
+];
+
+const DEMO_WEATHER = { conditions: "Clear", windSpeedMph: 7, isRaining: false, temperatureF: 66, humidityPct: 54 };
 
 const css = `
 .fleet{--bg:#0C0F0A;--surface:#151A12;--card:#1A2015;--border:rgba(255,255,255,0.06);--text:#E8E6E1;--text-muted:#727966;--accent:#A3D977;font-family:'Instrument Sans',system-ui,sans-serif;color:var(--text);display:grid;gap:18px}
@@ -96,6 +109,8 @@ const css = `
 .fleet__alerts{display:grid;gap:10px}
 .fleet__alert{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;border-radius:8px;border:1px solid rgba(251,191,36,.22);background:rgba(251,191,36,.08)}
 .fleet__alert.is-overdue{border-color:rgba(248,113,113,.34);background:rgba(248,113,113,.1)}
+.fleet__ready-chip{display:inline-flex;align-items:center;gap:7px;color:#E8E6E1;font-size:12px;font-weight:900}
+.fleet__ready-chip span{width:9px;height:9px;border-radius:50%;background:var(--chip)}
 .fleet__empty{padding:14px;border:1px dashed var(--border);border-radius:8px;color:var(--text-muted)}
 .fleet__details{display:grid;gap:12px;margin-top:4px;padding-top:12px;border-top:1px solid var(--border)}
 .fleet__log{padding:12px;border-radius:8px;background:rgba(255,255,255,.035);border:1px solid var(--border)}
@@ -129,17 +144,56 @@ function maintenanceColor(percent) {
   return "#A3D977";
 }
 
+function missionForReadiness(item) {
+  return {
+    id: item.id,
+    fieldName: item.field_name,
+    fieldLocation: item.field_location,
+    fieldAcres: item.field_acres,
+    cropType: item.crop_type,
+    productToApply: item.product_to_apply,
+    applicationNumber: item.application_number,
+    totalApplications: item.total_applications,
+    windowOpens: item.window_opens,
+    windowCloses: item.window_closes,
+    maxWindMph: item.wind_max_mph || 10,
+    requiresPesticideLicense: !String(item.product_to_apply || "").toLowerCase().includes("source"),
+  };
+}
+
+function aircraftForReadiness(drone) {
+  return {
+    id: drone.id,
+    serialNumber: drone.serial_number,
+    model: drone.model,
+    status: drone.status,
+    faaRegistration: drone.faa_registration,
+    insuranceExpiry: drone.insurance_expiry,
+    totalFlightHours: drone.total_flight_hours,
+    hoursSinceMaintenance: drone.hours_since_maintenance,
+    maintenanceDueHours: drone.maintenance_due_hours,
+  };
+}
+
+function readinessChip(readiness) {
+  if (!readiness) return { color: "#727966", label: "No mission assigned" };
+  if (readiness.blockerCount > 0) return { color: "#F87171", label: `${readiness.blockerCount} blockers` };
+  if (readiness.warningCount > 0) return { color: "#FBBF24", label: `${readiness.warningCount} warning${readiness.warningCount === 1 ? "" : "s"}` };
+  return { color: "#A3D977", label: "Mission Ready" };
+}
+
 function FleetManagementPage() {
   const { dealerId, networkId, isDemo } = useAuth();
   const [drones, setDrones] = useState([]);
   const [maintenanceLogs, setMaintenanceLogs] = useState([]);
   const [flightLogs, setFlightLogs] = useState([]);
+  const [schedule, setSchedule] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [modal, setModal] = useState(null);
   const [message, setMessage] = useState("");
   const [addForm, setAddForm] = useState({
     serial_number: "",
-    model: "Hylio AG-272",
+    model: "HYL-300 Atlas",
     nickname: "",
     assigned_pilot_name: "",
     location_description: "",
@@ -157,10 +211,11 @@ function FleetManagementPage() {
     let isMounted = true;
 
     async function loadData() {
-      const [{ data: droneRows, error: droneError }, { data: maintenanceRows }, { data: flightRows }] = await Promise.all([
+      const [{ data: droneRows, error: droneError }, { data: maintenanceRows }, { data: flightRows }, { data: scheduleRows }] = await Promise.all([
         supabase.from("fleet_drones").select("*").order("nickname"),
         supabase.from("fleet_maintenance_logs").select("*").order("completed_at", { ascending: false }).limit(50),
         supabase.from("fleet_flight_logs").select("*").order("completed_at", { ascending: false }).limit(50),
+        supabase.from("application_schedule").select("*").in("status", ["assigned", "in_progress"]),
       ]);
 
       if (!isMounted) return;
@@ -168,6 +223,7 @@ function FleetManagementPage() {
       setDrones(fallback ? DEMO_DRONES : droneRows || []);
       setMaintenanceLogs(fallback ? DEMO_MAINTENANCE : maintenanceRows || []);
       setFlightLogs(fallback ? [] : flightRows || []);
+      setSchedule(fallback ? DEMO_SCHEDULE : scheduleRows || []);
       if (droneError && !fallback) setMessage(droneError.message);
     }
 
@@ -194,6 +250,24 @@ function FleetManagementPage() {
       .sort((a, b) => (Number(b.hours_since_maintenance || 0) - Number(b.maintenance_due_hours || 50)) - (Number(a.hours_since_maintenance || 0) - Number(a.maintenance_due_hours || 50)))
   ), [drones]);
 
+  function getReadinessForDrone(drone) {
+    const mission = schedule.find((item) => item.assigned_drone_id === drone.id || item.assigned_drone_serial === drone.serial_number);
+    const pilot = DEMO_PILOTS.find((item) => item.name === (mission?.assigned_pilot_name || drone.assigned_pilot_name));
+    return evaluateFlightReadiness({
+      pilot: pilot || { name: drone.assigned_pilot_name || "Unassigned pilot", trainingComplete: false, trainingProgressPct: 0 },
+      aircraft: aircraftForReadiness(drone),
+      mission: mission
+        ? missionForReadiness(mission)
+        : {
+            id: `aircraft-check-${drone.id}`,
+            fieldName: "Aircraft readiness check",
+            productToApply: "SOURCE",
+            requiresPesticideLicense: false,
+          },
+      weather: mission ? DEMO_WEATHER : null,
+    });
+  }
+
   async function addDrone(event) {
     event.preventDefault();
     if (!addForm.serial_number.trim()) return;
@@ -211,7 +285,7 @@ function FleetManagementPage() {
       return;
     }
     setDrones((current) => [...current, data].sort((a, b) => String(a.nickname || "").localeCompare(String(b.nickname || ""))));
-    setAddForm({ serial_number: "", model: "Hylio AG-272", nickname: "", assigned_pilot_name: "", location_description: "", faa_registration: "" });
+    setAddForm({ serial_number: "", model: "HYL-300 Atlas", nickname: "", assigned_pilot_name: "", location_description: "", faa_registration: "" });
     setModal(null);
     setMessage("Drone added to fleet.");
   }
@@ -259,7 +333,7 @@ function FleetManagementPage() {
           <div>
             <span className="eyebrow">Drone operations</span>
             <h1>Fleet management</h1>
-            <p>Track every drone across the operation. Hours, maintenance, assignments, and compliance.</p>
+            <p>Track every drone across the operation. HYL-300 Atlas is the flagship large-format swarming model, with HYL-150 Ares supporting smaller jobs, training, and flexible coverage.</p>
           </div>
           <div className="fleet__hero-actions">
             <button className="button button--primary button--small" type="button" onClick={() => setModal({ type: "add" })}>Add drone</button>
@@ -283,6 +357,9 @@ function FleetManagementPage() {
             const droneLogs = maintenanceLogs.filter((log) => log.drone_id === drone.id);
             const droneFlights = flightLogs.filter((log) => log.drone_id === drone.id);
             const expanded = expandedId === drone.id;
+            const readiness = getReadinessForDrone(drone);
+            const chip = readinessChip(readiness);
+            const maintenanceGate = readiness?.gates.find((gate) => gate.id === "aircraft-maintenance");
 
             return (
               <article className="fleet__drone" key={drone.id} style={{ "--status-color": statusColors[drone.status] || "#A3D977" }} onClick={() => setExpandedId(expanded ? null : drone.id)}>
@@ -290,7 +367,7 @@ function FleetManagementPage() {
                   <div>
                     <span className="fleet__serial">{drone.serial_number}</span>
                     <h3>{drone.nickname || "Unnamed drone"}</h3>
-                    <p>{drone.model || "Hylio AG-272"}</p>
+                    <p>{drone.model || "HYL-300 Atlas"}</p>
                   </div>
                   <span className="fleet__pill">{String(drone.status || "available").replaceAll("_", " ")}</span>
                 </div>
@@ -306,6 +383,9 @@ function FleetManagementPage() {
                   <div className="fleet__progress-track"><span style={{ "--fill": `${Math.min(percent, 100)}%`, "--bar": maintenanceColor(percent) }} /></div>
                 </div>
 
+                <span className="fleet__ready-chip" style={{ "--chip": chip.color }}><span />{chip.label}</span>
+                {readiness ? <FlightReadinessPanel readiness={readiness} compact /> : null}
+
                 <div className="fleet__meta">
                   <div className="fleet__meta-row"><span>Last maintenance</span><strong>{formatDate(drone.last_maintenance_date)}</strong></div>
                   <div className="fleet__meta-row"><span>FAA registration</span><strong>{drone.faa_registration || "-"}</strong></div>
@@ -313,6 +393,8 @@ function FleetManagementPage() {
 
                 {expanded ? (
                   <div className="fleet__details">
+                    {readiness ? <FlightReadinessPanel readiness={readiness} /> : <p className="fleet__empty">Assign this aircraft to a mission and pilot to run the full readiness check.</p>}
+                    {maintenanceGate?.status === "fail" ? <p className="fleet__empty">Maintenance is overdue. Log maintenance before assigning this aircraft to launch.</p> : null}
                     <button className="button button--secondary button--small" type="button" onClick={(event) => { event.stopPropagation(); setModal({ type: "maintenance", drone }); }}>
                       Log maintenance
                     </button>

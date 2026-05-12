@@ -58,6 +58,7 @@ export const trainingCourses = [
             required: true,
             officialMaterialRequired: false,
             minutes: 18,
+            contentPath: "content/training/hylio/00-orientation.mdx",
             content:
               "Harvest-qualified operators are expected to stop work when legal, aircraft, weather, chemical, or site conditions are not ready. This lesson frames training as an operating gate, not a one-time content library.",
           },
@@ -75,6 +76,7 @@ export const trainingCourses = [
             minutes: 40,
             officialMaterialRequired: true,
             officialLink: "https://www.hyl.io/faa-information",
+            contentPath: "content/training/hylio/01-compliance-foundations.mdx",
             content:
               "Review the operating documents that may apply to agricultural UAS work. Harvest OS tracks readiness and internal qualification only; FAA, state, tribal, territorial, and insurance requirements must be verified from current sources.",
           },
@@ -93,6 +95,7 @@ export const trainingCourses = [
             minutes: 35,
             officialMaterialRequired: true,
             officialLink: "https://www.hyl.io/learn",
+            contentPath: "content/training/hylio/02-hylio-hardware-groundlink.mdx",
             content:
               "Use official Hylio materials for hardware handling and maintenance specifics. Harvest adds job-readiness expectations, evidence capture, and supervisor signoff requirements.",
           },
@@ -110,6 +113,7 @@ export const trainingCourses = [
             minutes: 45,
             officialMaterialRequired: true,
             officialLink: "https://www.hyl.io/agrosolgcs",
+            contentPath: "content/training/hylio/03-agrosol-mission-planning.mdx",
             content:
               "Practice translating a Harvest job into a bounded field plan: field boundary, obstacles, payload type, rate, altitude, speed, swath, flight angle, caution zones, and application-data review.",
           },
@@ -127,6 +131,7 @@ export const trainingCourses = [
             required: true,
             minutes: 35,
             checklistSlug: "drift-weather-review",
+            contentPath: "content/training/hylio/04-field-safety-site-survey.mdx",
             content:
               "Walk the site before operations. Confirm people, animals, roads, buildings, utilities, water, neighboring fields, and access routes are accounted for before launch.",
           },
@@ -142,6 +147,7 @@ export const trainingCourses = [
             type: LESSON_TYPES.ARTICLE,
             required: true,
             minutes: 30,
+            contentPath: "content/sops/drift-management-sop.mdx",
             content:
               "Operators must verify wind, temperature, inversion risk, label constraints, neighboring sensitive areas, and Harvest abort criteria before starting or resuming application.",
           },
@@ -158,6 +164,7 @@ export const trainingCourses = [
             required: true,
             minutes: 38,
             checklistSlug: "chemical-mixing-loading",
+            contentPath: "content/training/hylio/05-chemical-handling-application.mdx",
             content:
               "Harvest SOPs require label review, PPE confirmation, mixing/loading controls, spill kit readiness, rinse/cleanup plan, and application record capture.",
           },
@@ -174,6 +181,7 @@ export const trainingCourses = [
             required: true,
             minutes: 30,
             checklistSlug: "battery-handling",
+            contentPath: "content/training/hylio/07-maintenance-batteries-calibration.mdx",
             content:
               "Inspect, charge, transport, stage, and quarantine batteries under Harvest SOPs and manufacturer guidance. Damaged or abnormal batteries block assignment.",
           },
@@ -189,6 +197,7 @@ export const trainingCourses = [
             type: LESSON_TYPES.ARTICLE,
             required: true,
             minutes: 32,
+            contentPath: "content/training/hylio/07-maintenance-batteries-calibration.mdx",
             content:
               "Each aircraft and payload configuration needs inspection, calibration evidence, cleaning logs, and maintenance status before being cleared for a Harvest job.",
           },
@@ -205,6 +214,7 @@ export const trainingCourses = [
             required: true,
             minutes: 45,
             checklistSlug: "emergency-response",
+            contentPath: "content/training/hylio/06-manual-control-emergency-procedures.mdx",
             content:
               "Operators must know when to pause, abort, land, isolate an area, notify a supervisor, preserve logs, and trigger incident-based retraining.",
           },
@@ -221,6 +231,7 @@ export const trainingCourses = [
             type: LESSON_TYPES.ARTICLE,
             required: true,
             minutes: 35,
+            contentPath: "content/training/hylio/09-harvest-job-workflow.mdx",
             content:
               "Harvest work flows from grower intake to field plan, readiness check, application, records, billing/support, and recurrent review triggers.",
           },
@@ -236,6 +247,7 @@ export const trainingCourses = [
             type: LESSON_TYPES.ARTICLE,
             required: true,
             minutes: 15,
+            contentPath: "content/training/hylio/10-recurrent-training.mdx",
             content:
               "Confirm that all required lessons, assessments, credentials, and practical signoff requests are complete before moving into supervised field work.",
           },
@@ -271,6 +283,7 @@ export const trainingCourses = [
           required: true,
           minutes: 45,
           checklistSlug: index === 1 ? "preflight" : index === 6 ? "postflight" : undefined,
+          contentPath: "content/training/hylio/08-supervised-field-practicum.mdx",
           content:
             "Complete this task under direct supervision. Evidence and notes should be attached to the practical rubric before a lead operator signs the item.",
         },
@@ -296,12 +309,218 @@ export const trainingCourses = [
             type: index === 5 ? LESSON_TYPES.SCENARIO : LESSON_TYPES.ARTICLE,
             required: true,
             minutes: 25,
+            contentPath: "content/training/hylio/10-recurrent-training.mdx",
             content:
               "Review current Harvest SOPs, recent incidents or near misses, and any Hylio software, firmware, aircraft, or payload changes before returning to active assignment.",
           },
         ],
       }),
     ),
+  },
+  {
+    slug: "potato-application-specialist",
+    title: "Potato Application Specialist",
+    audience: "Potato application pilots, leads, compliance admins",
+    status: "published",
+    estimatedDurationMinutes: 115,
+    requiredForJobTypes: ["potato-spraying"],
+    description:
+      "Product-specific training for drone application on potato crops. Covers fungicide protocols, desiccant timing, drift management for high-value crops, and RDO operational procedures.",
+    modules: [
+      {
+        slug: "potato-crop-protection-overview",
+        title: "Potato crop protection overview",
+        lessons: [
+          {
+            id: "potato-101",
+            title: "Potato crop protection overview",
+            type: LESSON_TYPES.ARTICLE,
+            required: true,
+            minutes: 20,
+            description:
+              "The 8-12 application cycle: fungicides, insecticides, and desiccants. Why timing matters more for potatoes than any other crop.",
+            content: `## The Potato Spray Cycle
+
+Potatoes require more spray applications per season than almost any other crop. A typical potato field receives 8-12 applications over a 16-week growing season.
+
+### Application types and typical timing:
+
+**Early season (emergence to row closure):**
+- Herbicide application (1-2 applications)
+- Insecticide for Colorado potato beetle and aphid control
+
+**Mid season (row closure through bulking):**
+- Fungicide applications every 7-10 days for late blight prevention
+- This is the highest-frequency period, typically 6-8 fungicide sprays
+- Common products: Chlorothalonil, Mancozeb, Revus, Ranman
+
+**Late season (vine kill and harvest prep):**
+- Desiccant application (Reglone/diquat) to kill vines before harvest
+- Timing is critical: too early and tubers are undersized, too late and skin set is poor
+
+For potatoes, a missed spray window can cost $500-1,000+ per acre in yield loss from late blight. Drone application creates value by hitting narrow windows even when fields are wet or late-season canopy damage would be unacceptable.`,
+            quiz: [
+              { question: "How many spray applications does a typical potato field receive per season?", options: ["2-4", "5-7", "8-12", "15-20"], correctIndex: 2 },
+              { question: "What is the primary reason for the high frequency of mid-season fungicide applications?", options: ["Weed control", "Late blight prevention", "Nutrient delivery", "Insect management"], correctIndex: 1 },
+              { question: "Why is drone application particularly valuable for late-season potato spraying?", options: ["Lower cost per acre", "Ground rigs damage crop canopy and compact soil", "Faster coverage speed", "Better chemical mixing"], correctIndex: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        slug: "fungicide-application-protocols",
+        title: "Fungicide application protocols",
+        lessons: [
+          {
+            id: "potato-fungicide",
+            title: "Fungicide application protocols",
+            type: LESSON_TYPES.ARTICLE,
+            required: true,
+            minutes: 25,
+            description:
+              "Product-specific rates, tank mix compatibility, application timing, and drift prevention for potato fungicide programs.",
+            content: `## Fungicide Application for Potatoes
+
+Common fungicide programs include Chlorothalonil, Mancozeb, Revus, and Ranman. Drone carrier volume is commonly 3-5 GPA for fungicide applications, with label minimums checked before every mission.
+
+Drone-specific considerations:
+- Lower carrier volumes mean higher concentration than ground rigs
+- Nozzle selection is critical; use medium to coarse droplets to minimize drift
+- Fly at 6-10 feet above canopy for canopy penetration
+- Application speed is typically 10-15 mph depending on canopy density
+- Always check product labels for minimum carrier volume, re-entry intervals, adjuvant requirements, and harvest restrictions`,
+            quiz: [
+              { question: "What is the typical carrier volume range for drone fungicide application on potatoes?", options: ["1-2 GPA", "3-5 GPA", "10-15 GPA", "20-30 GPA"], correctIndex: 1 },
+              { question: "What is the recommended flight height above potato canopy for fungicide application?", options: ["2-4 feet", "6-10 feet", "15-20 feet", "25-30 feet"], correctIndex: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        slug: "desiccant-application-and-vine-kill-timing",
+        title: "Desiccant application and vine kill timing",
+        lessons: [
+          {
+            id: "potato-desiccant",
+            title: "Desiccant application and vine kill timing",
+            type: LESSON_TYPES.ARTICLE,
+            required: true,
+            minutes: 20,
+            description:
+              "Desiccant product protocols, timing windows, and the critical relationship between vine kill and tuber quality.",
+            content: `## Vine Kill and Desiccant Application
+
+Desiccant application is one of the most timing-critical potato operations. The goal is to kill above-ground vine tissue to stop tuber growth and initiate skin set before harvest.
+
+Apply too early and tubers are undersized. Apply too late and skin does not set properly, leading to skinning during harvest and reduced storage life.
+
+Drone application for desiccants:
+- Use higher carrier volume than fungicide, commonly 5+ GPA
+- Dense canopies may require a two-pass application
+- Fly lower, often 4-6 feet, to maximize canopy penetration
+- Apply when vines are dry
+- Wind speed must stay under 10 mph because drift onto adjacent crops can cause severe damage`,
+            quiz: [
+              { question: "What happens if desiccant is applied too late?", options: ["Tubers grow too large", "Skin does not set properly", "Vines regrow", "No effect on crop"], correctIndex: 1 },
+            ],
+          },
+        ],
+      },
+      {
+        slug: "drift-management-for-high-value-crops",
+        title: "Drift management for high-value crops",
+        lessons: [
+          {
+            id: "potato-drift",
+            title: "Drift management for high-value crops",
+            type: LESSON_TYPES.CHECKLIST,
+            required: true,
+            minutes: 15,
+            checklistSlug: "drift-weather-review",
+            description:
+              "Spray drift prevention is critical when applying to potato fields near other crops. One drift incident can cause thousands in damages.",
+            content: `## Drift Management for Potato Operations
+
+Potato fields are often adjacent to other high-value crops. Fungicide or desiccant drift can cause crop damage, liability, and customer trust damage.
+
+Mandatory drift prevention practices:
+1. Never spray when wind exceeds 10 mph
+2. Use medium to coarse droplet nozzles
+3. Maintain product label buffer zones
+4. Do not spray during temperature inversions
+5. Record wind speed and direction for every application
+6. If conditions change mid-application, land and wait`,
+            quiz: [
+              { question: "What is the maximum wind speed for safe drone spraying on potato fields?", options: ["5 mph", "10 mph", "15 mph", "20 mph"], correctIndex: 1 },
+              { question: "What should you do if wind conditions change mid-application?", options: ["Continue at lower altitude", "Speed up to finish faster", "Land and wait for conditions to improve", "Switch to finer droplet nozzles"], correctIndex: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        slug: "field-operations-and-coordination",
+        title: "Field operations and coordination",
+        lessons: [
+          {
+            id: "potato-operations",
+            title: "Field operations and coordination",
+            type: LESSON_TYPES.ARTICLE,
+            required: true,
+            minutes: 20,
+            description:
+              "Coordinating drone operations with irrigation schedules, harvest crews, and multi-field rotation across an enterprise potato operation.",
+            content: `## Enterprise Potato Field Operations
+
+Potato drone operations must be coordinated with irrigation schedules, harvest crews, scouts, and multi-field spray rotations.
+
+Daily planning checklist:
+1. Which fields are in their spray window today?
+2. Which fields are highest priority?
+3. What is the next 48-hour weather forecast?
+4. Which drones and pilots are available?
+5. Are any maintenance items due before tomorrow's assignments?
+
+Do not spray within 2 hours before or after irrigation because wet foliage reduces product efficacy. Communicate application completion and anomalies immediately through the platform.`,
+            quiz: [
+              { question: "How far before or after irrigation should you avoid spraying?", options: ["30 minutes", "1 hour", "2 hours", "4 hours"], correctIndex: 2 },
+            ],
+          },
+        ],
+      },
+      {
+        slug: "regulatory-compliance-and-record-keeping",
+        title: "Regulatory compliance and record keeping",
+        lessons: [
+          {
+            id: "potato-compliance",
+            title: "Regulatory compliance and record keeping",
+            type: LESSON_TYPES.ARTICLE,
+            required: true,
+            minutes: 15,
+            description:
+              "EPA, state, and federal requirements for commercial drone application of restricted-use pesticides on potato crops.",
+            content: `## Compliance Requirements for Commercial Drone Application
+
+Commercial drone pesticide application requires current pilot credentials, current state pesticide licensing where applicable, registered and maintained aircraft, and complete application records.
+
+For every spray application, record:
+- Date and time of application
+- Field location
+- Product applied and application rate
+- Total amount applied
+- Wind speed and direction
+- Temperature
+- Applicator name and license number
+
+Federal pesticide application records must be retained for at least 2 years, and some states require longer. The Harvest Drone readiness gate and compliance record workflow turns this into an automatic operating record rather than manual paperwork.`,
+            quiz: [
+              { question: "What is the minimum federal retention period for pesticide application records?", options: ["6 months", "1 year", "2 years", "5 years"], correctIndex: 2 },
+              { question: "Which license is required for applying restricted-use pesticides via drone?", options: ["FAA Part 107 only", "State pesticide applicator license", "Commercial driver license", "OSHA certification"], correctIndex: 1 },
+            ],
+          },
+        ],
+      },
+    ],
   },
 ];
 
@@ -523,7 +742,7 @@ export const demoOperators = [
     name: "Ada Miller",
     role: "Lead Operator",
     state: "Arkansas",
-    aircraftModels: ["Hylio AG-272"],
+    aircraftModels: ["HYL-300 Atlas"],
     payloadTypes: ["liquid", "granular"],
     completedLessons: [
       "hylio-foundations-operating-model",
@@ -554,7 +773,7 @@ export const demoOperators = [
       { type: CREDENTIAL_TYPES.FAA_PART_107, status: "verified", expiresAt: "2027-03-01" },
       { type: CREDENTIAL_TYPES.FAA_PART_107_RECENCY, status: "verified", expiresAt: "2027-03-01" },
       { type: CREDENTIAL_TYPES.PESTICIDE_APPLICATOR_LICENSE, status: "verified", state: "Arkansas", category: "Aerial", expiresAt: "2027-12-31" },
-      { type: CREDENTIAL_TYPES.REMOTE_ID, status: "verified", aircraftModel: "Hylio AG-272" },
+      { type: CREDENTIAL_TYPES.REMOTE_ID, status: "verified", aircraftModel: "HYL-300 Atlas" },
       { type: CREDENTIAL_TYPES.HYLIO_ONBOARDING, status: "verified", expiresAt: "2027-03-20" },
       { type: CREDENTIAL_TYPES.HARVEST_INTERNAL_QUALIFICATION, status: "verified", expiresAt: "2027-03-20" },
     ],
@@ -564,7 +783,7 @@ export const demoOperators = [
     name: "Beau Carter",
     role: "Trainee",
     state: "Arkansas",
-    aircraftModels: ["Hylio AG-272"],
+    aircraftModels: ["HYL-300 Atlas"],
     payloadTypes: ["liquid"],
     completedLessons: ["hylio-foundations-operating-model", "hylio-foundations-compliance"],
     assessmentAttempts: [{ assessmentId: "compliance-foundations", score: 67, passed: false, attemptedAt: "2026-04-08" }],
@@ -582,7 +801,7 @@ export const demoHylioJob = {
   title: "Rice fungicide application",
   state: "Arkansas",
   operationType: "pesticide_application",
-  aircraftModel: "Hylio AG-272",
+  aircraftModel: "HYL-300 Atlas",
   payloadType: "liquid",
   requiresMedical: false,
   aircraft: {
@@ -733,7 +952,7 @@ export function mapTrainingRowsToOperator({
     name,
     role: source.role || source.operator_type || profile?.role || "Operator",
     state: source.state || source.state_territory || "Arkansas",
-    aircraftModels: normalizeArrayField(source.aircraft_models || source.aircraftModels, ["Hylio AG-272"]),
+    aircraftModels: normalizeArrayField(source.aircraft_models || source.aircraftModels, ["HYL-300 Atlas"]),
     payloadTypes: normalizeArrayField(source.payload_types || source.payloadTypes, ["liquid"]),
     enrollments: enrollments.map((row) => ({
       courseId: getNestedSlug(row, "training_courses", "course_slug") || row.course_id,

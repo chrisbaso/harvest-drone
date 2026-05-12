@@ -247,6 +247,21 @@ function HarvestAdminPage() {
             >
               Export CSV
             </button>
+            <Link className="button button--secondary" to="/admin/integrations">
+              Integrations
+            </Link>
+            <Link className="button button--secondary" to="/admin/integration-events">
+              Events
+            </Link>
+            <Link className="button button--secondary" to="/admin/daily-ops">
+              Daily Ops
+            </Link>
+            <Link className="button button--secondary" to="/admin/weekly-brief">
+              Weekly Brief
+            </Link>
+            <Link className="button button--secondary" to="/admin/profit-centers">
+              Profit Centers
+            </Link>
             <span className="harvest-admin__mode-pill">
               {leadData.mode === "local" ? "Local mock mode" : "Supabase mode"}
             </span>

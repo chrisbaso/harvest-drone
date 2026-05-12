@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { evaluateFlightReadiness, generateComplianceRecord } from "../../shared/flightReadiness";
+import FlightReadinessPanel from "../components/FlightReadinessPanel";
 import Shell from "../components/Shell";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -25,12 +27,19 @@ const DEMO_SCHEDULE = [
 ];
 
 const DEMO_DRONES = [
-  { id: "demo-alpha", serial_number: "HY-AG272-0041", nickname: "Alpha", status: "available", assigned_pilot_name: "Jody Bjornson" },
-  { id: "demo-bravo", serial_number: "HY-AG272-0042", nickname: "Bravo", status: "available", assigned_pilot_name: "Jody Bjornson" },
-  { id: "demo-delta", serial_number: "HY-AG272-0044", nickname: "Delta", status: "available", assigned_pilot_name: "" },
+  { id: "demo-alpha", serial_number: "HY-AG272-0041", model: "HYL-300 Atlas", nickname: "Alpha", status: "available", assigned_pilot_name: "Jody Bjornson", total_flight_hours: 127.5, hours_since_maintenance: 22.5, maintenance_due_hours: 50, faa_registration: "FA3XXHD041", insurance_expiry: "2027-02-01" },
+  { id: "demo-bravo", serial_number: "HY-AG272-0042", model: "HYL-300 Atlas", nickname: "Bravo", status: "available", assigned_pilot_name: "Jody Bjornson", total_flight_hours: 98.3, hours_since_maintenance: 48.3, maintenance_due_hours: 50, faa_registration: "FA3XXHD042", insurance_expiry: "2027-02-01" },
+  { id: "demo-delta", serial_number: "HY-AG272-0044", model: "HYL-300 Atlas", nickname: "Delta", status: "available", assigned_pilot_name: "", total_flight_hours: 45.2, hours_since_maintenance: 45.2, maintenance_due_hours: 50, faa_registration: "FA3XXHD044", insurance_expiry: "2027-02-01" },
 ];
 
-const PILOTS = ["Jody Bjornson", "Ada Miller", "Noah Petersen", "Backup operator"];
+const DEMO_PILOTS = [
+  { id: "pilot-jody", name: "Jody Bjornson", part107Number: "RP-107-4412", part107ExpiryDate: "2027-04-30", pesticideLicenseNumber: "MN-POTATO-118", pesticideLicenseExpiryDate: "2027-03-31", trainingComplete: true, trainingProgressPct: 100, insuranceExpiryDate: "2027-01-31" },
+  { id: "pilot-ada", name: "Ada Miller", part107Number: "RP-107-9921", part107ExpiryDate: "2026-05-25", pesticideLicenseNumber: "MN-POTATO-202", pesticideLicenseExpiryDate: "2027-02-15", trainingComplete: true, trainingProgressPct: 100, insuranceExpiryDate: "2026-12-31" },
+  { id: "pilot-noah", name: "Noah Petersen", part107Number: "RP-107-7720", part107ExpiryDate: "2027-06-15", pesticideLicenseNumber: "", pesticideLicenseExpiryDate: "", trainingComplete: true, trainingProgressPct: 100, insuranceExpiryDate: "2026-11-01" },
+  { id: "pilot-backup", name: "Backup operator", part107Number: "", part107ExpiryDate: "", pesticideLicenseNumber: "", pesticideLicenseExpiryDate: "", trainingComplete: false, trainingProgressPct: 45, insuranceExpiryDate: "" },
+];
+
+const DEMO_WEATHER = { conditions: "Clear", windSpeedMph: 7, isRaining: false, temperatureF: 66, humidityPct: 54 };
 
 const css = `
 .scheduler{--bg:#0C0F0A;--surface:#151A12;--card:#1A2015;--border:rgba(255,255,255,0.06);--text:#E8E6E1;--text-muted:#727966;--accent:#A3D977;font-family:'Instrument Sans',system-ui,sans-serif;color:var(--text);display:grid;gap:18px}
@@ -67,8 +76,14 @@ const css = `
 .scheduler__empty{padding:14px;border:1px dashed var(--border);border-radius:8px;color:var(--text-muted)}
 .scheduler__modal{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:18px;background:rgba(2,5,4,.72)}
 .scheduler__modal-card{width:min(680px,100%);max-height:90vh;overflow:auto;border:1px solid var(--border);border-radius:8px;background:#151A12;padding:20px;display:grid;gap:14px}
+.scheduler__modal-card.is-wide{width:min(860px,100%)}
 .scheduler__form-grid{display:grid;gap:12px}
 .scheduler__message{color:#f2efcf}
+.scheduler__readiness-chip{display:inline-flex;align-items:center;gap:7px;color:#E8E6E1;font-size:12px;font-weight:800}
+.scheduler__readiness-chip span{width:9px;height:9px;border-radius:50%;background:var(--chip)}
+.scheduler__blockers{display:grid;gap:6px;margin:0;padding-left:18px;color:#FFD7D7}
+.scheduler__checklist-box{display:grid;gap:8px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.035)}
+.scheduler__override{display:grid;gap:8px;padding:12px;border:1px solid rgba(251,191,36,.22);border-radius:8px;background:rgba(251,191,36,.08)}
 @media(min-width:760px){.scheduler__kpis{grid-template-columns:repeat(4,1fr)}.scheduler__board{grid-template-columns:repeat(2,1fr)}.scheduler__bottom{grid-template-columns:1.1fr .9fr}.scheduler__form-grid{grid-template-columns:repeat(2,1fr)}}
 @media(min-width:1120px){.scheduler__board{grid-template-columns:repeat(4,1fr)}}
 `;
@@ -92,14 +107,56 @@ function isClosingSoon(end) {
   return delta > 0 && delta <= 86400000;
 }
 
+function missionForReadiness(item, overrides = {}) {
+  return {
+    id: item.id,
+    fieldName: item.field_name,
+    fieldLocation: item.field_location,
+    fieldAcres: item.field_acres,
+    cropType: item.crop_type,
+    productToApply: item.product_to_apply,
+    applicationRate: item.application_rate,
+    applicationNumber: item.application_number,
+    totalApplications: item.total_applications,
+    windowOpens: item.window_opens,
+    windowCloses: item.window_closes,
+    maxWindMph: item.wind_max_mph || 10,
+    requiresPesticideLicense: !String(item.product_to_apply || "").toLowerCase().includes("source"),
+    ...overrides,
+  };
+}
+
+function aircraftForReadiness(drone) {
+  if (!drone) return {};
+  return {
+    id: drone.id,
+    serialNumber: drone.serial_number,
+    model: drone.model,
+    status: drone.status,
+    faaRegistration: drone.faa_registration,
+    insuranceExpiry: drone.insurance_expiry,
+    totalFlightHours: drone.total_flight_hours,
+    hoursSinceMaintenance: drone.hours_since_maintenance,
+    maintenanceDueHours: drone.maintenance_due_hours,
+  };
+}
+
+function readinessChip(readiness) {
+  if (!readiness) return { color: "#727966", label: "Unassigned" };
+  if (readiness.blockerCount > 0) return { color: "#F87171", label: `${readiness.blockerCount} blockers` };
+  if (readiness.warningCount > 0) return { color: "#FBBF24", label: `${readiness.warningCount} warning${readiness.warningCount === 1 ? "" : "s"}` };
+  return { color: "#A3D977", label: "Cleared" };
+}
+
 function SchedulerPage() {
-  const { isDemo } = useAuth();
+  const { isDemo, isAdmin, profile, dealerId, networkId } = useAuth();
   const [schedule, setSchedule] = useState([]);
   const [fields, setFields] = useState([]);
   const [drones, setDrones] = useState([]);
+  const [pilots, setPilots] = useState(DEMO_PILOTS);
   const [selected, setSelected] = useState(null);
   const [message, setMessage] = useState("");
-  const [assignForm, setAssignForm] = useState({ droneId: "", pilot: "Jody Bjornson", actualAcres: "" });
+  const [assignForm, setAssignForm] = useState({ droneId: "", pilotId: "pilot-jody", actualAcres: "", overrideReason: "", preflightCompleted: false, postflightCompleted: false, anomalies: "" });
 
   useEffect(() => {
     let isMounted = true;
@@ -116,6 +173,7 @@ function SchedulerPage() {
       setSchedule(fallback ? DEMO_SCHEDULE : scheduleRows || []);
       setFields(fallback ? DEMO_FIELDS : fieldRows || []);
       setDrones(fallback ? DEMO_DRONES : droneRows || []);
+      setPilots(DEMO_PILOTS);
       if (error && !fallback) setMessage(error.message);
     }
 
@@ -140,11 +198,28 @@ function SchedulerPage() {
   const availableDrones = drones.filter((drone) => drone.status === "available");
 
   function openCard(item) {
+    const assignedPilot = DEMO_PILOTS.find((pilot) => pilot.name === item.assigned_pilot_name) || DEMO_PILOTS[0];
     setSelected(item);
     setAssignForm({
       droneId: availableDrones[0]?.id || "",
-      pilot: item.assigned_pilot_name || availableDrones[0]?.assigned_pilot_name || "Jody Bjornson",
+      pilotId: assignedPilot.id,
       actualAcres: item.field_acres || "",
+      overrideReason: "",
+      preflightCompleted: Boolean(item.preflight_completed),
+      postflightCompleted: Boolean(item.postflight_completed),
+      anomalies: "",
+    });
+  }
+
+  function getReadinessFor(item, { requirePreflightNow = false, preflightCompleted = false, droneId, pilotId } = {}) {
+    const drone = drones.find((entry) => entry.id === (droneId || item.assigned_drone_id));
+    const pilot = pilots.find((entry) => entry.id === pilotId) || pilots.find((entry) => entry.name === item.assigned_pilot_name);
+    if (!drone || !pilot) return null;
+    return evaluateFlightReadiness({
+      pilot,
+      aircraft: aircraftForReadiness(drone),
+      mission: missionForReadiness(item, { requirePreflightNow, preflightCompleted }),
+      weather: DEMO_WEATHER,
     });
   }
 
@@ -168,29 +243,134 @@ function SchedulerPage() {
     event.preventDefault();
     if (!selected || !assignForm.droneId) return;
     const drone = drones.find((item) => item.id === assignForm.droneId);
+    const pilot = pilots.find((item) => item.id === assignForm.pilotId);
+    const readiness = getReadinessFor(selected, { droneId: assignForm.droneId, pilotId: assignForm.pilotId });
+    const overrideUsed = !readiness?.cleared && isAdmin && assignForm.overrideReason.trim();
+    if (!readiness?.cleared && !overrideUsed) {
+      setMessage("Mission cannot be assigned until readiness blockers are cleared or an admin override is documented.");
+      return;
+    }
     const result = await updateSchedule(selected.id, {
       status: "assigned",
       assigned_drone_id: drone?.id,
       assigned_drone_serial: drone?.serial_number,
-      assigned_pilot_name: assignForm.pilot,
+      assigned_pilot_name: pilot?.name,
+      override_used: Boolean(overrideUsed),
+      override_reason: overrideUsed ? assignForm.overrideReason.trim() : null,
+      override_authorized_by: overrideUsed ? profile?.full_name || profile?.email || "Admin" : null,
     });
     if (result.ok) {
       setSelected(null);
-      setMessage("Application assigned.");
+      setMessage(overrideUsed ? "Application assigned with documented admin override." : "Application assigned.");
+    }
+  }
+
+  async function startMission() {
+    if (!selected) return;
+    const readiness = getReadinessFor(selected, {
+      requirePreflightNow: true,
+      preflightCompleted: assignForm.preflightCompleted,
+      droneId: selected.assigned_drone_id,
+    });
+    if (!readiness?.cleared) {
+      setMessage("Mission launch is blocked until every readiness gate passes, including pre-flight.");
+      return;
+    }
+    const result = await updateSchedule(selected.id, {
+      status: "in_progress",
+      started_at: new Date().toISOString(),
+      preflight_completed: true,
+      readiness_evaluated_at: new Date().toISOString(),
+    });
+    if (result.ok) {
+      setSelected(null);
+      setMessage("Mission launched after readiness confirmation.");
     }
   }
 
   async function markComplete(event) {
     event.preventDefault();
-    if (!selected) return;
+    if (!selected || !assignForm.postflightCompleted) {
+      setMessage("Post-flight inspection is required before completing the mission.");
+      return;
+    }
+    const drone = drones.find((item) => item.id === selected.assigned_drone_id);
+    const pilot = pilots.find((item) => item.name === selected.assigned_pilot_name) || pilots[0];
+    const completedAt = new Date().toISOString();
+    const startedAt = selected.started_at || new Date(Date.now() - 60 * 60000).toISOString();
+    const flightDurationMinutes = Math.max(1, Math.round((new Date(completedAt) - new Date(startedAt)) / 60000));
+    const flightLog = {
+      acresSprayed: Number(assignForm.actualAcres || selected.field_acres || 0),
+      preflightChecklistCompleted: true,
+      postflightInspectionCompleted: true,
+      startedAt,
+      completedAt,
+      flightDurationMinutes,
+      readinessEvaluatedAt: selected.readiness_evaluated_at,
+    };
+    const complianceRecord = generateComplianceRecord({
+      pilot,
+      aircraft: aircraftForReadiness(drone),
+      mission: missionForReadiness(selected),
+      flightLog,
+      weather: DEMO_WEATHER,
+      override: {
+        used: Boolean(selected.override_used),
+        reason: selected.override_reason,
+        authorizedBy: selected.override_authorized_by,
+      },
+    });
     const result = await updateSchedule(selected.id, {
       status: "completed",
-      completed_at: new Date().toISOString(),
+      completed_at: completedAt,
       actual_acres_sprayed: Number(assignForm.actualAcres || selected.field_acres || 0),
+      postflight_completed: true,
+      notes: assignForm.anomalies || selected.notes || null,
     });
     if (result.ok) {
+      if (!String(selected.id).startsWith("s")) {
+        await supabase.from("compliance_records").insert({
+          record_number: complianceRecord.recordNumber,
+          mission_id: selected.id,
+          drone_id: drone?.id,
+          field_name: complianceRecord.fieldName,
+          field_location: complianceRecord.fieldLocation,
+          field_acres: complianceRecord.fieldAcres,
+          crop_type: complianceRecord.cropType,
+          application_number: complianceRecord.applicationNumber,
+          total_applications: complianceRecord.totalApplications,
+          product_applied: complianceRecord.productApplied,
+          application_rate: complianceRecord.applicationRate,
+          actual_acres_sprayed: complianceRecord.actualAcresSprayed,
+          pilot_name: complianceRecord.pilotName,
+          part107_current: true,
+          pesticide_license_current: true,
+          training_complete: complianceRecord.pilotTrainingComplete,
+          insurance_current: true,
+          drone_serial_number: complianceRecord.droneSerialNumber,
+          drone_model: complianceRecord.droneModel,
+          faa_registration: complianceRecord.faaRegistration,
+          flight_hours_at_mission: complianceRecord.flightHoursAtMission,
+          maintenance_current: complianceRecord.maintenanceCurrent,
+          preflight_completed: true,
+          postflight_completed: true,
+          weather_conditions: complianceRecord.weatherConditions,
+          wind_speed_mph: complianceRecord.windSpeedMph,
+          temperature_f: complianceRecord.temperatureF,
+          humidity_pct: complianceRecord.humidityPct,
+          mission_started: startedAt,
+          mission_completed: completedAt,
+          flight_duration_minutes: flightDurationMinutes,
+          all_gates_passed: !selected.override_used,
+          override_used: Boolean(selected.override_used),
+          override_reason: selected.override_reason,
+          override_authorized_by: selected.override_authorized_by,
+          dealer_id: dealerId,
+          network_id: networkId,
+        });
+      }
       setSelected(null);
-      setMessage("Application marked complete.");
+      setMessage(`Application marked complete. Compliance record ${complianceRecord.recordNumber} generated.`);
     }
   }
 
@@ -204,6 +384,15 @@ function SchedulerPage() {
     const total = field.applications_per_season || Math.max(...fieldItems.map((item) => item.total_applications || 0), 0) || 1;
     return { field, completed, total, remaining: Math.max(total - completed, 0), percent: Math.min(100, Math.round((completed / total) * 100)) };
   });
+
+  const selectedReadiness = selected?.status === "scheduled"
+    ? getReadinessFor(selected, { droneId: assignForm.droneId, pilotId: assignForm.pilotId })
+    : selected
+      ? getReadinessFor(selected, { requirePreflightNow: selected.status === "assigned", preflightCompleted: assignForm.preflightCompleted, droneId: selected.assigned_drone_id })
+      : null;
+  const selectedPilot = pilots.find((pilot) => pilot.id === assignForm.pilotId);
+  const canAssign = selected?.status === "scheduled" && (selectedReadiness?.cleared || (isAdmin && selectedReadiness && assignForm.overrideReason.trim()));
+  const canLaunch = selected?.status === "assigned" && selectedReadiness?.cleared;
 
   return (
     <Shell compact>
@@ -236,6 +425,8 @@ function SchedulerPage() {
                   {items.length ? items.map((item) => {
                     const progress = Math.min(100, ((item.application_number || 0) / (item.total_applications || 1)) * 100);
                     const assignedDrone = drones.find((drone) => drone.id === item.assigned_drone_id);
+                    const cardReadiness = ["assigned", "in_progress"].includes(item.status) ? getReadinessFor(item, { droneId: item.assigned_drone_id }) : null;
+                    const chip = readinessChip(cardReadiness);
                     return (
                       <button className="scheduler__card" type="button" key={item.id} onClick={() => openCard(item)}>
                         <div className="scheduler__card-top">
@@ -255,6 +446,7 @@ function SchedulerPage() {
                         </div>
                         <span className={`scheduler__window ${isClosingSoon(item.window_closes) ? "is-tight" : ""}`}>{formatWindow(item.window_opens, item.window_closes)}</span>
                         {item.assigned_pilot_name ? <p>{assignedDrone?.nickname || item.assigned_drone_serial || "Assigned drone"} | {item.assigned_pilot_name}</p> : null}
+                        {cardReadiness ? <span className="scheduler__readiness-chip" style={{ "--chip": chip.color }}><span />{chip.label}</span> : null}
                       </button>
                     );
                   }) : <p className="scheduler__empty">No applications in this stage.</p>}
@@ -307,7 +499,7 @@ function SchedulerPage() {
 
         {selected ? (
           <div className="scheduler__modal" role="dialog" aria-modal="true">
-            <form className="scheduler__modal-card" onSubmit={selected.status === "scheduled" ? assignApplication : markComplete}>
+            <form className="scheduler__modal-card is-wide" onSubmit={selected.status === "scheduled" ? assignApplication : markComplete}>
               <div>
                 <span className="eyebrow">Application detail</span>
                 <h2>{selected.field_name}</h2>
@@ -326,26 +518,62 @@ function SchedulerPage() {
                   </label>
                   <label className="field">
                     <span>Qualified pilot</span>
-                    <select value={assignForm.pilot} onChange={(event) => setAssignForm((current) => ({ ...current, pilot: event.target.value }))}>
-                      {PILOTS.map((pilot) => <option key={pilot}>{pilot}</option>)}
+                    <select value={assignForm.pilotId} onChange={(event) => setAssignForm((current) => ({ ...current, pilotId: event.target.value }))}>
+                      {pilots.map((pilot) => <option key={pilot.id} value={pilot.id}>{pilot.name}</option>)}
                     </select>
                   </label>
                 </div>
               ) : (
-                <label className="field">
-                  <span>Actual acres sprayed</span>
-                  <input inputMode="decimal" value={assignForm.actualAcres} onChange={(event) => setAssignForm((current) => ({ ...current, actualAcres: event.target.value }))} />
-                </label>
+                <div className="scheduler__form-grid">
+                  <label className="field">
+                    <span>Actual acres sprayed</span>
+                    <input inputMode="decimal" value={assignForm.actualAcres} onChange={(event) => setAssignForm((current) => ({ ...current, actualAcres: event.target.value }))} />
+                  </label>
+                  <label className="field">
+                    <span>Anomalies noted</span>
+                    <input value={assignForm.anomalies} onChange={(event) => setAssignForm((current) => ({ ...current, anomalies: event.target.value }))} placeholder="None" />
+                  </label>
+                </div>
               )}
+
+              {selectedReadiness ? <FlightReadinessPanel readiness={selectedReadiness} compact={selected.status === "completed"} /> : null}
+
+              {selected.status === "scheduled" && selectedReadiness && !selectedReadiness.cleared ? (
+                <div className="scheduler__override">
+                  <strong>Admin override</strong>
+                  <p>Overrides require a documented reason and are carried into the compliance record.</p>
+                  <textarea rows="3" value={assignForm.overrideReason} onChange={(event) => setAssignForm((current) => ({ ...current, overrideReason: event.target.value }))} disabled={!isAdmin} placeholder={isAdmin ? "Type reason for override" : "Admin only"} />
+                </div>
+              ) : null}
+
+              {selected.status === "assigned" ? (
+                <div className="scheduler__checklist-box">
+                  <label>
+                    <input type="checkbox" checked={assignForm.preflightCompleted} onChange={(event) => setAssignForm((current) => ({ ...current, preflightCompleted: event.target.checked }))} /> Pre-flight checklist completed for this mission
+                  </label>
+                  <a className="button button--secondary button--small" href="/training/checklists/hylio-preflight-checklist">Open pre-flight checklist</a>
+                </div>
+              ) : null}
+
+              {selected.status === "in_progress" ? (
+                <div className="scheduler__checklist-box">
+                  <label>
+                    <input type="checkbox" checked={assignForm.postflightCompleted} onChange={(event) => setAssignForm((current) => ({ ...current, postflightCompleted: event.target.checked }))} /> Post-flight inspection completed
+                  </label>
+                  <a className="button button--secondary button--small" href="/training/checklists/hylio-postflight-checklist">Open post-flight checklist</a>
+                </div>
+              ) : null}
 
               <div className="inline-actions">
                 {selected.status === "scheduled" ? (
-                  <button className="button button--primary button--small" type="submit" disabled={!availableDrones.length}>Assign</button>
+                  <button className="button button--primary button--small" type="submit" disabled={!canAssign}>{selectedReadiness?.cleared ? "Assign Mission" : `Cannot Assign - ${selectedReadiness?.blockerCount || 0} blockers`}</button>
+                ) : selected.status === "in_progress" ? (
+                  <button className="button button--primary button--small" type="submit" disabled={!assignForm.postflightCompleted}>Mark complete</button>
                 ) : (
-                  <button className="button button--primary button--small" type="submit">Mark complete</button>
+                  null
                 )}
                 {selected.status === "assigned" ? (
-                  <button className="button button--secondary button--small" type="button" onClick={() => updateSchedule(selected.id, { status: "in_progress", started_at: new Date().toISOString() }).then((result) => result.ok && setSelected(null))}>Start job</button>
+                  <button className="button button--secondary button--small" type="button" disabled={!canLaunch} onClick={startMission}>Confirm Launch</button>
                 ) : null}
                 <button className="button button--secondary button--small" type="button" onClick={() => setSelected(null)}>Close</button>
               </div>

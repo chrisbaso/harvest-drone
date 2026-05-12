@@ -42,6 +42,58 @@ function normalizeArray(value) {
     .filter(Boolean);
 }
 
+function migrateModelName(value) {
+  if (value === "Hylio AG-272") return "HYL-300 Atlas";
+  if (value === "Hylio AG-230") return "HYL-150 Ares";
+  return value;
+}
+
+function migrateModelText(value) {
+  return typeof value === "string"
+    ? value
+        .replaceAll("Hylio AG-272", "HYL-300 Atlas")
+        .replaceAll("Hylio AG-230", "HYL-150 Ares")
+        .replaceAll("AG-272", "HYL-300 Atlas")
+        .replaceAll("AG-230", "HYL-150 Ares")
+    : value;
+}
+
+export function migrateEnterpriseDroneModelNames(workspace) {
+  const next = clone(workspace);
+
+  if (next.organization?.division) {
+    next.organization.division.flagshipAircraftModel = "HYL-300 Atlas";
+    next.organization.division.flagshipPositioning =
+      "HYL-300 Atlas is the flagship model for large-acre operations because its large size and swarming workflow support enterprise-scale application windows.";
+  }
+
+  next.operators = (next.operators || []).map((operator) => ({
+    ...operator,
+    aircraftModels: (operator.aircraftModels || []).map(migrateModelName),
+    credentials: (operator.credentials || []).map((credential) => ({
+      ...credential,
+      aircraftModel: migrateModelName(credential.aircraftModel),
+    })),
+  }));
+
+  next.aircraft = (next.aircraft || []).map((aircraft) => ({
+    ...aircraft,
+    model: migrateModelName(aircraft.model),
+  }));
+
+  next.applicationJobs = (next.applicationJobs || []).map((job) => ({
+    ...job,
+    aircraftModel: migrateModelName(job.aircraftModel),
+  }));
+
+  next.supportTickets = (next.supportTickets || []).map((ticket) => ({
+    ...ticket,
+    title: migrateModelText(ticket.title),
+  }));
+
+  return next;
+}
+
 function getRequiredFoundationLessonIds() {
   const foundations = trainingCourses.find((course) => course.slug === "hylio-operator-foundations") || trainingCourses[0];
   return (foundations?.modules || [])
@@ -153,7 +205,7 @@ function readinessForWorkspaceJob(workspace, job, now = new Date("2026-05-05T12:
 }
 
 export function createEnterpriseWorkspace(orgId = "rdo") {
-  return clone(getEnterpriseDemo(orgId));
+  return migrateEnterpriseDroneModelNames(getEnterpriseDemo(orgId));
 }
 
 export function getWorkspaceDivisionSummary(workspace) {
@@ -194,7 +246,7 @@ export function addOperator(workspace, input) {
     role: input.role || "Operator trainee",
     base: input.base || "Pilot location",
     state: input.state || "North Dakota",
-    aircraftModels: normalizeArray(input.aircraftModels || input.aircraftModel || "Hylio AG-272"),
+    aircraftModels: normalizeArray(input.aircraftModels || input.aircraftModel || "HYL-300 Atlas"),
     payloadTypes: normalizeArray(input.payloadTypes || input.payloadType || "liquid"),
     completedLessons: input.completedLessons || [],
     assessmentAttempts: input.assessmentAttempts || [],
@@ -212,7 +264,7 @@ export function addAircraft(workspace, input) {
   const aircraft = {
     id: input.id || nextId("rdo-aircraft", next.aircraft, input.tailNumber),
     tailNumber: input.tailNumber,
-    model: input.model || "Hylio AG-272",
+    model: input.model || "HYL-300 Atlas",
     status: input.status || "active",
     locationId: input.locationId || next.farmLocations[0]?.id,
     registrationStatus: input.registrationStatus || "verified",
@@ -237,7 +289,7 @@ export function addApplicationJob(workspace, input) {
     title: input.title,
     fieldId: input.fieldId || next.fields[0]?.id,
     state: input.state || "North Dakota",
-    aircraftModel: input.aircraftModel || "Hylio AG-272",
+    aircraftModel: input.aircraftModel || "HYL-300 Atlas",
     aircraftId: input.aircraftId,
     assignedOperatorId: input.assignedOperatorId,
     payloadType: input.payloadType || "liquid",

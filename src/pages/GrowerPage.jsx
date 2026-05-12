@@ -1,303 +1,726 @@
-import { useMemo, useRef, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import Shell from "../components/Shell";
+import { trackMetaEventOnce } from "../lib/metaPixel";
+import { usePageMeta } from "../lib/pageMeta";
 import { submitGrowerLead } from "../lib/submissions";
 
-const formFields = [
-  { label: "First name", name: "firstName", required: true, placeholder: "Emma", autoComplete: "given-name" },
-  { label: "Email", name: "email", type: "email", required: true, placeholder: "emma@collinsfarms.com", autoComplete: "email", inputMode: "email" },
-  { label: "State", name: "state", required: true, placeholder: "Illinois", autoComplete: "address-level1" },
-  { label: "Crop type", name: "cropType", required: true, placeholder: "Corn, soybeans" },
-  { label: "Total acres", name: "acres", type: "number", required: true, placeholder: "2,400", inputMode: "numeric", min: "0", step: "1" },
+const STATES = [
+  "Alabama",
+  "Alaska",
+  "Arizona",
+  "Arkansas",
+  "California",
+  "Colorado",
+  "Connecticut",
+  "Delaware",
+  "Florida",
+  "Georgia",
+  "Hawaii",
+  "Idaho",
+  "Illinois",
+  "Indiana",
+  "Iowa",
+  "Kansas",
+  "Kentucky",
+  "Louisiana",
+  "Maine",
+  "Maryland",
+  "Massachusetts",
+  "Michigan",
+  "Minnesota",
+  "Mississippi",
+  "Missouri",
+  "Montana",
+  "Nebraska",
+  "Nevada",
+  "New Hampshire",
+  "New Jersey",
+  "New Mexico",
+  "New York",
+  "North Carolina",
+  "North Dakota",
+  "Ohio",
+  "Oklahoma",
+  "Oregon",
+  "Pennsylvania",
+  "Rhode Island",
+  "South Carolina",
+  "South Dakota",
+  "Tennessee",
+  "Texas",
+  "Utah",
+  "Vermont",
+  "Virginia",
+  "Washington",
+  "West Virginia",
+  "Wisconsin",
+  "Wyoming",
 ];
 
-const steps = [
-  { num: "01", title: "Tell us about your acres", desc: "Five quick fields. Takes 30 seconds." },
-  { num: "02", title: "We scan your soil", desc: "EarthOptics subsurface scanning maps compaction, drainage, and nutrient variability - so recommendations are based on data, not guesswork." },
-  { num: "03", title: "Get your acre plan", desc: "A field-level recommendation showing where precision application of SOURCE and BLUEPRINT crop inputs will improve yield and reduce unnecessary input spend." },
+const proofPoints = [
+  {
+    quote:
+      "Put SOURCE on half my corn acres. The treated side yielded 4 bushels more per acre and I cut $30/acre off my urea bill. It's going on everything next year.",
+    meta: "Corn grower, 1,400 acres, southern Minnesota",
+    stat: { value: "+4 bu/acre", label: "reported yield lift" },
+  },
+  {
+    quote:
+      "I was skeptical until I saw my own field data. The check strips don't lie. SOURCE-treated rows came through a dry June better than the untreated side.",
+    meta: "Row crop operation, 2,200 acres, central Minnesota",
+    stat: { value: "$25-45", label: "targeted N savings per acre" },
+  },
+  {
+    quote:
+      "One ounce replacing 25 lbs of N sounded too good. But the math works when you run it against the actual fertilizer line items.",
+    meta: "Corn and soybean grower, 800 acres",
+    stat: { value: "150%", label: "reported net retention" },
+  },
+  {
+    quote:
+      "We started with 200 acres to test it. Now we're doing 1,200. The data from the first season sold me, not the sales pitch.",
+    meta: "Multi-generation farm, western Minnesota",
+    stat: { value: "1M+", label: "US acres on SOURCE" },
+  },
 ];
 
-const flywheel = [
-  { label: "Scan", title: "EarthOptics soil intelligence", desc: "Subsurface scanning identifies exactly where your fields need attention - compaction layers, drainage issues, nutrient variability. No more guessing.", accent: "#60A5FA" },
-  { label: "Prescribe", title: "Data-driven input recommendations", desc: "Scan results generate field-specific prescriptions for SOURCE (nitrogen fixation) and BLUEPRINT (phosphorus solubilization). You apply only what each zone needs.", accent: "#A3D977" },
-  { label: "Apply", title: "Precision drone application", desc: "Drone spraying applies inputs at the zone level with no compaction and no crop damage. Wet fields, tall canopy, tight windows - none of it stops the application.", accent: "#FBBF24" },
-  { label: "Measure", title: "Track ROI per acre", desc: "Post-season data shows exactly what worked and where. Next year's prescription gets sharper, your input spend goes down, and your yield goes up.", accent: "#C084FC" },
-];
-
-const objections = [
-  { q: "What is SOURCE and how does it work?", a: "SOURCE is a synthetic soil activator from Sound Agriculture. It helps crops access nutrients already present in the field - reducing the need for synthetic fertilizer while maintaining or improving yield. SOURCE only is $15 per acre." },
-  { q: "What does EarthOptics actually scan?", a: "EarthOptics uses subsurface sensing technology to map soil conditions below the surface - things like compaction layers, drainage patterns, and nutrient distribution that you can't see from a soil probe or satellite image. The scan produces a field-level prescription map." },
-  { q: "How is drone application different from a ground rig?", a: "Drone application gets into fields that ground rigs can't - wet conditions, tall canopy, tight spray windows. Zero compaction, zero crop damage, and 3-5x faster turnaround. Your application happens when timing matters most, not when the rig is available." },
-  { q: "What does this cost per acre?", a: "Drone application runs $8-14 per acre. SOURCE and BLUEPRINT run approximately $25 per acre combined. Your acre plan will include a full cost breakdown specific to your fields so you can compare against current input spend." },
-  { q: "Do I need to commit to anything?", a: "No. The acre review is free. You'll get a recommendation based on your fields, and you decide whether it makes sense for your operation. No contracts, no obligations." },
+const faqs = [
+  {
+    q: "What exactly is SOURCE?",
+    a: "SOURCE is a synthetic soil activator from Sound Agriculture with an extremely low use rate: one ounce replaces 25 lbs of N. It activates soil microbes to deliver nitrogen and phosphorus to crops, reducing dependence on anhydrous, urea, and UAN.",
+  },
+  {
+    q: "How much does it cost?",
+    a: "SOURCE is $15/acre. BLUEPRINT is $11/acre. The SOURCE + BLUEPRINT bundle is $25/acre, and Harvest Drone application is $23/acre.",
+  },
+  {
+    q: "What fertilizer line items can it reduce?",
+    a: "SOURCE is used to reduce part of an anhydrous ammonia, urea, or UAN program. BLUEPRINT solubilizes bound phosphorus and reduces DAP and MAP spend. Your acre plan compares the product cost against the dollars you are cutting or reallocating.",
+  },
+  {
+    q: "Do I have to put it on every acre?",
+    a: "No. Start with a practical trial: choose a portion of your acres, leave check strips, and compare at harvest. Your field data decides how many acres it earns next season.",
+  },
+  {
+    q: "What happens after I submit the form?",
+    a: "Jake reviews the acres and location, then follows up with a short cost breakdown. You can choose product only, SOURCE plus BLUEPRINT, or a drone-applied plan.",
+  },
+  {
+    q: "What about drone application?",
+    a: "Drone application is optional. It can help when fields are wet, canopy is tall, or spray windows are tight. It also avoids compaction and crop damage from ground rigs.",
+  },
 ];
 
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Instrument+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Instrument+Sans:wght@400;500;600;700;800&display=swap');
 
-.gp{--gp-bg:#0C0F0A;--gp-surface:#151A12;--gp-card:#1A2015;--gp-border:rgba(255,255,255,0.06);--gp-text:#E8E6E1;--gp-text-muted:#727966;--gp-accent:#A3D977;--gp-accent-hover:#B8E68A;--gp-accent-dim:rgba(163,217,119,0.10);--gp-danger:#F87171;--gp-sans:'Instrument Sans',system-ui,sans-serif;--gp-serif:'DM Serif Display',Georgia,serif;background:var(--gp-bg);color:var(--gp-text);font-family:var(--gp-sans);-webkit-font-smoothing:antialiased;min-height:100vh}
-.gp__hero{max-width:1200px;margin:0 auto;padding:56px 32px 64px;display:grid;grid-template-columns:1fr 420px;gap:56px;align-items:start}
-.gp__hero-copy{padding-top:16px}
-.gp__hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gp-accent);margin-bottom:20px}
-.gp__hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--gp-accent)}
-.gp__hero h1{font-family:var(--gp-serif);font-size:clamp(2rem,4.5vw,3.2rem);font-weight:400;line-height:1.12;color:#fff;margin:0 0 20px}
-.gp__hero h1 em{font-style:normal;color:var(--gp-accent)}
-.gp__hero-sub{font-size:17px;color:var(--gp-text-muted);line-height:1.7;max-width:500px;margin:0 0 28px}
-.gp__hero-proof{display:flex;gap:24px;flex-wrap:wrap}
-.gp__hero-proof-item{display:flex;flex-direction:column;gap:2px}
-.gp__hero-proof-item strong{font-family:var(--gp-serif);font-size:1.6rem;color:#fff}
-.gp__hero-proof-item span{font-size:12px;color:var(--gp-text-muted)}
-.gp__hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-.gp__hero-link{display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:700;transition:background .15s,border-color .15s,transform .1s}
-.gp__hero-link--primary{background:var(--gp-accent);color:var(--gp-bg)}
-.gp__hero-link--primary:hover{background:var(--gp-accent-hover);transform:translateY(-1px)}
-.gp__hero-link--secondary{background:rgba(255,255,255,0.04);color:var(--gp-text);border:1px solid var(--gp-border)}
-.gp__hero-link--secondary:hover{background:var(--gp-accent-dim);border-color:rgba(255,255,255,0.12)}
-.gp__form-card{background:var(--gp-surface);border:1px solid var(--gp-border);border-radius:16px;padding:36px 32px 32px;position:sticky;top:24px}
-.gp__form-header{margin-bottom:24px}
-.gp__form-header h2{font-family:var(--gp-serif);font-size:1.35rem;font-weight:400;color:#fff;margin:0 0 6px}
-.gp__form-header p{font-size:14px;color:var(--gp-text-muted);margin:0}
-.gp__form-grid{display:flex;flex-direction:column;gap:14px}
-.gp__field{display:flex;flex-direction:column;gap:5px}
-.gp__field-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--gp-text-muted);padding-left:2px}
-.gp__field-label .gp__required{color:var(--gp-accent);margin-left:2px}
-.gp__input{font-family:var(--gp-sans);font-size:15px;color:var(--gp-text);background:var(--gp-bg);border:1px solid var(--gp-border);border-radius:8px;padding:12px 14px;outline:none;transition:border-color .15s,box-shadow .15s;width:100%}
-.gp__input::placeholder{color:rgba(114,121,102,0.6)}
-.gp__input:focus{border-color:rgba(163,217,119,0.4);box-shadow:0 0 0 3px var(--gp-accent-dim)}
-.gp__form-error{font-size:13px;color:var(--gp-danger);margin:4px 0 0}
-.gp__submit{width:100%;padding:14px;font-family:var(--gp-sans);font-size:15px;font-weight:700;color:var(--gp-bg);background:var(--gp-accent);border:none;border-radius:10px;cursor:pointer;transition:background .15s,transform .1s;margin-top:6px}
-.gp__submit:hover:not(:disabled){background:var(--gp-accent-hover);transform:translateY(-1px)}
-.gp__submit:disabled{opacity:0.5;cursor:not-allowed}
-.gp__form-footer{text-align:center;font-size:12px;color:var(--gp-text-muted);margin-top:10px}
-.gp__success{text-align:center;padding:24px 0}
-.gp__success-icon{width:56px;height:56px;border-radius:50%;background:var(--gp-accent-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
-.gp__success h2{font-family:var(--gp-serif);font-size:1.3rem;font-weight:400;color:#fff;margin:0 0 10px}
-.gp__success p{font-size:14px;color:var(--gp-text-muted);margin:0;line-height:1.6}
-.gp__section{max-width:1200px;margin:0 auto;padding:0 32px 72px}
-.gp__section-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gp-accent);margin-bottom:12px}
-.gp__section-eyebrow::before{content:'';width:20px;height:1px;background:var(--gp-accent)}
-.gp__section-title{font-family:var(--gp-serif);font-size:clamp(1.4rem,3vw,2rem);font-weight:400;color:#fff;margin:0 0 40px;max-width:520px;line-height:1.25}
-.gp__value-strip{max-width:1200px;margin:0 auto;padding:0 32px 72px}
-.gp__value-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.gp__value-card{background:var(--gp-surface);border:1px solid var(--gp-border);border-radius:12px;padding:32px 28px;display:flex;flex-direction:column;gap:8px}
-.gp__value-card-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
-.gp__value-card h3{font-family:var(--gp-serif);font-size:1.25rem;font-weight:400;color:#fff;margin:0;line-height:1.25}
-.gp__value-card p{font-size:14px;color:var(--gp-text-muted);line-height:1.65;margin:0}
-.gp__value-card-stat{display:flex;align-items:baseline;gap:8px;margin-top:4px}
-.gp__value-card-stat strong{font-family:var(--gp-serif);font-size:1.6rem;color:#fff}
-.gp__value-card-stat span{font-size:13px;color:var(--gp-text-muted)}
-.gp__flywheel-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--gp-border);border:1px solid var(--gp-border);border-radius:12px;overflow:hidden}
-.gp__flywheel-step{background:var(--gp-surface);padding:36px 28px;display:flex;flex-direction:column;gap:8px}
-.gp__flywheel-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase}
-.gp__flywheel-title{font-size:15px;font-weight:700;color:#fff}
-.gp__flywheel-desc{font-size:13px;color:var(--gp-text-muted);line-height:1.6}
-.gp__flywheel-arrow{display:flex;align-items:center;justify-content:center;margin-top:auto;padding-top:12px;color:var(--gp-text-muted);opacity:0.4}
-.gp__video-card{background:var(--gp-surface);border:1px solid var(--gp-border);border-radius:16px;padding:32px;text-align:center}
-.gp__video-card .gp__section-eyebrow{justify-content:center}
-.gp__video-frame{position:relative;padding-bottom:56.25%;border-radius:10px;overflow:hidden;margin-top:20px;background:#000}
-.gp__video-frame iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
-.gp__steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--gp-border);border:1px solid var(--gp-border);border-radius:12px;overflow:hidden}
-.gp__step{background:var(--gp-surface);padding:36px 32px}
-.gp__step-num{font-family:var(--gp-serif);font-size:2.4rem;color:var(--gp-accent);opacity:0.3;line-height:1;margin-bottom:16px}
-.gp__step-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
-.gp__step-desc{font-size:14px;color:var(--gp-text-muted);line-height:1.6}
-.gp__objections-list{display:flex;flex-direction:column;gap:12px}
-.gp__objection{background:var(--gp-surface);border:1px solid var(--gp-border);border-radius:12px;overflow:hidden}
-.gp__objection-q{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;font-family:var(--gp-sans);font-size:15px;font-weight:600;color:#fff;background:transparent;border:none;cursor:pointer;text-align:left;transition:background .15s}
-.gp__objection-q:hover{background:rgba(255,255,255,0.02)}
-.gp__objection-chevron{flex-shrink:0;transition:transform .2s;color:var(--gp-text-muted)}
-.gp__objection-chevron.is-open{transform:rotate(180deg)}
-.gp__objection-a{padding:0 24px 20px;font-size:14px;color:var(--gp-text-muted);line-height:1.65;margin:0}
-.gp__bottom{max-width:1200px;margin:0 auto;padding:0 32px 80px}
-.gp__bottom-card{background:linear-gradient(135deg,rgba(163,217,119,0.08) 0%,transparent 60%);border:1px solid var(--gp-border);border-radius:16px;padding:56px 48px;text-align:center;display:flex;flex-direction:column;align-items:center}
-.gp__bottom-card h2{font-family:var(--gp-serif);font-size:clamp(1.4rem,3vw,2rem);font-weight:400;color:#fff;margin:0 0 12px;max-width:560px;line-height:1.25}
-.gp__bottom-card p{font-size:15px;color:var(--gp-text-muted);margin:0 0 28px;max-width:480px}
-.gp__bottom-btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--gp-sans);font-size:15px;font-weight:700;color:var(--gp-bg);background:var(--gp-accent);border:none;border-radius:10px;padding:14px 32px;cursor:pointer;text-decoration:none;transition:background .15s,transform .1s}
-.gp__bottom-btn:hover{background:var(--gp-accent-hover);transform:translateY(-1px)}
-@media(max-width:900px){.gp__hero{grid-template-columns:1fr;gap:32px;padding:40px 20px 48px}.gp__form-card{position:static}.gp__steps-grid,.gp__flywheel-grid{grid-template-columns:1fr}.gp__value-grid{grid-template-columns:1fr}}
-@media(max-width:600px){.gp__hero{padding:32px 16px 36px}.gp__form-card{padding:28px 20px 24px}.gp__section,.gp__value-strip,.gp__bottom{padding-left:16px;padding-right:16px}.gp__bottom-card{padding:40px 24px}}
+@keyframes gpFadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.gp2{--bg:#0C0F0A;--surface:#151A12;--card:#1A2015;--elevated:#1F261A;--border:rgba(255,255,255,0.07);--border-active:rgba(163,217,119,0.28);--text:#E8E6E1;--muted:#8A927E;--dim:#5F6653;--accent:#A3D977;--accent-hover:#B8E68A;--accent-soft:rgba(163,217,119,0.08);--accent-med:rgba(163,217,119,0.16);--danger:#F87171;--warning:#FBBF24;--blue:#60A5FA;--serif:'DM Serif Display',Georgia,serif;--sans:'Instrument Sans',system-ui,sans-serif;--radius:10px;--radius-lg:16px;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;min-height:100vh}
+.gp2 *,.gp2 *::before,.gp2 *::after{box-sizing:border-box}
+.gp2 h1,.gp2 h2,.gp2 h3,.gp2 p{margin:0}
+.gp2 button,.gp2 input,.gp2 select{font:inherit}
+
+.gp2__hero{max-width:1120px;margin:0 auto;padding:48px 28px 56px;display:grid;gap:32px;align-items:start}
+@media(min-width:900px){.gp2__hero{grid-template-columns:minmax(0,1fr) 390px;column-gap:56px;row-gap:28px;padding:58px 32px 72px}}
+
+.gp2__hero-content{animation:gpFadeUp 0.5s ease both}
+.gp2__hero-proof-block{animation:gpFadeUp 0.5s ease 0.08s both}
+.gp2__hero-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:0.72rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:20px}
+.gp2__hero-eyebrow::before{content:'';width:24px;height:1px;background:var(--accent)}
+.gp2__hero h1{font-family:var(--serif);font-size:clamp(2.05rem,5vw,3.3rem);font-weight:400;line-height:1.08;color:#fff;margin-bottom:20px}
+.gp2__hero h1 em{font-style:normal;color:var(--accent)}
+.gp2__hero-sub{font-size:1rem;line-height:1.7;color:var(--muted);max-width:540px;margin-bottom:28px}
+
+.gp2__hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:0}
+.gp2__hero-btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:13px 20px;border-radius:var(--radius);border:1px solid transparent;font-size:0.9rem;font-weight:800;cursor:pointer;text-decoration:none;transition:background 0.15s,border-color 0.15s,transform 0.1s}
+.gp2__hero-btn--primary{color:var(--bg);background:var(--accent)}
+.gp2__hero-btn--primary:hover{background:var(--accent-hover);transform:translateY(-1px)}
+.gp2__hero-btn--secondary{color:var(--text);background:rgba(255,255,255,0.04);border-color:var(--border)}
+.gp2__hero-btn--secondary:hover{background:var(--accent-soft);border-color:var(--border-active)}
+
+.gp2__proof{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;max-width:560px;margin-bottom:20px}
+.gp2__proof-item{background:var(--surface);padding:19px 14px;text-align:center}
+.gp2__proof-value{font-family:var(--serif);font-size:clamp(1.35rem,3vw,1.8rem);color:#fff;display:block;line-height:1}
+.gp2__proof-label{font-size:0.7rem;color:var(--muted);margin-top:6px;display:block;line-height:1.3}
+.gp2__trust{font-size:0.86rem;color:var(--muted);line-height:1.6;max-width:560px}
+.gp2__trust strong{color:var(--text)}
+
+.gp2__mini-plan{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:560px;margin-top:26px}
+.gp2__mini-card{background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.gp2__mini-label{display:block;font-size:0.68rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.gp2__mini-card strong{display:block;font-size:0.92rem;color:#fff;line-height:1.35}
+.gp2__mini-card span:last-child{display:block;font-size:0.78rem;color:var(--muted);line-height:1.45;margin-top:6px}
+@media(max-width:600px){.gp2__mini-plan{grid-template-columns:1fr}.gp2__proof{grid-template-columns:1fr}}
+
+.gp2__form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px 28px 28px;animation:gpFadeUp 0.5s ease 0.12s both}
+@media(min-width:900px){.gp2__form-card{grid-column:2;grid-row:1 / span 2;position:sticky;top:24px}.gp2__hero-proof-block{grid-column:1;grid-row:2}}
+.gp2__form-badge{display:inline-flex;align-items:center;gap:6px;font-size:0.68rem;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-med);padding:5px 10px;border-radius:999px;margin-bottom:16px}
+.gp2__form-badge::before{content:'';width:6px;height:6px;border-radius:999px;background:var(--accent)}
+.gp2__form-title{font-family:var(--serif);font-size:1.35rem;font-weight:400;color:#fff;margin-bottom:4px}
+.gp2__form-sub{font-size:0.84rem;color:var(--muted);margin-bottom:24px;line-height:1.5}
+.gp2__form-fields{display:grid;gap:14px}
+.gp2__field{display:grid;gap:5px}
+.gp2__field-label{font-size:0.72rem;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:var(--muted)}
+.gp2__field-label .req{color:var(--accent);margin-left:2px}
+.gp2__input,.gp2__select{font-family:var(--sans);font-size:0.92rem;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;width:100%}
+.gp2__input::placeholder{color:rgba(138,146,126,0.55)}
+.gp2__input:focus,.gp2__select:focus{border-color:rgba(163,217,119,0.45);box-shadow:0 0 0 3px var(--accent-soft)}
+.gp2__select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238A927E' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.gp2__submit{width:100%;padding:14px;font-family:var(--sans);font-size:0.92rem;font-weight:800;color:var(--bg);background:var(--accent);border:none;border-radius:var(--radius);cursor:pointer;transition:background 0.15s,transform 0.1s;margin-top:8px}
+.gp2__submit:hover:not(:disabled){background:var(--accent-hover);transform:translateY(-1px)}
+.gp2__submit:disabled{opacity:0.55;cursor:not-allowed}
+.gp2__form-footer{text-align:center;font-size:0.72rem;color:var(--dim);margin-top:10px;line-height:1.5}
+.gp2__form-error{font-size:0.82rem;color:var(--danger);margin-top:4px}
+
+.gp2__success{text-align:center;padding:32px 0;animation:gpFadeUp 0.4s ease both}
+.gp2__success-icon{width:56px;height:56px;border-radius:999px;background:var(--accent-soft);border:2px solid var(--accent-med);display:grid;place-items:center;margin:0 auto 20px}
+.gp2__success h2{font-family:var(--serif);font-size:1.28rem;font-weight:400;color:#fff;margin-bottom:10px}
+.gp2__success p{font-size:0.86rem;color:var(--muted);line-height:1.6;max-width:320px;margin:0 auto}
+
+.gp2__divider{max-width:1120px;margin:0 auto;padding:0 28px}
+.gp2__divider-line{height:1px;background:var(--border)}
+.gp2__section{max-width:1120px;margin:0 auto;padding:64px 28px}
+.gp2__section-eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:0.68rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.gp2__section-eyebrow::before{content:'';width:16px;height:1px;background:var(--accent)}
+.gp2__section-title{font-family:var(--serif);font-size:clamp(1.38rem,3vw,1.95rem);font-weight:400;color:#fff;margin-bottom:38px;max-width:520px;line-height:1.2}
+
+.gp2__calc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.gp2__calc-header{padding:24px 28px;border-bottom:1px solid var(--border)}
+.gp2__calc-header h3{font-family:var(--serif);font-size:1.16rem;font-weight:400;color:#fff}
+.gp2__calc-header p{font-size:0.82rem;color:var(--muted);margin-top:4px;line-height:1.5}
+.gp2__calc-body{padding:24px 28px;display:grid;gap:20px}
+.gp2__calc-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.gp2__calc-row{grid-template-columns:1fr}}
+.gp2__calc-field{display:grid;gap:5px}
+.gp2__calc-field label{font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted)}
+.gp2__calc-results{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border)}
+@media(max-width:700px){.gp2__calc-results{grid-template-columns:1fr}}
+.gp2__calc-result{background:var(--card);padding:24px;text-align:center}
+.gp2__calc-result-value{font-family:var(--serif);font-size:1.6rem;color:var(--accent);display:block;line-height:1}
+.gp2__calc-result-label{font-size:0.72rem;color:var(--muted);margin-top:6px;display:block;line-height:1.35}
+
+.gp2__proof-grid{display:grid;gap:12px}
+@media(min-width:700px){.gp2__proof-grid{grid-template-columns:1fr 1fr;gap:16px}}
+.gp2__proof-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);padding:24px;display:grid;gap:12px}
+.gp2__proof-card-quote{font-size:0.95rem;color:var(--text);line-height:1.6;font-style:italic}
+.gp2__proof-card-meta{font-size:0.75rem;color:var(--dim)}
+.gp2__proof-card-stat{display:flex;align-items:baseline;gap:8px}
+.gp2__proof-card-stat strong{font-family:var(--serif);font-size:1.5rem;color:#fff}
+.gp2__proof-card-stat span{font-size:0.82rem;color:var(--muted)}
+
+.gp2__products{display:grid;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+@media(min-width:740px){.gp2__products{grid-template-columns:repeat(4,1fr)}}
+.gp2__product{background:var(--surface);padding:24px 20px;display:grid;gap:8px}
+.gp2__product-name{font-size:0.72rem;font-weight:800;letter-spacing:0.08em;text-transform:uppercase}
+.gp2__product-price{font-family:var(--serif);font-size:1.5rem;color:#fff}
+.gp2__product-price small{font-size:0.6em;color:var(--muted)}
+.gp2__product-desc{font-size:0.8rem;color:var(--muted);line-height:1.5}
+.gp2__product--highlight{background:var(--card);border-left:3px solid var(--accent)}
+
+.gp2__steps{display:grid;gap:0}
+@media(min-width:700px){.gp2__steps{grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}.gp2__step{background:var(--surface)}}
+.gp2__step{padding:28px 24px;display:grid;gap:8px}
+.gp2__step-num{font-size:0.68rem;font-weight:800;color:var(--accent);letter-spacing:0.08em}
+.gp2__step-title{font-size:1rem;font-weight:800;color:#fff}
+.gp2__step-desc{font-size:0.85rem;color:var(--muted);line-height:1.6}
+
+.gp2__faq-list{display:grid;gap:4px}
+.gp2__faq{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.gp2__faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 20px;background:var(--surface);border:none;color:var(--text);font-family:var(--sans);font-size:0.9rem;font-weight:700;text-align:left;cursor:pointer;transition:background 0.15s}
+.gp2__faq-q:hover{background:var(--card)}
+.gp2__faq-chevron{transition:transform 0.2s;color:var(--muted);flex-shrink:0}
+.gp2__faq-chevron.is-open{transform:rotate(180deg)}
+.gp2__faq-a{padding:0 20px 16px;font-size:0.88rem;color:var(--muted);line-height:1.65;background:var(--surface)}
+
+.gp2__bottom{max-width:1120px;margin:0 auto;padding:0 28px 80px}
+.gp2__bottom-card{background:linear-gradient(135deg,var(--card) 0%,var(--surface) 100%);border:1px solid var(--border);border-radius:var(--radius-lg);padding:48px 32px;text-align:center}
+.gp2__bottom-card h2{font-family:var(--serif);font-size:clamp(1.35rem,3vw,1.8rem);font-weight:400;color:#fff;max-width:560px;margin:0 auto 12px;line-height:1.2}
+.gp2__bottom-card p{font-size:0.9rem;color:var(--muted);max-width:500px;margin:0 auto 24px;line-height:1.6}
+.gp2__bottom-btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 28px;font-family:var(--sans);font-size:0.92rem;font-weight:800;color:var(--bg);background:var(--accent);border:none;border-radius:var(--radius);cursor:pointer;transition:background 0.15s,transform 0.1s}
+.gp2__bottom-btn:hover{background:var(--accent-hover);transform:translateY(-1px)}
 `;
 
-function buildInitialValues(searchParams) {
-  return {
-    firstName: searchParams.get("firstName") ?? "",
-    email: searchParams.get("email") ?? "",
-    state: searchParams.get("state") ?? "",
-    cropType: searchParams.get("cropType") ?? "",
-    acres: searchParams.get("acres") ?? "",
-  };
+function getParam(searchParams, key) {
+  return searchParams.get(key) || undefined;
 }
 
 function GrowerPage() {
+  const formRef = useRef(null);
+  const location = useLocation();
   const { dealerSlug } = useParams();
   const [searchParams] = useSearchParams();
-  const initialValues = useMemo(() => buildInitialValues(searchParams), [searchParams]);
-  const [formData, setFormData] = useState(initialValues);
-  const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [openFaq, setOpenFaq] = useState(null);
-  const formRef = useRef(null);
+  const [calcAcres, setCalcAcres] = useState(1000);
+  const [calcCurrentN, setCalcCurrentN] = useState(35);
+  const sourceCost = calcAcres * 15;
+  const currentNSpend = calcAcres * calcCurrentN;
+  const estimatedSavings = Math.max(0, currentNSpend - sourceCost);
+  const isSourceRoute = location.pathname === "/source";
+  const leadSource = isSourceRoute ? "website-source-sales-page" : "website-grower-funnel";
+  const pageVersion = isSourceRoute ? "source-sales-acre-plan-v2" : "grower-source-acre-plan-v2";
+  const funnelName = isSourceRoute ? "SOURCE sales funnel" : "grower funnel";
 
-  function handleChange(event) {
-    const { name, value } = event.target;
-    setFormData((current) => ({ ...current, [name]: value }));
+  usePageMeta({
+    title: "Get a SOURCE Acre Plan | Harvest Drone",
+    description:
+      "See what SOURCE costs on your acres and what you'd save on synthetic nitrogen.",
+  });
+
+  useEffect(() => {
+    trackMetaEventOnce(`source-sales-view:${location.pathname}`, "ViewContent", {
+      content_name: isSourceRoute ? "Harvest Drone SOURCE Sales Funnel" : "Harvest Drone Grower Funnel",
+      content_category: "SOURCE acre plan",
+      lead_source: leadSource,
+      page_version: pageVersion,
+    });
+  }, [isSourceRoute, leadSource, location.pathname, pageVersion]);
+
+  function scrollToForm() {
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
     setIsSubmitting(true);
     setErrorMessage("");
+
+    const fd = new FormData(event.currentTarget);
+    const data = {
+      firstName: fd.get("firstName")?.toString().trim(),
+      email: fd.get("email")?.toString().trim(),
+      state: fd.get("state")?.toString().trim(),
+      cropType: "Corn/Soybeans",
+      acres: fd.get("acres")?.toString().trim(),
+      interestType: "Product availability/pricing",
+      fertilityConcern: "Nitrogen efficiency",
+      productInterest: "Yes",
+      leadSource,
+      landingPage: location.pathname,
+      pageVersion,
+      nitrogenProgramNotes: `Calculator N dollars reviewed: $${calcCurrentN}/acre across ${calcAcres} acres.`,
+      notes: [
+        `Requested free SOURCE acre plan from ${funnelName}.`,
+        `Calculator SOURCE cost: $${sourceCost.toLocaleString()}.`,
+        `Calculator net savings: $${estimatedSavings.toLocaleString()}.`,
+      ].join("\n"),
+      dealerSlug: dealerSlug || undefined,
+      utm_source: getParam(searchParams, "utm_source"),
+      utm_medium: getParam(searchParams, "utm_medium"),
+      utm_campaign: getParam(searchParams, "utm_campaign"),
+      utm_content: getParam(searchParams, "utm_content"),
+      utm_term: getParam(searchParams, "utm_term"),
+    };
+
+    if (!data.firstName || !data.email || !data.state || !data.acres) {
+      setErrorMessage("Please fill in all fields.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      await submitGrowerLead({ ...formData, interestType: "Profitability review", dealerSlug });
-      setSubmitted(true);
+      const result = await submitGrowerLead(data);
+      trackMetaEventOnce(`source-sales-lead:${leadSource}:${result.created_at}`, "Lead", {
+        content_name: isSourceRoute ? "Harvest Drone SOURCE Acre Plan" : "Harvest Drone Grower Acre Plan",
+        content_category: "SOURCE acre plan",
+        lead_source: leadSource,
+        page_version: pageVersion,
+        acres: Number(data.acres) || undefined,
+        state: data.state,
+      });
+      setIsSubmitted(true);
     } catch (error) {
-      setErrorMessage(error.message ?? "Something went wrong. Please try again.");
+      setErrorMessage(error.message || "Something went wrong. Try again or call 612-258-0582.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  function scrollToForm() {
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-
   return (
     <Shell compact>
       <style>{css}</style>
-      <div className="gp">
-        <section className="gp__hero">
-          <div className="gp__hero-copy">
-            <span className="gp__hero-eyebrow">Harvest Drone</span>
-            <h1>Your spray window is <em>72 hours.</em> Don't lose it to a ground rig backlog.</h1>
-            <p className="gp__hero-sub">
-              Drone application gets into your fields faster, with no compaction
-              and no crop damage. Pair it with EarthOptics soil intelligence and
-              Sound Agriculture precision inputs to spend less per acre and get more
-              out of every field.
+      <div className="gp2">
+        <section className="gp2__hero">
+          <div className="gp2__hero-content">
+            <span className="gp2__hero-eyebrow">For growers watching nitrogen costs</span>
+            <h1>
+              One ounce replaces
+              <br />
+              <em>25 lbs of N.</em>
+            </h1>
+            <p className="gp2__hero-sub">
+              SOURCE is a synthetic soil activator at $15/acre. Growers are cutting $25-45/acre
+              off their anhydrous and urea spend - and seeing 3-4 bushel yield lifts on corn.
+              We have product in stock in Minnesota.
             </p>
-            <div className="gp__hero-proof">
-              <div className="gp__hero-proof-item"><strong>3-5x</strong><span>Faster than ground rigs</span></div>
-              <div className="gp__hero-proof-item"><strong>$8-14</strong><span>Per acre application</span></div>
-              <div className="gp__hero-proof-item"><strong>0%</strong><span>Crop damage or compaction</span></div>
-            </div>
-            <div className="gp__hero-actions">
-              <Link className="gp__hero-link gp__hero-link--primary" to="/source">
-                Buy SOURCE Now
-              </Link>
-              <Link className="gp__hero-link gp__hero-link--secondary" to="/source">
-                See SOURCE Pricing
-              </Link>
+            <div className="gp2__hero-actions">
+              <button type="button" className="gp2__hero-btn gp2__hero-btn--primary" onClick={scrollToForm}>
+                Get my acre plan
+              </button>
+              <button
+                type="button"
+                className="gp2__hero-btn gp2__hero-btn--secondary"
+                onClick={() => document.getElementById("source-calculator")?.scrollIntoView({ behavior: "smooth" })}
+              >
+                Run the numbers
+              </button>
             </div>
           </div>
 
-          <div className="gp__form-card" ref={formRef} id="grower-acre-plan-form">
-            {submitted ? (
-              <div className="gp__success">
-                <div className="gp__success-icon">
-                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#A3D977" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 14.5l5.5 5.5L22 9" /></svg>
+          <div className="gp2__form-card" ref={formRef} id="grower-acre-plan-form">
+            {isSubmitted ? (
+              <div className="gp2__success">
+                <div className="gp2__success-icon">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#A3D977" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 14.5l5.5 5.5L22 9" />
+                  </svg>
                 </div>
-                <h2>We're reviewing your acres.</h2>
-                <p>Expect to hear from us within one business day with your acre plan - including soil scan recommendations and input efficiency analysis for your fields.</p>
+                <h2>We're building your acre plan.</h2>
+                <p>
+                  Jake will follow up within one business day with a SOURCE recommendation
+                  specific to your acres.
+                </p>
               </div>
             ) : (
-              <form className="gp__form-grid" onSubmit={handleSubmit}>
-                <div className="gp__form-header">
-                  <h2>Get your free acre plan</h2>
-                  <p>Five fields. Takes 30 seconds.</p>
-                </div>
-                {formFields.map((field) => (
-                  <div className="gp__field" key={field.name}>
-                    <label className="gp__field-label">{field.label}{field.required && <span className="gp__required">*</span>}</label>
-                    <input className="gp__input" name={field.name} type={field.type ?? "text"} required={field.required} placeholder={field.placeholder} autoComplete={field.autoComplete} inputMode={field.inputMode} min={field.min} step={field.step} value={formData[field.name]} onChange={handleChange} />
+              <>
+                <div className="gp2__form-badge">Free - 30 seconds</div>
+                <h2 className="gp2__form-title">Get your acre plan</h2>
+                <p className="gp2__form-sub">
+                  We'll show you what SOURCE costs on your fields and what you'd save on
+                  synthetic nitrogen.
+                </p>
+                <form onSubmit={handleSubmit}>
+                  <div className="gp2__form-fields">
+                    <div className="gp2__field">
+                      <label className="gp2__field-label" htmlFor="firstName">
+                        First name <span className="req">*</span>
+                      </label>
+                      <input
+                        className="gp2__input"
+                        id="firstName"
+                        name="firstName"
+                        required
+                        placeholder="Your first name"
+                        autoComplete="given-name"
+                        defaultValue={searchParams.get("firstName") || ""}
+                      />
+                    </div>
+                    <div className="gp2__field">
+                      <label className="gp2__field-label" htmlFor="email">
+                        Email <span className="req">*</span>
+                      </label>
+                      <input
+                        className="gp2__input"
+                        id="email"
+                        name="email"
+                        type="email"
+                        required
+                        placeholder="you@yourfarm.com"
+                        autoComplete="email"
+                        inputMode="email"
+                        defaultValue={searchParams.get("email") || ""}
+                      />
+                    </div>
+                    <div className="gp2__field">
+                      <label className="gp2__field-label" htmlFor="state">
+                        State <span className="req">*</span>
+                      </label>
+                      <select
+                        className="gp2__select"
+                        id="state"
+                        name="state"
+                        required
+                        defaultValue={searchParams.get("state") || ""}
+                      >
+                        <option value="" disabled>
+                          Select your state
+                        </option>
+                        {STATES.map((state) => (
+                          <option key={state} value={state}>
+                            {state}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="gp2__field">
+                      <label className="gp2__field-label" htmlFor="acres">
+                        Total acres <span className="req">*</span>
+                      </label>
+                      <input
+                        className="gp2__input"
+                        id="acres"
+                        name="acres"
+                        type="number"
+                        required
+                        placeholder="1,200"
+                        inputMode="numeric"
+                        min="1"
+                        step="1"
+                        defaultValue={searchParams.get("acres") || ""}
+                      />
+                    </div>
                   </div>
-                ))}
-                {errorMessage && <p className="gp__form-error">{errorMessage}</p>}
-                <button className="gp__submit" type="submit" disabled={isSubmitting}>{isSubmitting ? "Reviewing your acres..." : "Get My Acre Plan ->"}</button>
-                <p className="gp__form-footer">Free. No commitment. Includes soil analysis and input recommendations.</p>
-              </form>
+                  {errorMessage ? <p className="gp2__form-error">{errorMessage}</p> : null}
+                  <button className="gp2__submit" type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Reviewing your acres..." : "Get my acre plan"}
+                  </button>
+                  <p className="gp2__form-footer">
+                    No commitment. Includes product cost, nitrogen savings, and application options.
+                  </p>
+                </form>
+              </>
             )}
           </div>
-        </section>
 
-        <div className="gp__value-strip">
-          <span className="gp__section-eyebrow">Built on data, not guesswork</span>
-          <h2 className="gp__section-title">Two technologies that change the economics of every acre.</h2>
-          <div className="gp__value-grid">
-            <div className="gp__value-card">
-              <span className="gp__value-card-eyebrow" style={{ color: "#60A5FA" }}>EarthOptics</span>
-              <h3>See what's happening below the surface.</h3>
-              <p>Subsurface soil scanning maps compaction, drainage, and nutrient variability at the field level. Instead of blanket-applying inputs, you get a prescription map that shows exactly where each zone needs attention - and where it doesn't.</p>
-              <div className="gp__value-card-stat"><strong>Zone-level</strong><span>precision prescriptions per field</span></div>
+          <div className="gp2__hero-proof-block">
+            <div className="gp2__proof">
+              <div className="gp2__proof-item">
+                <span className="gp2__proof-value">$15</span>
+                <span className="gp2__proof-label">per acre</span>
+              </div>
+              <div className="gp2__proof-item">
+                <span className="gp2__proof-value">3-4 bu</span>
+                <span className="gp2__proof-label">reported corn lift</span>
+              </div>
+              <div className="gp2__proof-item">
+                <span className="gp2__proof-value">1M+</span>
+                <span className="gp2__proof-label">US acres on SOURCE</span>
+              </div>
             </div>
-            <div className="gp__value-card">
-              <span className="gp__value-card-eyebrow" style={{ color: "#A3D977" }}>SOURCE &amp; BLUEPRINT</span>
-              <h3>Reduce synthetic input spend without losing yield.</h3>
-              <p>SOURCE is a synthetic soil activator that helps crops access nutrients already present in the field. BLUEPRINT supports phosphorus availability. Together they reduce dependency on synthetic fertilizer - applied precisely where EarthOptics data says they'll have the most impact.</p>
-              <div className="gp__value-card-stat"><strong>~$25</strong><span>per acre for both crop inputs</span></div>
+            <p className="gp2__trust">
+              <strong>Start with a test block.</strong> Leave check strips, compare at harvest,
+              and expand only if your field data earns it.
+            </p>
+            <div className="gp2__mini-plan" aria-label="What your acre plan includes">
+              <div className="gp2__mini-card">
+                <span className="gp2__mini-label">Cost</span>
+                <strong>Product spend by acre</strong>
+                <span>SOURCE, BLUEPRINT, bundle, and drone application options.</span>
+              </div>
+              <div className="gp2__mini-card">
+                <span className="gp2__mini-label">Trial</span>
+                <strong>Simple check-strip plan</strong>
+                <span>Where to test, what to compare, and how to judge the result.</span>
+              </div>
             </div>
           </div>
+        </section>
+
+        <section className="gp2__section" id="source-calculator">
+          <span className="gp2__section-eyebrow">Run your own numbers</span>
+          <h2 className="gp2__section-title">See how a SOURCE trial changes your nitrogen math.</h2>
+          <div className="gp2__calc">
+            <div className="gp2__calc-header">
+              <h3>SOURCE savings calculator</h3>
+              <p>
+                Use the nitrogen dollars you are considering cutting or reallocating,
+                then compare that against SOURCE at $15/acre.
+              </p>
+            </div>
+            <div className="gp2__calc-body">
+              <div className="gp2__calc-row">
+                <div className="gp2__calc-field">
+                  <label htmlFor="calcAcres">Acres to evaluate</label>
+                  <input
+                    className="gp2__input"
+                    id="calcAcres"
+                    type="number"
+                    value={calcAcres}
+                    onChange={(event) => setCalcAcres(Math.max(0, Number(event.target.value)))}
+                    min="0"
+                    step="100"
+                  />
+                </div>
+                <div className="gp2__calc-field">
+                  <label htmlFor="calcCurrentN">N dollars targeted per acre</label>
+                  <input
+                    className="gp2__input"
+                    id="calcCurrentN"
+                    type="number"
+                    value={calcCurrentN}
+                    onChange={(event) => setCalcCurrentN(Math.max(0, Number(event.target.value)))}
+                    min="0"
+                    step="5"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="gp2__calc-results">
+              <div className="gp2__calc-result">
+                <span className="gp2__calc-result-value">${sourceCost.toLocaleString()}</span>
+                <span className="gp2__calc-result-label">
+                  SOURCE cost ({calcAcres.toLocaleString()} acres x $15)
+                </span>
+              </div>
+              <div className="gp2__calc-result">
+                <span className="gp2__calc-result-value">${currentNSpend.toLocaleString()}</span>
+                <span className="gp2__calc-result-label">Nitrogen dollars under review</span>
+              </div>
+              <div className="gp2__calc-result">
+                <span className="gp2__calc-result-value">${estimatedSavings.toLocaleString()}</span>
+                <span className="gp2__calc-result-label">Net savings before yield impact</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="gp2__divider">
+          <div className="gp2__divider-line" />
         </div>
 
-        <section className="gp__section">
-          <span className="gp__section-eyebrow">The acre-level flywheel</span>
-          <h2 className="gp__section-title">Scan. Prescribe. Apply. Measure. Repeat.</h2>
-          <div className="gp__flywheel-grid">
-            {flywheel.map((step, i) => (
-              <div className="gp__flywheel-step" key={step.label}>
-                <span className="gp__flywheel-label" style={{ color: step.accent }}>{step.label}</span>
-                <span className="gp__flywheel-title">{step.title}</span>
-                <span className="gp__flywheel-desc">{step.desc}</span>
-                {i < flywheel.length - 1 && <div className="gp__flywheel-arrow">{"->"}</div>}
+        <section className="gp2__section">
+          <span className="gp2__section-eyebrow">What growers are reporting</span>
+          <h2 className="gp2__section-title">They tried it on part of their fields. Then they expanded.</h2>
+          <div className="gp2__proof-grid">
+            {proofPoints.map((point) => (
+              <div className="gp2__proof-card" key={point.quote}>
+                <p className="gp2__proof-card-quote">"{point.quote}"</p>
+                <span className="gp2__proof-card-meta">{point.meta}</span>
+                <div className="gp2__proof-card-stat">
+                  <strong>{point.stat.value}</strong>
+                  <span>{point.stat.label}</span>
+                </div>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="gp__section">
-          <div className="gp__video-card">
-            <span className="gp__section-eyebrow">See it in action</span>
-            <div className="gp__video-frame">
-              <iframe src="https://app.heygen.com/embeds/a6f5797516d74831aee74e68c7d6c54a" title="Harvest Drone - how drone application works" allow="encrypted-media; fullscreen;" allowFullScreen />
+        <div className="gp2__divider">
+          <div className="gp2__divider-line" />
+        </div>
+
+        <section className="gp2__section">
+          <span className="gp2__section-eyebrow">Transparent pricing</span>
+          <h2 className="gp2__section-title">Know the product cost before anyone calls you.</h2>
+          <div className="gp2__products">
+            <div className="gp2__product">
+              <span className="gp2__product-name" style={{ color: "var(--accent)" }}>
+                SOURCE
+              </span>
+              <span className="gp2__product-price">
+                $15<small>/acre</small>
+              </span>
+              <span className="gp2__product-desc">
+                Synthetic activator. 1 oz replaces 25 lbs of N. Built for anhydrous,
+                urea, and UAN reduction plans.
+              </span>
+            </div>
+            <div className="gp2__product">
+              <span className="gp2__product-name" style={{ color: "var(--blue)" }}>
+                BLUEPRINT
+              </span>
+              <span className="gp2__product-price">
+                $11<small>/acre</small>
+              </span>
+              <span className="gp2__product-desc">
+                Solubilizes bound phosphorus. Reduces DAP and MAP spend.
+              </span>
+            </div>
+            <div className="gp2__product gp2__product--highlight">
+              <span className="gp2__product-name" style={{ color: "var(--accent)" }}>
+                Bundle
+              </span>
+              <span className="gp2__product-price">
+                $25<small>/acre</small>
+              </span>
+              <span className="gp2__product-desc">
+                SOURCE plus BLUEPRINT. Use when both nitrogen efficiency and phosphorus access matter.
+              </span>
+            </div>
+            <div className="gp2__product">
+              <span className="gp2__product-name" style={{ color: "var(--warning)" }}>
+                Drone apply
+              </span>
+              <span className="gp2__product-price">
+                $23<small>/acre</small>
+              </span>
+              <span className="gp2__product-desc">
+                Optional Harvest Drone application for wet fields, tall canopy, and tight timing windows.
+              </span>
             </div>
           </div>
         </section>
 
-        <section className="gp__section">
-          <span className="gp__section-eyebrow">How it works</span>
-          <h2 className="gp__section-title">From form to field in three steps.</h2>
-          <div className="gp__steps-grid">
-            {steps.map((step) => (
-              <div className="gp__step" key={step.num}>
-                <div className="gp__step-num">{step.num}</div>
-                <div className="gp__step-title">{step.title}</div>
-                <div className="gp__step-desc">{step.desc}</div>
-              </div>
-            ))}
+        <div className="gp2__divider">
+          <div className="gp2__divider-line" />
+        </div>
+
+        <section className="gp2__section">
+          <span className="gp2__section-eyebrow">How it works</span>
+          <h2 className="gp2__section-title">Three steps. No complexity.</h2>
+          <div className="gp2__steps">
+            <div className="gp2__step">
+              <span className="gp2__step-num">STEP 01</span>
+              <span className="gp2__step-title">Tell us about your acres</span>
+              <span className="gp2__step-desc">
+                Four fields. 30 seconds. We build a free acre plan showing product cost
+                and a practical SOURCE trial path.
+              </span>
+            </div>
+            <div className="gp2__step">
+              <span className="gp2__step-num">STEP 02</span>
+              <span className="gp2__step-title">Start with a test block</span>
+              <span className="gp2__step-desc">
+                Pick fields, leave check strips, and compare SOURCE-treated rows against
+                your current program at harvest.
+              </span>
+            </div>
+            <div className="gp2__step">
+              <span className="gp2__step-num">STEP 03</span>
+              <span className="gp2__step-title">Expand based on your result</span>
+              <span className="gp2__step-desc">
+                If the math and yield data work, expand next season. If not, you tested
+                a contained portion and now you know.
+              </span>
+            </div>
           </div>
         </section>
 
-        <section className="gp__section">
-          <span className="gp__section-eyebrow">Common questions</span>
-          <h2 className="gp__section-title">Straight answers before you commit.</h2>
-          <div className="gp__objections-list">
-            {objections.map((obj, i) => (
-              <div className="gp__objection" key={i}>
-                <button type="button" className="gp__objection-q" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
-                  {obj.q}
-                  <svg className={`gp__objection-chevron${openFaq === i ? " is-open" : ""}`} width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6l4 4 4-4" /></svg>
+        <div className="gp2__divider">
+          <div className="gp2__divider-line" />
+        </div>
+
+        <section className="gp2__section">
+          <span className="gp2__section-eyebrow">Common questions</span>
+          <h2 className="gp2__section-title">Straight answers before you try it.</h2>
+          <div className="gp2__faq-list">
+            {faqs.map((faq, index) => (
+              <div className="gp2__faq" key={faq.q}>
+                <button
+                  type="button"
+                  className="gp2__faq-q"
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  aria-expanded={openFaq === index}
+                >
+                  {faq.q}
+                  <svg className={`gp2__faq-chevron${openFaq === index ? " is-open" : ""}`} width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 6l4 4 4-4" />
+                  </svg>
                 </button>
-                {openFaq === i && <p className="gp__objection-a">{obj.a}</p>}
+                {openFaq === index ? <div className="gp2__faq-a">{faq.a}</div> : null}
               </div>
             ))}
           </div>
         </section>
 
-        <section className="gp__bottom">
-          <div className="gp__bottom-card">
-            <h2>Soil data. Precision inputs. Precision application. One acre plan ties it together.</h2>
-            <p>Tell us about your fields and we'll show you where drone application and smarter inputs save you time, money, and crop.</p>
-            <button type="button" className="gp__bottom-btn" onClick={scrollToForm}>{"Get My Acre Plan ->"}</button>
+        <section className="gp2__bottom">
+          <div className="gp2__bottom-card">
+            <h2>Your nitrogen bill went up. Your yield does not have to go down.</h2>
+            <p>
+              Tell us about your fields. We'll show you what SOURCE costs on your acres,
+              what you'd save on synthetic nitrogen, and how to test it without betting the
+              whole farm.
+            </p>
+            <button type="button" className="gp2__bottom-btn" onClick={scrollToForm}>
+              Get my acre plan
+            </button>
           </div>
         </section>
       </div>

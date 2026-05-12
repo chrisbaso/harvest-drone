@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "export:rdo-seed": "node scripts/export-rdo-enterprise-seed.mjs",
-    "test": "node tests/harvestLeadEngine.test.js && node tests/revenueOps.test.js && node tests/trainingProgram.test.js && node tests/enterpriseDivision.test.js && node tests/enterpriseDemoPath.test.js && node tests/enterpriseSeed.test.js && node tests/enterpriseWorkspace.test.js && node tests/enterpriseEvidence.test.js && node tests/enterpriseRlsMigration.test.js"
+    "test": "node tests/harvestLeadEngine.test.js && node tests/revenueOps.test.js && node tests/trainingProgram.test.js && node tests/academy.test.js && node tests/fieldOps.test.js && node tests/fieldOpsMigration.test.js && node tests/flightReadiness.test.js && node tests/enterpriseDivision.test.js && node tests/enterpriseDemoPath.test.js && node tests/enterpriseSeed.test.js && node tests/enterpriseWorkspace.test.js && node tests/enterpriseEvidence.test.js && node tests/enterpriseRlsMigration.test.js && node tests/integrationStack.test.js && node tests/dailyOps.test.js && node tests/operatingBriefs.test.js && node tests/demoAccess.test.js && node tests/enterpriseDemoAccess.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",

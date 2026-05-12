@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/process-drips",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/daily-ops",
+      "schedule": "0 12 * * 1-5"
     }
   ],
   "rewrites": [
