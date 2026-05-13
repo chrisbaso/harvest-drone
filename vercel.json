@@ -6,10 +6,14 @@
     },
     {
       "path": "/api/cron/daily-ops",
-      "schedule": "0 12 * * 1-5"
+      "schedule": "0 11 * * 1-5"
     }
   ],
   "rewrites": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
