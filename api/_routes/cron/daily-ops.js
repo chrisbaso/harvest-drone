@@ -1,5 +1,6 @@
 import { generateDailyOpsBrief, isWeekdayInTimezone } from "../../_lib/dailyOpsAgent.js";
 import { getSupabaseServerClient } from "../../_lib/serverSupabase.js";
+import { maybeRunWeeklyBlogGeneration } from "./generate-blog-posts.js";
 
 function unauthorized(res) {
   return res.status(401).json({ error: "Unauthorized" });
@@ -39,6 +40,13 @@ export default async function handler(req, res) {
       timezone,
       postToSlack: true,
     });
+    let blogGeneration = { skipped: true, reason: "Blog generation only runs on Mondays.", timezone };
+
+    try {
+      blogGeneration = await maybeRunWeeklyBlogGeneration({ timezone });
+    } catch (blogError) {
+      blogGeneration = { status: "failed", error: blogError.message || "Unable to generate weekly blog drafts." };
+    }
 
     return res.status(200).json({
       briefId: result.brief.id,
@@ -46,6 +54,7 @@ export default async function handler(req, res) {
       slackStatus: result.slackResult?.status || "not_sent",
       counts: result.brief.summary?.counts || {},
       warnings: result.brief.summary?.warnings || [],
+      blogGeneration,
     });
   } catch (error) {
     return res.status(500).json({ error: error.message || "Unable to run Daily Ops Brief cron." });

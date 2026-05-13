@@ -1,0 +1,7 @@
+project_id = "tmnrjldripqzqiewuqym"
+
+[functions.blog-generate]
+verify_jwt = true
+
+[functions.blog-admin]
+verify_jwt = true

@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /ops
+Disallow: /agent
+Disallow: /crm
+Disallow: /dashboard
+Disallow: /fleet
+Disallow: /scheduler
+Disallow: /dealer
+Disallow: /network
+Disallow: /login
+Disallow: /demo
+
+Sitemap: https://harvest-drone.vercel.app/sitemap.xml

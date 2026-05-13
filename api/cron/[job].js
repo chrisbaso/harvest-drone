@@ -1,8 +1,10 @@
 import dailyOpsHandler from "../_routes/cron/daily-ops.js";
+import generateBlogPostsHandler from "../_routes/cron/generate-blog-posts.js";
 import processDripsHandler from "../_routes/cron/process-drips.js";
 
 const handlers = {
   "daily-ops": dailyOpsHandler,
+  "generate-blog-posts": generateBlogPostsHandler,
   "process-drips": processDripsHandler,
 };
 

@@ -11,6 +11,8 @@ const PUBLIC_LANDING_ROUTES = new Set([
   "/source-review",
   "/source-acre-review/results",
   "/source-acre-review/thank-you",
+  "/blog",
+  "/auth/callback",
   "/privacy",
   "/terms",
   "/login",
@@ -55,6 +57,7 @@ function Shell({ children, compact = false }) {
           ? [
               ["Ops", "/ops"],
               ["Academy", "/training"],
+              ...(role === "admin" ? [["Blog", "/admin/blog"]] : []),
             ]
           : [];
 

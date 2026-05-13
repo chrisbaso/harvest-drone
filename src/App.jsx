@@ -13,6 +13,10 @@ const OperatorPage = lazy(() => import("./pages/OperatorPage"));
 const HylioPage = lazy(() => import("./pages/HylioPage"));
 const SourcePage = lazy(() => import("./pages/SourcePage"));
 const SourceResultsPage = lazy(() => import("./pages/SourceResultsPage"));
+const BlogListPage = lazy(() => import("./pages/BlogListPage"));
+const BlogPostPage = lazy(() => import("./pages/BlogPostPage"));
+const BlogAdminPage = lazy(() => import("./pages/BlogAdminPage"));
+const AuthCallbackPage = lazy(() => import("./pages/AuthCallbackPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const AgentPage = lazy(() => import("./pages/AgentPage"));
@@ -97,6 +101,9 @@ function App() {
           <Route path="/source-review" element={<SourcePage />} />
           <Route path="/source-acre-review/results" element={<SourceResultsPage />} />
           <Route path="/source-acre-review/thank-you" element={<Navigate to="/source-acre-review/results" replace />} />
+          <Route path="/blog" element={<BlogListPage />} />
+          <Route path="/blog/:slug" element={<BlogPostPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -142,6 +149,7 @@ function App() {
           <Route path="/admin/weekly-brief" element={<ProtectedRoute allowedRoles={["admin"]}><WeeklyBriefPage /></ProtectedRoute>} />
           <Route path="/admin/profit-centers" element={<ProtectedRoute allowedRoles={["admin"]}><ProfitCentersPage /></ProtectedRoute>} />
           <Route path="/admin/leads/:leadId" element={<ProtectedRoute allowedRoles={["admin"]}><HarvestLeadDetailPage /></ProtectedRoute>} />
+          <Route path="/admin/blog" element={<ProtectedRoute allowedRoles={["admin"]}><BlogAdminPage /></ProtectedRoute>} />
           <Route path="/admin/training" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTrainingPage /></ProtectedRoute>} />
           <Route path="/admin/academy" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAcademyPage /></ProtectedRoute>} />
           <Route path="/network" element={<ProtectedRoute allowedRoles={["network_manager", "admin"]}><Navigate to="/ops" replace /></ProtectedRoute>} />
